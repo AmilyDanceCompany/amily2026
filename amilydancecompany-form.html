@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amily Summer Showcase 2026 — 指定席予約</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
+:root {
+  --bg:#fafaf8;--white:#fff;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;
+  --gold:#d4a84b;--green:#2e7d52;
+  --avail:#3a8c5c;--sel:#c8506e;--taken:#6b7a90;--outside:#e8e5e0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1a0a10 0%,#2d1020 45%,#1a0a18 100%);padding:28px 24px 22px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.18),transparent 70%);pointer-events:none;}
+.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--rose);margin-bottom:6px;}
+.hero-mode{display:inline-block;background:rgba(200,80,110,.25);border:1px solid rgba(200,80,110,.4);border-radius:14px;padding:3px 12px;font-size:10px;color:#f4a8bc;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:8px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(18px,4vw,30px);font-weight:700;color:#fff;line-height:1.2;margin-bottom:3px;}
+.hero-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.45);}
+
+/* STEPS */
+.steps{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 16px;}
+.step{display:flex;align-items:center;gap:8px;padding:12px 14px 12px 0;font-size:11px;color:var(--mid);white-space:nowrap;flex-shrink:0;}
+.step+.step::before{content:'›';margin-right:14px;color:var(--border);font-size:14px;}
+.step-n{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;flex-shrink:0;transition:all .2s;}
+.step.active{color:var(--ink);font-weight:500;}
+.step.active .step-n{background:var(--rose);border-color:var(--rose);color:#fff;}
+.step.done{color:var(--green);}
+.step.done .step-n{background:var(--green);border-color:var(--green);color:#fff;}
+
+/* MAIN */
+.main{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── SCREEN 0: PERF + TICKET TYPE ── */
+.s0-wrap{max-width:500px;margin:0 auto;}
+.section-h{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--mid);margin-bottom:12px;text-transform:uppercase;}
+.type-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;}
+.type-card{border:2px solid var(--border);border-radius:12px;padding:18px 14px;cursor:pointer;transition:all .2s;background:#fff;text-align:center;}
+.type-card:hover{border-color:var(--rose);}
+.type-card.selected{border-color:var(--rose);background:var(--rose-l);}
+.type-card.hidden-card{display:none;}
+.tc-icon{font-size:26px;margin-bottom:8px;display:block;}
+.tc-name{font-weight:700;font-size:13px;margin-bottom:4px;}
+.tc-price{font-family:'DM Mono',monospace;font-size:17px;color:var(--rose);margin-bottom:3px;}
+.tc-note{font-size:11px;color:var(--mid);line-height:1.6;}
+.perf-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;}
+.perf-card{border:2px solid var(--border);border-radius:12px;padding:20px 16px;cursor:pointer;transition:all .2s;background:#fff;text-align:center;}
+.perf-card:hover{border-color:var(--rose);transform:translateY(-2px);box-shadow:0 4px 16px rgba(200,80,110,.12);}
+.perf-card.selected{border-color:var(--rose);background:var(--rose-l);}
+.pc-tag{display:inline-block;background:var(--rose);color:#fff;border-radius:14px;padding:3px 12px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:8px;}
+.pc-time{font-size:24px;font-family:'Playfair Display',serif;font-weight:700;margin-bottom:2px;}
+.pc-date{font-size:11px;color:var(--mid);}
+.pc-remain{font-size:10px;color:var(--green);margin-top:8px;font-family:'DM Mono',monospace;}
+.pc-remain.low{color:#d4822b;}
+.btn-next{display:block;width:100%;background:var(--rose);color:#fff;border:none;padding:15px;border-radius:10px;font-family:'Noto Sans JP',sans-serif;font-size:14px;letter-spacing:.06em;cursor:pointer;transition:background .2s;font-weight:700;}
+.btn-next:hover{background:var(--rose-d);}
+.btn-next:disabled{background:#ccc;cursor:not-allowed;}
+
+/* ── SEAT MAP ── */
+.seat-layout{display:grid;grid-template-columns:1fr 280px;gap:20px;}
+@media(max-width:700px){.seat-layout{grid-template-columns:1fr;}}
+
+.map-panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 10px;overflow-x:auto;}
+.map-top{text-align:center;margin-bottom:14px;}
+.map-badge{display:inline-block;background:var(--rose);color:#fff;border-radius:14px;padding:3px 14px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:6px;}
+.map-hint{font-size:11px;color:var(--mid);}
+.stage-bar{width:70%;margin:0 auto 26px;height:10px;background:linear-gradient(90deg,transparent,rgba(200,80,110,.4),rgba(200,80,110,.9),rgba(200,80,110,.4),transparent);border-radius:4px;position:relative;}
+.stage-bar::before{content:'S T A G E';position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.35em;color:var(--rose);font-family:'DM Mono',monospace;white-space:nowrap;}
+
+/* 全体マップ */
+.seatmap-wrap{display:inline-block;}
+
+/* セクション背景帯 */
+.map-section{border-radius:6px;padding:3px 0;margin-bottom:2px;}
+.map-section.movable{background:rgba(212,168,75,.06);}
+.map-section.fixed-front{background:rgba(46,125,82,.05);}
+.map-section.fixed-back{background:rgba(180,180,180,.05);}
+
+/* セクションラベル */
+.section-band{display:flex;align-items:center;gap:6px;padding:4px 4px 3px;margin-bottom:2px;}
+.section-band-line{flex:1;height:1px;background:var(--border);}
+.section-band-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.15em;color:var(--mid);white-space:nowrap;}
+
+/* 1行 */
+.seat-row{display:flex;align-items:center;justify-content:center;margin-bottom:3px;}
+
+/* 行ラベル */
+.row-lbl{
+  font-family:'DM Mono',monospace;font-size:13px;font-weight:700;
+  color:var(--mid);width:24px;text-align:center;flex-shrink:0;line-height:1;
+}
+
+/* 通路スペース */
+.aisle{
+  width:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:8px;color:rgba(150,150,150,.45);
+  letter-spacing:.04em;
+}
+/* 横通路（D/E列間など） */
+.aisle-row{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 0;margin:2px 0;
+}
+.aisle-row-line{flex:1;height:2px;background:repeating-linear-gradient(90deg,#ccc 0,#ccc 4px,transparent 4px,transparent 8px);}
+.aisle-row-label{font-family:'DM Mono',monospace;font-size:8px;color:#aaa;white-space:nowrap;letter-spacing:.1em;}
+/* 傾斜開始ラベル（H列左） */
+.slope-tag{
+  font-family:'DM Mono',monospace;font-size:7px;color:#d4822b;
+  white-space:nowrap;letter-spacing:.04em;
+}
+/* 傾斜エリア囲み */
+.slope-wrap{
+  display:flex;align-items:stretch;gap:0;
+  border:1.5px solid #d4822b;border-radius:4px;
+  margin:2px 0;padding:3px 0;
+}
+.slope-wrap-rows{
+  flex:1;
+}
+.slope-wrap-label{
+  writing-mode:vertical-rl;text-orientation:mixed;
+  font-family:'Noto Sans JP',sans-serif;font-size:8px;color:#d4822b;
+  letter-spacing:.15em;padding:4px 3px;white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* 座席 */
+.seat{
+  width:17px;height:13px;
+  border-radius:3px 3px 1px 1px;
+  border:1px solid transparent;
+  cursor:pointer;
+  transition:all .12s;
+  position:relative;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:6px;
+  color:transparent;
+  margin:0 1px 3px;
+}
+/* 自由席エリア */
+.seat.free-seat{background:#dedad5;border-color:#c8c4c0;cursor:default;opacity:.55;}
+.seat.free-seat::after{background:#bbb7b2;}
+/* ズームコントロール */
+.map-outer-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+.map-zoom-inner{transform-origin:top left;transition:transform .2s;display:inline-block;}
+.zoom-controls{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;}
+.zoom-btn{background:#fff;border:1.5px solid var(--border);border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:700;line-height:1;transition:border-color .2s;flex-shrink:0;}
+.zoom-btn:hover{border-color:var(--rose);}
+.zoom-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mid);min-width:36px;text-align:center;}
+.seat::after{
+  content:'';position:absolute;bottom:-2px;left:2px;right:2px;
+  height:2px;border-radius:0 0 2px 2px;background:inherit;filter:brightness(.65);
+}
+.seat:hover .seat-num{opacity:1;}
+.seat-num{
+  position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:#333;color:#fff;padding:2px 5px;border-radius:3px;
+  font-size:8px;white-space:nowrap;pointer-events:none;opacity:0;
+  transition:opacity .15s;z-index:10;
+}
+.seat.avail{background:var(--avail);border-color:rgba(46,125,82,.6);color:rgba(255,255,255,.6);}
+.seat.avail:hover{background:#4aaa72;transform:translateY(-2px);box-shadow:0 3px 8px rgba(46,125,82,.35);color:#fff;z-index:2;}
+.seat.sel{background:var(--sel)!important;border-color:var(--rose-d)!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 3px 8px rgba(200,80,110,.4);z-index:2;}
+.seat.sel::after{background:var(--rose-d);}
+.seat.taken{background:var(--taken);border-color:#a8a3a0;cursor:not-allowed;opacity:.5;}
+.seat.taken::after{background:#9e9a97;}
+.seat.outside{background:var(--outside);border-color:#d0cdc8;cursor:default;opacity:.35;}
+.seat.outside::after{display:none;}
+.seat.hidden{opacity:0;pointer-events:none;}
+.seat.unavail{background:#b8b3ae;border-color:#9e9994;cursor:not-allowed;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);}
+.seat-spacer{width:6px;flex-shrink:0;}
+
+/* 列名ヘッダー行 */
+.col-header-row{display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.col-header-lbl-space{width:14px;flex-shrink:0;}
+.col-header-block{display:flex;gap:0;}
+.col-header-num{
+  width:17px;flex-shrink:0;
+  font-family:'DM Mono',monospace;font-size:6px;color:rgba(120,120,120,.7);
+  text-align:center;line-height:1;overflow:hidden;
+}
+.col-header-aisle{width:18px;flex-shrink:0;}
+.col-header-spacer{width:6px;flex-shrink:0;}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#555;}
+.leg-dot{width:16px;height:12px;border-radius:2px 2px 1px 1px;flex-shrink:0;}
+
+/* sidebar */
+.sidebar{display:flex;flex-direction:column;gap:14px;}
+.panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;}
+.panel-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:12px;text-transform:uppercase;}
+.cart-empty{text-align:center;color:var(--mid);font-size:12px;padding:14px 0;line-height:2;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;background:var(--bg);border-radius:6px;margin-bottom:5px;font-size:12px;}
+.ci-id{font-family:'DM Mono',monospace;font-size:11px;}
+.ci-rm{background:none;border:none;color:var(--mid);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;}
+.ci-rm:hover{color:var(--rose);}
+.cart-foot{border-top:1px solid var(--border);padding-top:11px;margin-top:2px;}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.ct-lbl{font-size:11px;color:var(--mid);}
+.ct-amt{font-family:'Playfair Display',serif;font-size:20px;color:var(--rose);}
+.btn-proc{width:100%;background:var(--rose);color:#fff;border:none;padding:12px;border-radius:8px;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;font-weight:700;transition:background .2s;letter-spacing:.04em;}
+.btn-proc:hover{background:var(--rose-d);}
+.btn-proc:disabled{background:#ccc;cursor:not-allowed;}
+.btn-back-sm{width:100%;background:none;border:1px solid var(--border);color:var(--ink);padding:9px;border-radius:8px;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;margin-top:7px;transition:border-color .2s;}
+.btn-back-sm:hover{border-color:var(--ink);}
+.max-note{text-align:center;font-size:10px;color:var(--mid);margin-top:5px;}
+
+/* ── FORM ── */
+.form-wrap{max-width:560px;margin:0 auto;}
+.form-h{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;margin-bottom:5px;}
+.form-sub{font-size:12px;color:var(--mid);margin-bottom:22px;line-height:1.8;}
+.order-box{background:linear-gradient(135deg,#1a0a10,#2d1020);border-radius:12px;padding:18px 20px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.ob-l{flex:1;}
+.ob-perf{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--rose);margin-bottom:5px;}
+.ob-tags{display:flex;flex-wrap:wrap;gap:4px;}
+.ob-tag{background:rgba(255,255,255,.12);border-radius:4px;padding:2px 7px;font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.7);}
+.ob-r{text-align:right;flex-shrink:0;}
+.ob-rlbl{font-size:9px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace;letter-spacing:.12em;}
+.ob-ramt{font-family:'Playfair Display',serif;font-size:24px;color:var(--gold);}
+.tib{background:var(--rose-l);border:1.5px solid rgba(200,80,110,.2);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.tib-icon{font-size:22px;flex-shrink:0;}
+.tib-title{font-weight:700;font-size:13px;color:var(--rose-d);margin-bottom:2px;}
+.tib-note{font-size:11px;color:var(--mid);line-height:1.5;}
+.sec-h{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);border-bottom:1px solid var(--border);padding-bottom:6px;margin:20px 0 14px;text-transform:uppercase;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.frow.full{grid-template-columns:1fr;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--mid);margin-bottom:4px;}
+.field label .req{color:var(--rose);}
+.field input,.field select{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-family:'Noto Sans JP',sans-serif;font-size:14px;color:var(--ink);background:#fff;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--rose);}
+.upgrade-sec{display:none;}
+.form-btns{display:flex;gap:10px;margin-top:24px;}
+.btn-fb{flex:0 0 auto;background:none;border:1.5px solid var(--border);color:var(--ink);padding:12px 18px;border-radius:8px;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;transition:border-color .2s;}
+.btn-fb:hover{border-color:var(--ink);}
+.btn-fs{flex:1;background:var(--rose);color:#fff;border:none;padding:13px;border-radius:8px;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-fs:hover{background:var(--rose-d);}
+
+/* ── COMPLETE ── */
+.comp-wrap{max-width:520px;margin:0 auto;}
+.comp-check{width:60px;height:60px;background:linear-gradient(135deg,var(--green),#4aaa6e);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 18px;box-shadow:0 5px 18px rgba(46,125,82,.3);}
+.comp-h{font-family:'Playfair Display',serif;font-size:30px;font-weight:400;text-align:center;margin-bottom:6px;}
+.comp-sub{text-align:center;font-size:12px;color:var(--mid);margin-bottom:24px;line-height:1.9;}
+.ticket{background:linear-gradient(145deg,#1a0a10 0%,#2a1225 50%,#1a0a18 100%);border-radius:16px;padding:26px;color:#fff;position:relative;overflow:hidden;margin-bottom:16px;}
+.ticket::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.18),transparent 70%);}
+.ticket::after{content:'';position:absolute;bottom:-40px;left:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,75,.1),transparent 70%);}
+.tk-brand{font-family:'Playfair Display',serif;font-style:italic;font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:3px;}
+.tk-ev{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:14px;}
+.tk-hr{border:none;border-top:1px dashed rgba(255,255,255,.12);margin:16px 0;position:relative;}
+.tk-hr::before{content:'';position:absolute;top:50%;left:-40px;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--bg);}
+.tk-hr::after{content:'';position:absolute;top:50%;right:-40px;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--bg);}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;position:relative;z-index:1;}
+.tf{display:flex;flex-direction:column;gap:3px;}
+.tfl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.17em;color:rgba(255,255,255,.35);}
+.tfv{font-size:13px;color:#fff;}
+.tk-seats{grid-column:1/-1;}
+.tk-seat-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.tst{background:rgba(212,168,75,.22);border:1px solid rgba(212,168,75,.35);border-radius:4px;padding:3px 9px;font-family:'DM Mono',monospace;font-size:12px;color:#f5d98a;letter-spacing:.06em;}
+.tk-amt{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;position:relative;z-index:1;}
+.ta-lbl{font-family:'DM Mono',monospace;font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.14em;}
+.ta-amt{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);}
+.ref-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;margin-bottom:14px;}
+.ref-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--mid);margin-bottom:6px;}
+.ref-num{font-family:'DM Mono',monospace;font-size:26px;letter-spacing:.22em;color:var(--rose);font-weight:700;}
+.ref-note{font-size:11px;color:var(--mid);margin-top:7px;line-height:1.8;}
+.pay-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.pay-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:12px;}
+.pay-body{font-size:13px;line-height:2.2;}
+.pi-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);display:block;margin-top:8px;line-height:1;}
+.pay-warn{margin-top:12px;padding:10px 14px;background:var(--rose-l);border-radius:8px;font-size:11px;color:var(--rose-d);line-height:1.8;}
+.ticket-link-box{background:linear-gradient(135deg,#1a0a10,#2d1020);border-radius:12px;padding:18px;text-align:center;margin-bottom:14px;}
+.tlb-note{font-size:12px;color:rgba(255,255,255,.65);margin-bottom:12px;line-height:1.8;}
+.tlb-btn{display:inline-block;background:var(--rose);color:#fff;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;}
+.comp-acts{display:flex;gap:10px;}
+.btn-ca{flex:1;background:none;border:1.5px solid var(--border);color:var(--ink);padding:11px;border-radius:8px;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;transition:border-color .2s;}
+.btn-ca:hover{border-color:var(--ink);}
+
+/* FREE SEAT ONLY notice */
+.free-only-notice{background:linear-gradient(135deg,#1a0a10,#2d1020);border-radius:12px;padding:18px 20px;margin-bottom:20px;border:1px solid rgba(200,80,110,.3);}
+.fon-title{font-family:'Playfair Display',serif;font-size:16px;color:#fff;margin-bottom:6px;}
+.fon-note{font-size:12px;color:rgba(255,255,255,.55);line-height:1.8;}
+
+@media(max-width:600px){
+  .frow{grid-template-columns:1fr;}
+  .comp-acts{flex-direction:column;}
+  .tk-grid{grid-template-columns:1fr;}
+  .type-cards,.perf-cards{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eye">TICKET RESERVATION — AMILY DANCE COMPANY</div>
+  <div class="hero-mode" id="hero-mode">一般用</div>
+  <div class="hero-title">Amily Summer Showcase 2026</div>
+  <div class="hero-sub">ふるさと劇場（川崎市民プラザ）</div>
+</div>
+
+<div class="steps">
+  <div class="step active" id="st0"><div class="step-n">1</div>公演・種別選択</div>
+  <div class="step" id="st1"><div class="step-n">2</div>座席選択</div>
+  <div class="step" id="st2"><div class="step-n">3</div>お客様情報</div>
+  <div class="step" id="st3"><div class="step-n">4</div>完了</div>
+</div>
+
+<div class="main">
+
+<!-- ── SCREEN 0 ── -->
+<div class="screen active" id="scr0">
+<div class="s0-wrap">
+
+  <!-- 一般用のみ：自由席チケットも選べる -->
+  <div id="type-section">
+    <div class="section-h" style="margin-bottom:12px">TICKET TYPE — チケット種別</div>
+    <div class="type-cards" id="type-cards">
+      <div class="type-card selected" id="tt-reserved" onclick="selType('reserved')">
+        <span class="tc-icon">🎫</span>
+        <div class="tc-name">指定席</div>
+        <div class="tc-price">¥4,000</div>
+        <div class="tc-note">座席を選んで<br>新規購入</div>
+      </div>
+      <div class="type-card" id="tt-free" onclick="selType('free')">
+        <span class="tc-icon">🎟</span>
+        <div class="tc-name">自由席</div>
+        <div class="tc-price">¥3,500</div>
+        <div class="tc-note">座席指定なし<br>当日自由に着席</div>
+      </div>
+      <!-- 出演者用のみ表示 -->
+      <div class="type-card hidden-card" id="tt-upgrade" onclick="selType('upgrade')">
+        <span class="tc-icon">⬆️</span>
+        <div class="tc-name">差額変更</div>
+        <div class="tc-price">¥500</div>
+        <div class="tc-note">自由席→指定席<br>差額のみ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 自由席選択時の案内 -->
+  <div id="free-notice" style="display:none" class="free-only-notice">
+    <div class="fon-title">🎟 自由席チケット申込</div>
+    <div class="fon-note">
+      自由席は座席の指定はありません。当日お好きな席にお座りください。<br>
+      公演・枚数を選択して申込へお進みください。
+    </div>
+  </div>
+
+  <div class="section-h">PERFORMANCE — 公演回</div>
+  <div class="perf-cards">
+    <div class="perf-card" id="pc-1st" onclick="selPerf('1st')">
+      <div class="pc-tag">1st Stage</div>
+      <div class="pc-time">14:30</div>
+      <div class="pc-date">開場 14:00</div>
+      <div class="pc-remain" id="rem-1st">残席確認中...</div>
+    </div>
+    <div class="perf-card" id="pc-2nd" onclick="selPerf('2nd')">
+      <div class="pc-tag">2nd Stage</div>
+      <div class="pc-time">18:00</div>
+      <div class="pc-date">開場 17:30</div>
+      <div class="pc-remain" id="rem-2nd">残席確認中...</div>
+    </div>
+  </div>
+
+  <p style="text-align:center;font-size:11px;color:var(--mid);margin-bottom:20px;">
+    ※ 指定席エリア：各回116席 ／ 1回の申込で最大6席まで
+  </p>
+
+  <button class="btn-next" id="btn-next0" disabled onclick="goToStep1()">次へ進む →</button>
+</div>
+</div>
+
+<!-- ── SCREEN 1: SEAT MAP ── -->
+<div class="screen" id="scr1">
+<div class="seat-layout">
+
+  <div class="map-panel">
+    <div class="map-top">
+      <div class="map-badge" id="map-badge">1st Stage 14:30</div>
+      <div class="map-hint">緑の座席をタップして選択（最大6席）</div>
+    </div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomMap(-0.15)" aria-label="縮小">−</button>
+      <span class="zoom-lbl" id="zoom-lbl">100%</span>
+      <button class="zoom-btn" onclick="zoomMap(+0.15)" aria-label="拡大">＋</button>
+    </div>
+    <div class="stage-bar"></div>
+    <div class="map-outer-scroll">
+      <div class="map-zoom-inner" id="map-zoom-inner">
+        <div id="seatmap"></div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:var(--avail)"></div>指定席（空き）</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--sel)"></div>選択中</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--taken)"></div>売り切れ</div>
+      <div class="leg"><div class="leg-dot" style="background:#dedad5;border:1px solid #c8c4c0;"></div>自由席エリア</div>
+      <div class="leg"><div class="leg-dot" style="background:#b8b3ae;border:1px solid #9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);"></div>選択不可</div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#d4822b;background:#fff8f0;border:1px solid #f8d4a0;border-radius:8px;padding:8px 12px;line-height:1.7;">
+      ⚠ <strong>H〜L列は傾斜型座席・段差あり</strong>です。<br>足元にご注意ください。
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="panel">
+      <div class="panel-t">選択中の座席</div>
+      <div id="cart-inner"><div class="cart-empty">座席をタップして<br>選択してください</div></div>
+      <div id="cart-foot" style="display:none" class="cart-foot">
+        <div class="cart-total">
+          <span class="ct-lbl" id="ct-lbl">合計</span>
+          <span class="ct-amt" id="ct-amt">¥0</span>
+        </div>
+        <button class="btn-proc" id="btn-proc" onclick="goToForm()">お客様情報を入力 →</button>
+        <button class="btn-back-sm" onclick="goToScreen0()">← 公演選択へ戻る</button>
+        <div class="max-note">※ 1回の申込で最大6席まで</div>
+      </div>
+      <div id="cart-foot-empty" style="margin-top:8px">
+        <button class="btn-proc" disabled>お客様情報を入力 →</button>
+        <button class="btn-back-sm" onclick="goToScreen0()">← 公演選択へ戻る</button>
+        <div class="max-note">※ 1回の申込で最大6席まで</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ── SCREEN 2: FORM ── -->
+<div class="screen" id="scr2">
+<div class="form-wrap">
+  <div class="form-h">お客様情報</div>
+  <div class="form-sub">ご登録のメールアドレスに受付番号・振込先をお送りします。</div>
+
+  <div class="order-box" id="order-box"></div>
+  <div class="tib" id="tib"></div>
+
+  <div class="sec-h">— 基本情報</div>
+  <div class="frow">
+    <div class="field"><label>姓 <span class="req">*</span></label><input id="f-sei" placeholder="山田" type="text"></div>
+    <div class="field"><label>名 <span class="req">*</span></label><input id="f-mei" placeholder="花子" type="text"></div>
+  </div>
+  <div class="frow">
+    <div class="field"><label>姓（フリガナ）<span class="req">*</span></label><input id="f-sei-k" placeholder="ヤマダ" type="text"></div>
+    <div class="field"><label>名（フリガナ）<span class="req">*</span></label><input id="f-mei-k" placeholder="ハナコ" type="text"></div>
+  </div>
+  <div class="frow full">
+    <div class="field"><label>メールアドレス <span class="req">*</span></label><input id="f-email" placeholder="example@email.com" type="email"></div>
+  </div>
+  <div class="frow full">
+    <div class="field"><label>メールアドレス（確認）<span class="req">*</span></label><input id="f-email2" placeholder="example@email.com" type="email"></div>
+  </div>
+  <div class="frow">
+    <div class="field"><label>電話番号 <span class="req">*</span></label><input id="f-tel" placeholder="090-0000-0000" type="tel"></div>
+    <div class="field"><label>枚数</label><input id="f-count" readonly style="background:var(--bg);color:var(--mid)" type="text"></div>
+  </div>
+
+  <!-- 自由席：枚数選択 -->
+  <div id="free-count-sec" style="display:none">
+    <div class="frow">
+      <div class="field"><label>枚数 <span class="req">*</span></label>
+        <select id="f-free-count">
+          <option value="1">1枚</option><option value="2">2枚</option>
+          <option value="3">3枚</option><option value="4">4枚</option>
+          <option value="5">5枚</option><option value="6">6枚</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 出演者用追加フィールド -->
+  <div class="upgrade-sec" id="upgrade-sec">
+    <div class="sec-h">— 出演者情報</div>
+    <div class="frow full">
+      <div class="field">
+        <label>チケット記載の出演者名 <span class="req">*</span></label>
+        <input id="f-performer" placeholder="例: 山田 花子" type="text">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--mid);margin-bottom:12px;line-height:1.8;">
+      ※ 自由席チケット番号は、チケットが手元に届いた後にチケット確認ページから入力できます。<br>
+      ※ 当日は自由席チケット原本と受付番号の両方が必要です。
+    </div>
+  </div>
+
+
+  <div class="form-btns">
+    <button class="btn-fb" id="btn-form-back" onclick="formBack()">← 戻る</button>
+    <button class="btn-fs" onclick="submitForm()">予約を確定する</button>
+  </div>
+</div>
+</div>
+
+<!-- ── SCREEN 3: COMPLETE ── -->
+<div class="screen" id="scr3">
+<div class="comp-wrap">
+  <div class="comp-check">✓</div>
+  <div class="comp-h">予約が完了しました</div>
+  <div class="comp-sub" id="comp-sub">ご登録のメールアドレスに確認メールをお送りしました。</div>
+
+  <div class="ticket">
+    <div class="tk-brand">from Amily Dance Company</div>
+    <div class="tk-ev">Amily Summer Showcase 2026</div>
+    <hr class="tk-hr">
+    <div class="tk-grid">
+      <div class="tf"><span class="tfl">公演回</span><span class="tfv" id="c-perf">—</span></div>
+      <div class="tf"><span class="tfl">チケット種別</span><span class="tfv" id="c-type">—</span></div>
+      <div class="tf"><span class="tfl" id="c-name-lbl">お名前</span><span class="tfv" id="c-name">—</span></div>
+      <div class="tf"><span class="tfl">メール</span><span class="tfv" id="c-email" style="font-size:11px;word-break:break-all">—</span></div>
+      <div class="tf tk-seats" id="c-seats-wrap" style="display:none">
+        <span class="tfl">座席</span>
+        <div class="tk-seat-tags" id="c-seats"></div>
+      </div>
+      <div class="tf" id="c-ticketno-wrap" style="display:none">
+        <span class="tfl">紙チケット通し番号</span>
+        <span class="tfv" id="c-ticketno" style="font-family:'DM Mono',monospace;font-size:16px;letter-spacing:.1em;color:var(--gold)">—</span>
+      </div>
+    </div>
+    <hr class="tk-hr">
+    <div class="tk-amt"><span class="ta-lbl">お支払い金額</span><span class="ta-amt" id="c-total">—</span></div>
+  </div>
+
+  <div class="ref-box">
+    <div class="ref-lbl">受付番号</div>
+    <div class="ref-num" id="c-ref">—</div>
+    <div class="ref-note" id="ref-note">
+      メールアドレスでチケット確認ページにログインできます。<br>
+      <span id="c-upgrade-note" style="display:none;color:var(--rose)">※ 自由席チケットが届いたら、チケット確認ページからチケット番号を入力してください。</span>
+    </div>
+  </div>
+
+  <!-- 支払い案内ボックス（フェーズ・モードに応じてJSで動的挿入） -->
+  <div id="pay-info-area"></div>
+
+  <div class="ticket-link-box">
+    <div class="tlb-note">メールアドレスでログインして<br>電子チケットを確認できます</div>
+    <a href="amilydancecompany-ticket.html" class="tlb-btn">電子チケット確認ページ →</a>
+  </div>
+
+  <div class="comp-acts">
+    <button class="btn-ca" onclick="window.print()">🖨 印刷</button>
+    <button class="btn-ca" onclick="resetAll()">別の公演を予約</button>
+  </div>
+</div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ============================================================
+// DATE PHASE CONTROL
+// 現在時刻（日本時間）をもとにフェーズを決定する
+//
+// PHASE 0: 〜2026/7/5 09:59  → 準備画面へリダイレクト
+// PHASE 1: 2026/7/5 10:00〜2026/7/10 23:59
+//   - 出演者: 振込案内なし（一括請求）
+//   - 一般:   受付番号のみ返信（支払案内なし）
+// PHASE 2: 2026/7/11〜2026/7/12 23:59
+//   - 出演者: PayPay or 振込案内あり
+//   - 一般:   受付番号のみ返信（まだ支払案内なし）
+// PHASE 3: 2026/7/13〜
+//   - 出演者: PayPay or 振込案内あり
+//   - 一般:   PayPay or 振込案内あり
+// ============================================================
+(function() {
+  // ============================================================
+  // ★ テスト中は日付チェックを無効化しています
+  // 本番公開前に下の return; を削除してください
+  // ============================================================
+  return;
+
+  // ?preview=1 がついている場合は日付チェックをスキップ（開発・確認用）
+  if (new URLSearchParams(location.search).get('preview') === '1') return;
+
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  const OPEN   = new Date('2026-07-05T10:00:00+09:00');
+  const PHASE2 = new Date('2026-07-11T00:00:00+09:00');
+  const PHASE3 = new Date('2026-07-13T00:00:00+09:00');
+
+  if (now < OPEN) {
+    location.replace('amilydancecompany-coming-soon.html' + location.search);
+  }
+
+  window.PHASE = now >= PHASE3 ? 3 : now >= PHASE2 ? 2 : 1;
+})();
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec';
+const params = new URLSearchParams(location.search);
+const MODE = params.get('mode') === 'performer' ? 'performer' : 'general';
+
+if (MODE === 'performer') {
+  document.getElementById('hero-mode').textContent = '出演者用';
+  document.getElementById('hero-mode').style.background = 'rgba(212,168,75,.25)';
+  document.getElementById('hero-mode').style.borderColor = 'rgba(212,168,75,.4)';
+  document.getElementById('hero-mode').style.color = '#f5d98a';
+  // Hide general type cards, show upgrade only
+  document.getElementById('tt-reserved').style.display = 'none';
+  document.getElementById('tt-free').style.display = 'none';
+  document.getElementById('tt-upgrade').classList.remove('hidden-card');
+  document.getElementById('tt-upgrade').classList.add('selected');
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let selectedPerf = null;
+let ticketType = MODE === 'performer' ? 'upgrade' : 'reserved';
+let selSeats = new Map();
+
+// Ticket number counters (simulated; in production managed by GAS/sheet)
+const ticketCounters = {
+  '1st': { performer: 1001, general_reserved: 1397, general_free: 1397 },
+  '2nd': { performer: 2001, general_reserved: 2397, general_free: 2397 }
+};
+
+// Simulated booked seats per perf
+const bookedSeats = {
+  '1st': new Set(['B15','C18','D21','E14','E23','F17','G13','I16','I22','J14','J20','K18']),
+  '2nd': new Set(['B13','C16','D19','E15','E24','F18','G14','I17','I23','J15','J21','K19'])
+};
+
+// ============================================================
+// SEAT MAP DEFINITION
+// All rows A-O with their seat ranges
+// Selectable = designated area
+// ============================================================
+const ROW_CONFIG = {
+  // [leftFrom, leftTo, rightFrom, rightTo, selectableColsFrom, selectableColsTo, selectableExtra]
+  // center block is always 13-24
+  // We define left and right as the non-center blocks
+  A: { left:[6,12],  right:[25,31], selCols:[13,14,15,16,21,22,23,24] },
+  B: { left:[5,12],  right:[25,32], selCols:range(13,24) },
+  C: { left:[4,12],  right:[25,33], selCols:range(13,24) },
+  D: { left:[2,12],  right:[25,35], selCols:range(13,24) },
+  E: { left:[2,12],  right:[25,35], selCols:range(13,24) },
+  F: { left:[2,12],  right:[25,35], selCols:range(13,24) },
+  G: { left:[1,12],  right:[25,36], selCols:range(13,24) },
+  H: { left:[1,12],  right:[25,36], selCols:[] },  // not in designated area
+  I: { left:[1,12],  right:[25,36], selCols:range(13,24) },
+  J: { left:[1,12],  right:[25,36], selCols:range(13,24) },
+  K: { left:[1,12],  right:[25,36], selCols:range(13,24) },
+  L: { left:[1,12],  right:[25,36], selCols:[] },
+  M: { left:[2,12],  right:[25,35], selCols:[] },
+  N: { left:[3,12],  right:[25,34], selCols:[] },
+  O: { left:null,    right:[25,33], selCols:[], wheelchair:true }
+};
+
+function range(a,b){ const r=[]; for(let i=a;i<=b;i++) r.push(i); return r; }
+
+// ============================================================
+// SEAT MAP — 全席表示（指定席=緑、自由席=グレー、対象外=非表示）
+// ============================================================
+let mapScale = 1.0;
+
+function zoomMap(delta) {
+  mapScale = Math.round(Math.min(2.5, Math.max(0.4, mapScale + delta)) * 100) / 100;
+  document.getElementById('map-zoom-inner').style.transform = `scale(${mapScale})`;
+  document.getElementById('zoom-lbl').textContent = Math.round(mapScale * 100) + '%';
+  // transform-origin が top left なので親コンテナの高さも更新
+  const inner = document.getElementById('map-zoom-inner');
+  inner.parentElement.style.minHeight = (inner.scrollHeight * mapScale) + 'px';
+}
+
+function makeHiddenSeat() {
+  const d = document.createElement('div');
+  d.className = 'seat hidden';
+  return d;
+}
+
+function makeFreeSeat() {
+  const d = document.createElement('div');
+  d.className = 'seat free-seat';
+  return d;
+}
+
+function makeUnavailSeat() {
+  const d = document.createElement('div');
+  d.className = 'seat unavail';
+  return d;
+}
+
+function buildSeatMap() {
+  const booked = bookedSeats[selectedPerf] || new Set();
+  const wrap = document.getElementById('seatmap');
+  wrap.innerHTML = '';
+
+  const outer = document.createElement('div');
+  outer.className = 'seatmap-wrap';
+
+  outer.appendChild(buildFullColHeader());
+
+  // 傾斜エリア（H〜L）を囲むラッパー
+  const slopeWrap = document.createElement('div');
+  slopeWrap.className = 'slope-wrap';
+  const makeSlopeLabel = () => {
+    const d = document.createElement('div');
+    d.className = 'slope-wrap-label';
+    d.textContent = '傾斜型座席・段差あり';
+    return d;
+  };
+  const slopeRows = document.createElement('div');
+  slopeRows.className = 'slope-wrap-rows';
+  slopeWrap.appendChild(makeSlopeLabel());
+  slopeWrap.appendChild(slopeRows);
+
+  const SLOPE_ROWS = new Set(['H','I','J','K','L','M','N','O']);
+  const allRows = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
+  allRows.forEach(row => {
+    // D→E間：横通路
+    if (row === 'E') {
+      const aisleRow = document.createElement('div');
+      aisleRow.className = 'aisle-row';
+      aisleRow.innerHTML = '<div class="aisle-row-line"></div><div class="aisle-row-label">通　路</div><div class="aisle-row-line"></div>';
+      outer.appendChild(aisleRow);
+    }
+    if (SLOPE_ROWS.has(row)) {
+      slopeRows.appendChild(buildFullRow(row, booked));
+      if (row === 'O') {
+        slopeWrap.appendChild(makeSlopeLabel());
+        outer.appendChild(slopeWrap);
+      }
+    } else {
+      outer.appendChild(buildFullRow(row, booked));
+    }
+  });
+
+  wrap.appendChild(outer);
+
+  // 自動フィット（初期ズームをコンテナ幅に合わせる）
+  setTimeout(() => {
+    const scrollEl = document.querySelector('.map-outer-scroll');
+    const innerEl  = document.getElementById('map-zoom-inner');
+    if (!scrollEl || !innerEl) return;
+    const naturalW = outer.scrollWidth + 40;
+    const available = scrollEl.clientWidth || 360;
+    const fit = Math.min(1.0, available / naturalW);
+    mapScale = Math.round(fit * 100) / 100;
+    innerEl.style.transform = `scale(${mapScale})`;
+    innerEl.parentElement.style.minHeight = (innerEl.scrollHeight * mapScale) + 'px';
+    document.getElementById('zoom-lbl').textContent = Math.round(mapScale * 100) + '%';
+  }, 60);
+}
+
+function buildFullColHeader() {
+  const row = document.createElement('div');
+  row.className = 'seat-row';
+  row.style.marginBottom = '6px';
+
+  const lblSp = () => { const d=document.createElement('div'); d.style.cssText='width:20px;flex-shrink:0;'; return d; };
+  const aisleGap = () => { const d=document.createElement('div'); d.style.cssText='width:10px;flex-shrink:0;'; return d; };
+  const num = n => {
+    const d=document.createElement('div');
+    d.style.cssText='width:17px;flex-shrink:0;text-align:center;font-family:"DM Mono",monospace;font-size:6px;color:rgba(120,120,120,.6);overflow:hidden;';
+    d.textContent = n;
+    return d;
+  };
+
+  row.appendChild(lblSp());
+  for (let c=1;  c<=12; c++) row.appendChild(num(c));
+  row.appendChild(aisleGap());
+  for (let c=13; c<=24; c++) row.appendChild(num(c));
+  row.appendChild(aisleGap());
+  for (let c=25; c<=36; c++) row.appendChild(num(c));
+  row.appendChild(lblSp());
+  return row;
+}
+
+function buildFullRow(row, booked) {
+  const cfg = ROW_CONFIG[row];
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'seat-row';
+
+  const makeLbl = () => {
+    const d = document.createElement('div');
+    d.className = 'row-lbl';
+    d.textContent = row;
+    return d;
+  };
+  const aisleGap = () => {
+    const d = document.createElement('div');
+    d.style.cssText = 'width:10px;flex-shrink:0;';
+    return d;
+  };
+
+  rowDiv.appendChild(makeLbl());
+
+  // ── 左ブロック（1〜12列）──
+  if (cfg.wheelchair) {
+    // O列：車椅子スペース（5席、13列寄せ）
+    for (let c=1; c<=7; c++) rowDiv.appendChild(makeHiddenSeat());
+    for (let c=8; c<=12; c++) {
+      const d = document.createElement('div');
+      d.className = 'seat free-seat';
+      d.style.cssText = 'font-size:7px;color:#5b7fc4;cursor:default;';
+      d.textContent = '♿';
+      rowDiv.appendChild(d);
+    }
+  } else if (cfg.left) {
+    const [lf, lt] = cfg.left;
+    for (let c=1;  c<lf;  c++) rowDiv.appendChild(makeHiddenSeat());
+    for (let c=lf; c<=lt; c++) rowDiv.appendChild(makeFreeSeat());
+    for (let c=lt+1; c<=12; c++) rowDiv.appendChild(makeHiddenSeat());
+  } else {
+    for (let c=1; c<=12; c++) rowDiv.appendChild(makeHiddenSeat());
+  }
+
+  rowDiv.appendChild(aisleGap());
+
+  // ── 中央ブロック（13〜24列）──
+  for (let c=13; c<=24; c++) {
+    const id = `${row}${c}`;
+    // A列17〜20、H列13〜24は選択不可席
+    if ((row === 'A' && c >= 17 && c <= 20) || (row === 'H' && c >= 13 && c <= 24)) {
+      rowDiv.appendChild(makeUnavailSeat()); continue;
+    }
+
+    if (cfg.selCols.includes(c)) {
+      // 指定席エリア
+      if (booked.has(id)) {
+        rowDiv.appendChild(makeSeatEl(c, id, 'taken'));
+      } else {
+        const el = makeSeatEl(c, id, 'avail');
+        el.addEventListener('click', () => toggleSeat(el, id));
+        rowDiv.appendChild(el);
+      }
+    } else {
+      // 自由席エリア（指定席対象外）
+      rowDiv.appendChild(makeFreeSeat());
+    }
+  }
+
+  rowDiv.appendChild(aisleGap());
+
+  // ── 右ブロック（25〜36列）──
+  if (cfg.right) {
+    const [rf, rt] = cfg.right;
+    for (let c=25;  c<rf;   c++) rowDiv.appendChild(makeHiddenSeat());
+    for (let c=rf;  c<=rt;  c++) rowDiv.appendChild(makeFreeSeat());
+    for (let c=rt+1;c<=36;  c++) rowDiv.appendChild(makeHiddenSeat());
+  } else {
+    for (let c=25; c<=36; c++) rowDiv.appendChild(makeHiddenSeat());
+  }
+
+  rowDiv.appendChild(makeLbl());
+  return rowDiv;
+}
+
+function buildColHeader() {
+  const cfg0 = ROW_CONFIG['G']; // 最大幅の列を基準
+  const row = document.createElement('div');
+  row.className = 'col-header-row';
+
+  // 行ラベルスペース × 2（左右）
+  const sp = () => { const d=document.createElement('div'); d.className='col-header-lbl-space'; return d; };
+  row.appendChild(sp());
+
+  // 左ブロック（1〜12）全列表示
+  row.appendChild(makeHeaderBlock([1, 12]));
+  row.appendChild(makeHeaderSpacer(6));
+
+  // 中央ブロック（13〜24）全列表示・ギャップなし
+  row.appendChild(makeHeaderBlock([13, 24]));
+  row.appendChild(makeHeaderSpacer(6));
+
+  // 右ブロック（25〜36）全列表示
+  row.appendChild(makeHeaderBlock([25, 36]));
+
+  row.appendChild(sp());
+  return row;
+}
+
+function makeHeaderBlock([from, to]) {
+  const d = document.createElement('div');
+  d.className = 'col-header-block';
+  for (let c = from; c <= to; c++) {
+    const n = document.createElement('div');
+    n.className = 'col-header-num';
+    n.textContent = c;
+    d.appendChild(n);
+  }
+  return d;
+}
+
+function makeHeaderSpacer(w) {
+  const d = document.createElement('div');
+  d.className = 'col-header-spacer';
+  d.style.width = w + 'px';
+  return d;
+}
+
+function buildRow(row, booked) {
+  const cfg = ROW_CONFIG[row];
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'seat-row';
+
+  const makeLbl = () => {
+    const d = document.createElement('div');
+    d.className = 'row-lbl';
+    d.textContent = row;
+    return d;
+  };
+
+  const makeAisle = () => {
+    const d = document.createElement('div');
+    d.className = 'aisle';
+    d.textContent = '通路';
+    return d;
+  };
+
+  const makeSpacer = (w=6) => {
+    const d = document.createElement('div');
+    d.style.cssText = `width:${w}px;flex-shrink:0;`;
+    return d;
+  };
+
+  // 左ラベル
+  rowDiv.appendChild(makeLbl());
+
+  // ── 左ブロック ──
+  if (cfg.wheelchair) {
+    for (let i=0; i<5; i++) {
+      const s = makeSeatEl('♿', '', 'outside');
+      s.style.fontSize='9px'; s.style.color='#5b7fc4'; s.style.opacity='0.6';
+      s.style.cursor='default';
+      rowDiv.appendChild(s);
+    }
+    // 左ブロック残りをhidden埋め
+    for (let c=6; c<=12; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+  } else if (cfg.left) {
+    const [lf, lt] = cfg.left;
+    // 最大左端（1番）まで hidden で揃える
+    for (let c=1; c<lf; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+    for (let c=lf; c<=lt; c++) rowDiv.appendChild(makeSeatEl(c, `${row}${c}`, 'outside'));
+    // 12番まで hidden で埋める
+    for (let c=lt+1; c<=12; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+  } else {
+    for (let c=1; c<=12; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+  }
+
+  rowDiv.appendChild(makeSpacer(6));
+
+  // ── 中央ブロック 13〜16（左側） ──
+  for (let c=13; c<=16; c++) {
+    const id = `${row}${c}`;
+    rowDiv.appendChild(makeCenterSeat(row, c, id, cfg, booked));
+  }
+
+  // ── 通路（17〜20番） ──
+  rowDiv.appendChild(makeAisle());
+
+  // ── 中央ブロック 21〜24（右側） ──
+  for (let c=21; c<=24; c++) {
+    const id = `${row}${c}`;
+    // A列は17-20のみ欠番（13-16,21-24は有効）
+    rowDiv.appendChild(makeCenterSeat(row, c, id, cfg, booked));
+  }
+
+  rowDiv.appendChild(makeSpacer(6));
+
+  // ── 右ブロック ──
+  if (cfg.right) {
+    const [rf, rt] = cfg.right;
+    for (let c=25; c<=rf-1; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+    for (let c=rf; c<=rt; c++) rowDiv.appendChild(makeSeatEl(c, `${row}${c}`, 'outside'));
+    for (let c=rt+1; c<=36; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+  } else {
+    for (let c=25; c<=36; c++) rowDiv.appendChild(makeSeatEl(c,'','hidden'));
+  }
+
+  // 右ラベル
+  rowDiv.appendChild(makeLbl());
+
+  return rowDiv;
+}
+
+function makeCenterSeat(row, c, id, cfg, booked) {
+  const isSel = cfg.selCols.includes(c);
+  if (!isSel) return makeSeatEl(c, id, 'outside');
+  if (booked.has(id)) return makeSeatEl(c, id, 'taken');
+  const el = makeSeatEl(c, id, 'avail');
+  el.addEventListener('click', () => toggleSeat(el, id));
+  return el;
+}
+
+function makeSeatEl(num, id, cls) {
+  const d = document.createElement('div');
+  d.className = `seat ${cls}`;
+  if (id) d.dataset.id = id;
+  // ツールチップ
+  if (id && cls === 'avail') {
+    const tip = document.createElement('div');
+    tip.className = 'seat-num';
+    tip.textContent = id;
+    d.appendChild(tip);
+  }
+  return d;
+}
+
+function toggleSeat(el, id) {
+  if (selSeats.has(id)) {
+    selSeats.delete(id);
+    el.classList.remove('sel');
+    el.classList.add('avail');
+  } else {
+    if (selSeats.size >= 6) { alert('1回の申込で選択できる座席は最大6席です。'); return; }
+    selSeats.set(id, true);
+    el.classList.remove('avail');
+    el.classList.add('sel');
+  }
+  renderCart();
+}
+
+function renderCart() {
+  const inner = document.getElementById('cart-inner');
+  const foot = document.getElementById('cart-foot');
+  const footEmpty = document.getElementById('cart-foot-empty');
+  const price = getPrice();
+
+  if (selSeats.size === 0) {
+    inner.innerHTML = '<div class="cart-empty">座席をタップして<br>選択してください</div>';
+    foot.style.display = 'none';
+    footEmpty.style.display = 'block';
+    return;
+  }
+
+  let html = '';
+  selSeats.forEach((_, id) => {
+    html += `<div class="cart-item">
+      <span class="ci-id">${id}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px">¥${price.toLocaleString()}</span>
+        <button class="ci-rm" onclick="removeSeat('${id}')">×</button>
+      </div>
+    </div>`;
+  });
+  inner.innerHTML = html;
+
+  const total = selSeats.size * price;
+  document.getElementById('ct-lbl').textContent = `合計（${selSeats.size}席）`;
+  document.getElementById('ct-amt').textContent = `¥${total.toLocaleString()}`;
+  foot.style.display = 'block';
+  footEmpty.style.display = 'none';
+}
+
+function removeSeat(id) {
+  selSeats.delete(id);
+  const el = document.querySelector(`.seat[data-id="${id}"]`);
+  if (el) { el.classList.remove('sel'); el.classList.add('avail'); }
+  renderCart();
+}
+
+function getPrice() {
+  if (ticketType === 'reserved') return 4000;
+  if (ticketType === 'upgrade') return 500;
+  return 3500;
+}
+
+// ============================================================
+// TYPE / PERF SELECT
+// ============================================================
+function selType(t) {
+  ticketType = t;
+  ['reserved','free','upgrade'].forEach(k => {
+    const el = document.getElementById(`tt-${k}`);
+    if (el) el.classList.toggle('selected', k === t);
+  });
+  document.getElementById('free-notice').style.display = t === 'free' ? 'block' : 'none';
+  checkNext();
+}
+
+function selPerf(p) {
+  selectedPerf = p;
+  ['1st','2nd'].forEach(k => document.getElementById(`pc-${k}`).classList.toggle('selected', k === selectedPerf));
+  checkNext();
+}
+
+function checkNext() {
+  document.getElementById('btn-next0').disabled = !selectedPerf;
+}
+
+function updateRemaining() {
+  ['1st','2nd'].forEach(p => {
+    const rem = 116 - (bookedSeats[p]?.size || 0);
+    const el = document.getElementById(`rem-${p}`);
+    el.textContent = `指定席 残${rem}席`;
+    el.classList.toggle('low', rem < 20);
+  });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function setScreen(n) {
+  ['scr0','scr1','scr2','scr3'].forEach((id,i) => {
+    document.getElementById(id).classList.toggle('active', i===n);
+  });
+  ['st0','st1','st2','st3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+  window.scrollTo(0,0);
+}
+
+function goToStep1() {
+  if (ticketType === 'free') {
+    // 自由席は座席選択不要 → フォームへ直接
+    buildFormSummaryFree();
+    setScreen(2);
+    return;
+  }
+  selSeats.clear();
+  buildSeatMap();
+  renderCart();
+  document.getElementById('map-badge').textContent = selectedPerf === '1st' ? '1st公演 13:00' : '2nd公演 17:00';
+  setScreen(1);
+}
+
+function goToScreen0() { selSeats.clear(); setScreen(0); }
+
+function goToForm() {
+  buildFormSummary();
+  document.getElementById('f-count').value = `${selSeats.size}席`;
+  document.getElementById('free-count-sec').style.display = 'none';
+  document.getElementById('upgrade-sec').style.display = ticketType === 'upgrade' ? 'block' : 'none';
+  document.getElementById('btn-form-back').onclick = () => setScreen(1);
+  setScreen(2);
+}
+
+function buildFormSummaryFree() {
+  document.getElementById('free-count-sec').style.display = 'block';
+  document.getElementById('upgrade-sec').style.display = 'none';
+  document.getElementById('f-count').value = '';
+  document.getElementById('btn-form-back').onclick = () => { setScreen(0); };
+
+  const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
+  document.getElementById('order-box').innerHTML = `
+    <div class="ob-l">
+      <div class="ob-perf">${perfLabel} / 自由席</div>
+      <div class="ob-tags"><span class="ob-tag">自由席 ¥3,500/枚</span></div>
+    </div>
+    <div class="ob-r"><div class="ob-rlbl">種別</div><div class="ob-ramt" style="font-size:16px">自由席</div></div>`;
+  document.getElementById('tib').innerHTML = `<div class="tib-icon">🎟</div><div><div class="tib-title">自由席チケット ¥3,500/枚</div><div class="tib-note">当日お好きな席にお座りください。受付番号・振込先をメールでお送りします。</div></div>`;
+  setScreen(2);
+}
+
+function buildFormSummary() {
+  const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
+  const price = getPrice();
+  const total = selSeats.size * price;
+  let tags = '';
+  selSeats.forEach((_, id) => { tags += `<span class="ob-tag">${id}</span>`; });
+  document.getElementById('order-box').innerHTML = `
+    <div class="ob-l"><div class="ob-perf">${perfLabel}</div><div class="ob-tags">${tags}</div></div>
+    <div class="ob-r"><div class="ob-rlbl">合計</div><div class="ob-ramt">¥${total.toLocaleString()}</div></div>`;
+
+  const typeMap = { reserved:'指定席 ¥4,000/席', upgrade:'差額変更 ¥500/席' };
+  const typeNote = { reserved:'振込確認後、電子チケットが発行されます。', upgrade:'自由席チケット番号は届き次第チケット確認ページから入力できます。' };
+  document.getElementById('tib').innerHTML = `<div class="tib-icon">${ticketType==='upgrade'?'⬆️':'🎫'}</div><div><div class="tib-title">${typeMap[ticketType]||''}</div><div class="tib-note">${typeNote[ticketType]||''}</div></div>`;
+}
+
+function formBack() { setScreen(ticketType === 'free' ? 0 : 1); }
+
+// ============================================================
+// SUBMIT
+// ============================================================
+function submitForm() {
+  const sei = document.getElementById('f-sei').value.trim();
+  const mei = document.getElementById('f-mei').value.trim();
+  const seiK = document.getElementById('f-sei-k').value.trim();
+  const meiK = document.getElementById('f-mei-k').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const email2 = document.getElementById('f-email2').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+
+  if (!sei||!mei||!seiK||!meiK||!email||!email2||!tel) { alert('必須項目（*）をすべてご入力ください。'); return; }
+  if (email !== email2) { alert('メールアドレスが一致しません。'); return; }
+
+  let performer = '';
+  if (ticketType === 'upgrade') {
+    performer = document.getElementById('f-performer').value.trim();
+    if (!performer) { alert('チケット記載の出演者名をご入力ください。'); return; }
+  }
+
+  let freeCount = 1;
+  if (ticketType === 'free') {
+    freeCount = parseInt(document.getElementById('f-free-count').value);
+  }
+
+  // Assign ticket number
+  const cntr = ticketCounters[selectedPerf];
+  let ticketNo = null;
+  if (ticketType === 'upgrade') { ticketNo = cntr.performer; cntr.performer += selSeats.size || 1; }
+  else if (ticketType === 'reserved') { ticketNo = cntr.general_reserved; cntr.general_reserved += selSeats.size || 1; }
+  else { ticketNo = cntr.general_free; cntr.general_free += freeCount; }
+
+  const ref = (selectedPerf === '1st' ? 'S1' : 'S2') + '-' + Date.now().toString(36).toUpperCase().slice(-5);
+
+  // Populate completion screen
+  const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
+  const typeLabel = { reserved:'新規指定席', upgrade:'差額変更（指定席）', free:'自由席' }[ticketType];
+  const cnt = ticketType === 'free' ? freeCount : selSeats.size;
+  const price = getPrice();
+  const total = cnt * price;
+
+  document.getElementById('c-perf').textContent = perfLabel;
+  document.getElementById('c-type').textContent = typeLabel;
+  document.getElementById('c-email').textContent = email;
+  document.getElementById('c-total').textContent = `¥${total.toLocaleString()}`;
+  document.getElementById('c-ref').textContent = ref;
+  document.getElementById('c-ref-inline').textContent = ref;
+
+  if (ticketType === 'upgrade') {
+    document.getElementById('c-name-lbl').textContent = '出演者名';
+    document.getElementById('c-name').textContent = performer;
+    document.getElementById('c-upgrade-note').style.display = 'inline';
+  } else {
+    document.getElementById('c-name-lbl').textContent = 'お名前';
+    document.getElementById('c-name').textContent = `${sei} ${mei}`;
+    document.getElementById('c-upgrade-note').style.display = 'none';
+  }
+
+  // Seats
+  const seatsWrap = document.getElementById('c-seats-wrap');
+  if (ticketType !== 'free' && selSeats.size > 0) {
+    seatsWrap.style.display = 'flex';
+    const seatsEl = document.getElementById('c-seats');
+    seatsEl.innerHTML = '';
+    selSeats.forEach((_,id) => {
+      const s = document.createElement('span'); s.className='tst'; s.textContent=id; seatsEl.appendChild(s);
+    });
+  } else {
+    seatsWrap.style.display = 'none';
+  }
+
+  // Ticket number
+  const tnoWrap = document.getElementById('c-ticketno-wrap');
+  if (ticketNo) {
+    tnoWrap.style.display = 'flex';
+    // Range display
+    const endNo = ticketNo + cnt - 1;
+    document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
+  }
+
+  // comp-sub と支払い案内をフェーズ・モードで動的切替
+  renderPaymentInfo(ref, ticketType, ticketNo, freeCount);
+
+  // Mark seats as booked
+  selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
+
+  setScreen(3);
+
+  // GASに予約データを送信
+  const payload = {
+    action: 'reserve',
+    ref,
+    perf: selectedPerf,
+    ticketType,
+    sei, mei,
+    email,
+    tel: document.getElementById('f-tel')?.value?.trim() || '',
+    performer: ticketType === 'upgrade' ? performer : '',
+    ticketNo: ticketNo ? String(ticketNo) : '',
+    seats: ticketType !== 'free' ? [...selSeats.keys()].join(', ') : '',
+    count: cnt,
+    total,
+    freeTicket: '',
+    note: '',
+  };
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload),
+  }).catch(err => console.warn('GAS送信エラー:', err));
+}
+
+// ============================================================
+// PAYMENT INFO — フェーズ×モード で完了画面の案内を切替
+// ============================================================
+function renderPaymentInfo(ref, ticketType, ticketNo, freeCount) {
+  const area = document.getElementById('pay-info-area');
+  const sub  = document.getElementById('comp-sub');
+  const phase = window.PHASE || 1;
+
+  // ── 出演者（upgrade）──
+  if (MODE === 'performer') {
+    if (phase <= 2) {
+      // 7/5〜7/12: 支払案内なし（7/13に出演者・一般まとめて連絡）
+      sub.textContent = 'ご予約を承りました。お支払いについては別途ご連絡いたします。';
+      area.innerHTML = `
+        <div style="background:#f0f0ff;border:1.5px solid rgba(100,80,200,.2);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:#7060c0;margin-bottom:10px;">PAYMENT</div>
+          <p style="font-size:13px;color:#3a3060;line-height:1.9;">
+            🎭 お支払い方法については <strong>7月13日（月）以降</strong> に<br>
+            ご登録のメールアドレスへご案内いたします。<br>
+            <span style="font-size:11px;color:var(--mid);">現時点でのお手続きは不要です。</span>
+          </p>
+        </div>`;
+    } else {
+      // 7/13〜: 個別支払い（PayPay or 振込）
+      sub.textContent = 'ご予約を承りました。お支払い方法のご案内をメールに記載しております。';
+      area.innerHTML = payPayOrTransferHTML(ref);
+    }
+    return;
+  }
+
+  // ── 一般（reserved / free）──
+  if (phase <= 2) {
+    // 7/5〜7/12: 受付番号のみ・支払案内は後日（7/13以降にメール）
+    if (ticketType === 'free') {
+      sub.textContent = `ご予約を承りました。自由席チケット（No.${ticketNo}〜${ticketNo+freeCount-1}）を当日お持ちください。`;
+    } else {
+      sub.textContent = 'ご予約を承りました。受付番号をメールにてお送りしました。';
+    }
+    area.innerHTML = `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:10px;">PAYMENT NOTICE</div>
+        <p style="font-size:13px;color:var(--ink);line-height:1.9;">
+          お支払い方法については <strong>7月13日（月）以降</strong> に、<br>
+          ご登録のメールアドレスへご案内いたします。<br>
+          <span style="font-size:11px;color:var(--mid);">PayPay またはお振込みにてお支払いいただきます。</span>
+        </p>
+      </div>`;
+  } else {
+    // 7/13〜: PayPay or 振込案内あり
+    if (ticketType === 'free') {
+      sub.textContent = `ご予約を承りました。自由席チケット（No.${ticketNo}〜${ticketNo+freeCount-1}）を当日お持ちください。お支払いは下記をご確認ください。`;
+    } else {
+      sub.textContent = 'ご予約を承りました。下記よりお支払いをお済ませください。振込確認後に電子チケットが発行されます。';
+    }
+    area.innerHTML = payPayOrTransferHTML(ref);
+  }
+}
+
+// PayPay or 振込の案内HTML（出演者フェーズ2以降・一般フェーズ3以降で共用）
+function payPayOrTransferHTML(ref) {
+  return `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:14px;">PAYMENT — お支払い方法</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:24px;margin-bottom:6px;">📱</div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px;">PayPay</div>
+          <div style="font-size:11px;color:var(--mid);line-height:1.6;">PayPay ID またはQRコードで送金</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--rose);margin-top:8px;">@amily2026<br><span style="font-size:10px;font-weight:400;color:var(--mid)">（PayPay ID）</span></div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:24px;margin-bottom:6px;">🏦</div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px;">お振込み</div>
+          <div style="font-size:11px;color:var(--mid);line-height:1.7;text-align:left;">
+            <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-bottom:1px;">金融機関</span>りそな銀行 東青梅支店（771）
+            <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">口座番号</span>普通 3501521
+            <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">名義</span>伊藤杏莉（イトウアンリ）
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--rose-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;">
+        ※ PayPayの場合：メモ欄に受付番号（<strong>${ref}</strong>）をご記入ください。<br>
+        ※ 振込の場合：振込名義に受付番号（<strong>${ref}</strong>）を必ずご記入ください。<br>
+        ※ 振込期限：公演日の5日前まで
+      </div>
+    </div>`;
+}
+
+function resetAll() {
+  selectedPerf = null; ticketType = MODE === 'performer' ? 'upgrade' : 'reserved'; selSeats.clear();
+  ['1st','2nd'].forEach(p => document.getElementById(`pc-${p}`).classList.remove('selected'));
+  if (MODE !== 'performer') {
+    document.getElementById('tt-reserved').classList.add('selected');
+    document.getElementById('tt-free').classList.remove('selected');
+  }
+  document.getElementById('btn-next0').disabled = true;
+  document.getElementById('free-notice').style.display='none';
+  ['f-sei','f-mei','f-sei-k','f-mei-k','f-email','f-email2','f-tel','f-performer','f-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  updateRemaining();
+  setScreen(0);
+}
+
+// init
+updateRemaining();
+
+// ── トラックパッド・ピンチ操作でズーム ──
+(function() {
+  function getScrollEl() { return document.querySelector('.map-outer-scroll'); }
+
+  // Ctrl+ホイール = トラックパッドピンチ / Ctrl+マウスホイール
+  document.addEventListener('wheel', function(e) {
+    const el = getScrollEl();
+    if (!el || !el.contains(e.target)) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.08 : 0.08;
+    zoomMap(delta);
+  }, { passive: false });
+
+  // タッチ（iPhone/iPad）ピンチ
+  let lastDist = null;
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    const el = getScrollEl();
+    if (!el || !el.contains(e.target)) return;
+    if (e.touches.length !== 2 || lastDist === null) return;
+    e.preventDefault();
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const delta = (dist - lastDist) * 0.005;
+    lastDist = dist;
+    zoomMap(delta);
+  }, { passive: false });
+  document.addEventListener('touchend', function() { lastDist = null; }, { passive: true });
+})();
+</script>
+</body>
+</html>

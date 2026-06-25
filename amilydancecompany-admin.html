@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理画面 — Amily Summer Showcase 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+:root{
+  --bg:#f4f4f2;--white:#fff;--ink:#1a1a1a;--mid:#666;--border:#ddd;
+  --rose:#c8506e;--rose-d:#a33d58;--rose-l:#f9eef1;
+  --green:#2e7d52;--green-l:#edf7f2;--amber:#d4822b;--amber-l:#fdf3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
+
+.topbar{background:#1a0a10;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+.tb-brand{font-family:'DM Mono',monospace;font-size:12px;color:rgba(255,255,255,.55);letter-spacing:.12em;}
+.tb-brand span{color:#f4a8bc;}
+.btn-logout{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Noto Sans JP',sans-serif;display:none;}
+.btn-logout:hover{border-color:rgba(255,255,255,.5);}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 44px);padding:20px;}
+.login-box{background:#fff;border-radius:12px;padding:36px;width:100%;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.lb-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.lb-sub{font-size:12px;color:var(--mid);margin-bottom:22px;}
+.lf{margin-bottom:12px;}
+.lf label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--mid);margin-bottom:4px;}
+.lf input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;outline:none;font-family:'Noto Sans JP',sans-serif;transition:border-color .2s;}
+.lf input:focus{border-color:var(--rose);}
+.btn-login{width:100%;background:var(--rose);color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .2s;margin-top:6px;}
+.btn-login:hover{background:var(--rose-d);}
+.login-err{color:var(--rose);font-size:12px;margin-top:8px;text-align:center;display:none;}
+
+/* ADMIN */
+#admin-screen{display:none;padding:20px;}
+
+.admin-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.ah-title{font-size:17px;font-weight:700;}
+.ah-sub{font-size:11px;color:var(--mid);margin-top:2px;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.stat{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.15em;color:var(--mid);margin-bottom:5px;text-transform:uppercase;}
+.stat-val{font-size:24px;font-weight:700;line-height:1;}
+.stat-val.green{color:var(--green);}
+.stat-val.amber{color:var(--amber);}
+.stat-val.rose{color:var(--rose);}
+.stat-val.ink{color:var(--ink);}
+
+/* Perf tabs */
+.ptabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.ptab{border:1.5px solid var(--border);border-radius:8px;padding:7px 16px;font-size:12px;cursor:pointer;background:#fff;color:var(--mid);font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
+.ptab.active{background:var(--rose);border-color:var(--rose);color:#fff;font-weight:700;}
+
+/* Filters */
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.f-select,.f-input{border:1.5px solid var(--border);border-radius:7px;padding:8px 11px;font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;background:#fff;color:var(--ink);transition:border-color .2s;}
+.f-select:focus,.f-input:focus{border-color:var(--rose);}
+.f-input{min-width:200px;}
+.btn-reload{background:none;border:1.5px solid var(--border);border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--ink);transition:border-color .2s;display:flex;align-items:center;gap:5px;}
+.btn-reload:hover{border-color:var(--ink);}
+
+/* Table */
+.tbl-wrap{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+thead th{background:#f9f9f7;border-bottom:1px solid var(--border);padding:10px 12px;text-align:left;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--mid);text-transform:uppercase;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f0efec;transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#fafaf8;}
+td{padding:11px 12px;vertical-align:middle;}
+.td-ref{font-family:'DM Mono',monospace;font-size:11px;color:var(--rose);font-weight:700;white-space:nowrap;}
+.td-name{font-weight:500;}
+.td-sub{font-size:10px;color:var(--mid);}
+.td-seats{font-family:'DM Mono',monospace;font-size:10px;color:var(--mid);}
+.td-ticketno{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;}
+.td-amt{font-weight:700;white-space:nowrap;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:14px;padding:3px 10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge.paid{background:var(--green-l);color:var(--green);}
+.badge.pending{background:var(--amber-l);color:var(--amber);}
+.badge.linked{background:var(--green-l);color:var(--green);margin-top:3px;}
+.badge.not-linked{background:var(--amber-l);color:var(--amber);margin-top:3px;}
+
+.btn-ok{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:700;transition:background .2s;white-space:nowrap;}
+.btn-ok:hover{background:#245f3e;}
+.btn-rev{background:none;border:1px solid var(--border);color:var(--mid);border-radius:6px;padding:5px 9px;font-size:10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:border-color .2s;white-space:nowrap;}
+.btn-rev:hover{border-color:var(--amber);color:var(--amber);}
+
+.tbl-loading,.tbl-empty{text-align:center;padding:40px 0;color:var(--mid);font-size:12px;line-height:2;}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--rose);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal-ov.open{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:26px;max-width:400px;width:100%;box-shadow:0 6px 32px rgba(0,0,0,.14);}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:7px;}
+.modal-body{font-size:12px;color:var(--mid);margin-bottom:20px;line-height:1.9;}
+.modal-body strong{color:var(--ink);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.btn-mc{background:none;border:1.5px solid var(--border);border-radius:7px;padding:9px 18px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-mo{background:var(--green);color:#fff;border:none;border-radius:7px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .2s;}
+.btn-mo:hover{background:#245f3e;}
+.btn-mo.rev{background:var(--amber);}
+.btn-mo.rev:hover{background:#b06820;}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;right:22px;background:#1a1a1a;color:#fff;border-radius:10px;padding:11px 18px;font-size:12px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:300;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.green{border-left:3px solid var(--green);}
+.toast.red{border-left:3px solid var(--rose);}
+
+@media(max-width:600px){
+  #admin-screen{padding:12px;}
+  .filters{flex-direction:column;}
+  .f-input{min-width:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-brand">AMILY <span>ADMIN</span> — Summer Showcase 2026</div>
+  <button class="btn-logout" id="btn-logout" onclick="doLogout()">ログアウト</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lb-title">管理者ログイン</div>
+    <div class="lb-sub">振込管理・ステータス更新</div>
+    <div class="lf">
+      <label>パスワード</label>
+      <input type="password" id="admin-pw" placeholder="管理者パスワード" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">ログイン</button>
+    <div class="login-err" id="login-err">パスワードが正しくありません。</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <div><div class="ah-title">振込管理</div><div class="ah-sub">予約一覧 / 振込ステータス更新 / 自由席チケット紐付け確認</div></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">総申込</div><div class="stat-val ink" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-lbl">振込済</div><div class="stat-val green" id="s-paid">—</div></div>
+    <div class="stat"><div class="stat-lbl">振込待ち</div><div class="stat-val amber" id="s-pending">—</div></div>
+    <div class="stat"><div class="stat-lbl">確定売上</div><div class="stat-val rose" id="s-revenue">—</div></div>
+    <div class="stat"><div class="stat-lbl">自由席番号<br>未入力（出演者）</div><div class="stat-val amber" id="s-unlinked">—</div></div>
+  </div>
+
+  <div class="ptabs">
+    <div class="ptab active" onclick="setPerf('all',this)">すべて</div>
+    <div class="ptab" onclick="setPerf('1st',this)">1st Stage 14:30</div>
+    <div class="ptab" onclick="setPerf('2nd',this)">2nd Stage 18:00</div>
+  </div>
+
+  <div class="filters">
+    <select class="f-select" id="f-status" onchange="applyFilter()">
+      <option value="">すべてのステータス</option>
+      <option value="pending">振込待ち</option>
+      <option value="paid">振込済</option>
+    </select>
+    <select class="f-select" id="f-type" onchange="applyFilter()">
+      <option value="">すべての種別</option>
+      <option value="reserved">指定席（新規）</option>
+      <option value="upgrade">差額変更</option>
+      <option value="free">自由席</option>
+    </select>
+    <input class="f-input" type="text" id="f-search" placeholder="受付番号・氏名・メール・席番号で検索" oninput="applyFilter()">
+    <button class="btn-reload" onclick="loadData()">↺ 更新</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>受付番号</th>
+          <th>申込日時</th>
+          <th>氏名</th>
+          <th>公演</th>
+          <th>種別</th>
+          <th>座席 / 紙チケットNo.</th>
+          <th>金額</th>
+          <th>振込</th>
+          <th>自由席番号</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="10" class="tbl-loading"><span class="spin"></span>読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-ov" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn-mc" onclick="closeModal()">キャンセル</button>
+      <button class="btn-mo" id="btn-mo" onclick="execChange()"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec';
+const ADMIN_PW = 'amily2026admin'; // ← 変更してください
+
+// Demo data (replace with GAS fetch in production)
+const DEMO = [
+  { ref:'S1-ABC12', createdAt:'2026/06/01 10:23', name:'山田 花子', email:'demo@test.com', perf:'1st', ticketType:'upgrade', seats:'B15,C16', ticketNo:'1042〜1043', total:1000, payStatus:'pending', freeTicket:null },
+  { ref:'S1-XYZ99', createdAt:'2026/06/02 14:05', name:'鈴木 太郎', email:'demo2@test.com', perf:'1st', ticketType:'reserved', seats:'D18,E19', ticketNo:'1430〜1431', total:8000, payStatus:'paid', freeTicket:null },
+  { ref:'S2-DEF34', createdAt:'2026/06/03 09:40', name:'佐藤 美咲', email:'demo3@test.com', perf:'2nd', ticketType:'free', seats:'', ticketNo:'2440', total:3500, payStatus:'pending', freeTicket:null },
+  { ref:'S1-GHI56', createdAt:'2026/06/03 16:12', name:'田中 次郎', email:'demo4@test.com', perf:'1st', ticketType:'upgrade', seats:'F14', ticketNo:'1055', total:500, payStatus:'paid', freeTicket:'1055' },
+  { ref:'S2-JKL78', createdAt:'2026/06/04 11:30', name:'高橋 さくら', email:'demo5@test.com', perf:'2nd', ticketType:'reserved', seats:'I13,I14,I15', ticketNo:'2398〜2400', total:12000, payStatus:'pending', freeTicket:null },
+];
+
+let allData = [];
+let currentPerf = 'all';
+let pendingChange = null;
+
+function doLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  if (pw === ADMIN_PW) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    document.getElementById('btn-logout').style.display = '';
+    document.getElementById('login-err').style.display = 'none';
+    loadData();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('btn-logout').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+
+async function loadData() {
+  document.getElementById('tbody').innerHTML = '<tr><td colspan="10" class="tbl-loading"><span class="spin"></span>読み込み中...</td></tr>';
+  await new Promise(r => setTimeout(r, 300));
+  // Production: fetch(`${GAS_URL}?action=list&pw=...`)
+  allData = JSON.parse(JSON.stringify(DEMO));
+  updateStats();
+  applyFilter();
+}
+
+function setPerf(p, el) {
+  currentPerf = p;
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  const st = document.getElementById('f-status').value;
+  const ty = document.getElementById('f-type').value;
+  const q = document.getElementById('f-search').value.toLowerCase();
+  let rows = allData;
+  if (currentPerf !== 'all') rows = rows.filter(r => r.perf === currentPerf);
+  if (st) rows = rows.filter(r => r.payStatus === st);
+  if (ty) rows = rows.filter(r => r.ticketType === ty);
+  if (q) rows = rows.filter(r =>
+    (r.ref||'').toLowerCase().includes(q) ||
+    (r.name||'').toLowerCase().includes(q) ||
+    (r.email||'').toLowerCase().includes(q) ||
+    (r.seats||'').toLowerCase().includes(q)
+  );
+  renderTable(rows);
+}
+
+function updateStats() {
+  const total = allData.length;
+  const paid = allData.filter(r => r.payStatus==='paid').length;
+  const pend = total - paid;
+  const rev = allData.filter(r => r.payStatus==='paid').reduce((s,r) => s+Number(r.total||0), 0);
+  const unlinked = allData.filter(r => r.ticketType==='upgrade' && !r.freeTicket).length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-paid').textContent = paid;
+  document.getElementById('s-pending').textContent = pend;
+  document.getElementById('s-revenue').textContent = '¥'+rev.toLocaleString();
+  document.getElementById('s-unlinked').textContent = unlinked;
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="10" class="tbl-empty">該当する申込がありません。</td></tr>'; return; }
+  const typeMap = { reserved:'指定席', upgrade:'差額変更', free:'自由席' };
+  const perfMap = { '1st':'1st 13:00', '2nd':'2nd 17:00' };
+
+  tbody.innerHTML = rows.map(r => {
+    const isPaid = r.payStatus === 'paid';
+    const payBadge = isPaid ? `<span class="badge paid">✓ 済</span>` : `<span class="badge pending">⏳ 待ち</span>`;
+
+    let freeLinkCell = '—';
+    if (r.ticketType === 'upgrade') {
+      freeLinkCell = r.freeTicket
+        ? `<span class="badge linked">✓ ${esc(r.freeTicket)}</span>`
+        : `<span class="badge not-linked">未入力</span>`;
+    }
+
+    const actionBtns = isPaid
+      ? `<button class="btn-rev" onclick="openModal('${r.ref}','revert')">取消</button>`
+      : `<button class="btn-ok" onclick="openModal('${r.ref}','confirm')">振込確認</button>`;
+
+    return `<tr>
+      <td class="td-ref">${esc(r.ref)}</td>
+      <td style="font-size:10px;color:var(--mid);white-space:nowrap">${esc(r.createdAt||'—')}</td>
+      <td class="td-name">${esc(r.name)}<br><span class="td-sub">${esc(r.email)}</span></td>
+      <td style="font-size:11px;white-space:nowrap">${perfMap[r.perf]||'—'}</td>
+      <td style="font-size:11px">${typeMap[r.ticketType]||'—'}</td>
+      <td class="td-seats">${esc(r.seats||'—')}<br><span class="td-ticketno">${esc(r.ticketNo||'—')}</span></td>
+      <td class="td-amt">¥${Number(r.total||0).toLocaleString()}</td>
+      <td>${payBadge}</td>
+      <td>${freeLinkCell}</td>
+      <td>${actionBtns}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openModal(ref, action) {
+  const row = allData.find(r => r.ref === ref);
+  if (!row) return;
+  pendingChange = { ref, action };
+  const isConfirm = action === 'confirm';
+  document.getElementById('modal-title').textContent = isConfirm ? '振込確認' : '振込確認の取消';
+  document.getElementById('modal-body').innerHTML = isConfirm
+    ? `<strong>${row.ref}</strong> / ${esc(row.name)}<br>${esc(row.seats||'自由席')} ／ No.${esc(row.ticketNo||'—')}<br><br>振込を「<strong style="color:var(--green)">済</strong>」にしますか？電子チケットが解放されます。`
+    : `<strong>${row.ref}</strong> の振込確認を取り消します。<br>電子チケットが非表示になります。`;
+  const btn = document.getElementById('btn-mo');
+  btn.textContent = isConfirm ? '振込済にする' : '取消する';
+  btn.className = isConfirm ? 'btn-mo' : 'btn-mo rev';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); pendingChange = null; }
+
+async function execChange() {
+  if (!pendingChange) return;
+  closeModal();
+  const { ref, action } = pendingChange;
+  const newStatus = action === 'confirm' ? 'paid' : 'pending';
+  // Production: POST to GAS
+  const row = allData.find(r => r.ref === ref);
+  if (row) row.payStatus = newStatus;
+  updateStats();
+  applyFilter();
+  showToast(action==='confirm' ? `✓ ${ref} を振込済にしました` : `${ref} を取り消しました`, action==='confirm'?'green':'red');
+}
+
+function showToast(msg, type='green') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function esc(s) {
+  if (!s) return '—';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('modal').addEventListener('click', e => { if (e.target===document.getElementById('modal')) closeModal(); });
+</script>
+</body>
+</html>

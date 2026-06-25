@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>入場スキャン — Amily 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+:root{
+  --bg:#0d0d0d; --panel:#1a1a1a; --border:#2a2a2a;
+  --text:#f0f0f0; --mid:#888; --dim:#444;
+  --green:#22c55e; --green-d:#15803d; --green-bg:rgba(34,197,94,.12);
+  --yellow:#eab308; --yellow-bg:rgba(234,179,8,.12);
+  --red:#ef4444;   --red-bg:rgba(239,68,68,.12);
+  --1st:#c04060; --2nd:#5b3fa0;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;}
+
+/* ── ログイン ── */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:32px;z-index:100;
+}
+.login-logo{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.25em;color:var(--mid);text-align:center;}
+.login-logo b{color:var(--1st);font-size:18px;display:block;letter-spacing:.1em;margin-bottom:4px;}
+.login-title{font-size:15px;font-weight:700;text-align:center;margin-top:8px;}
+.login-input{
+  width:100%;max-width:320px;padding:14px 16px;
+  background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:16px;font-family:'DM Mono',monospace;letter-spacing:.1em;outline:none;
+}
+.login-input:focus{border-color:var(--1st);}
+.login-btn{
+  width:100%;max-width:320px;padding:14px;border:none;border-radius:12px;
+  background:var(--1st);color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+}
+.login-err{font-size:12px;color:var(--red);display:none;}
+
+/* ── メイン ── */
+#main-screen{display:none;flex-direction:column;height:100%;}
+
+/* ヘッダー */
+.hdr{
+  background:var(--panel);border-bottom:1px solid var(--border);
+  padding:calc(var(--safe-top) + 10px) 16px 10px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.hdr-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--mid);flex:1;}
+.perf-toggle{display:flex;gap:4px;}
+.ptbtn{
+  padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;
+  font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;
+  background:none;color:var(--mid);cursor:pointer;transition:all .15s;
+}
+.ptbtn.active-1st{background:var(--1st);border-color:var(--1st);color:#fff;}
+.ptbtn.active-2nd{background:var(--2nd);border-color:var(--2nd);color:#fff;}
+
+/* 入場統計バー */
+.stat-bar{
+  background:var(--panel);border-bottom:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.stat-item{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.stat-num{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
+.stat-num.green{color:var(--green);}
+.stat-num.yellow{color:var(--yellow);}
+.stat-lbl{font-size:9px;letter-spacing:.1em;color:var(--mid);}
+.stat-div{width:1px;height:32px;background:var(--border);}
+.stat-prog{flex:2;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;}
+.stat-prog-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s;}
+
+/* タブ */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel);}
+.tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--text);border-color:var(--1st);}
+
+/* スキャンタブ */
+#tab-scan{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.cam-wrap{position:relative;flex:1;background:#000;overflow:hidden;}
+video{width:100%;height:100%;object-fit:cover;}
+canvas#qr-canvas{display:none;}
+
+/* スキャン枠 */
+.scan-frame{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);
+  width:220px;height:220px;
+}
+.sf-corner{position:absolute;width:28px;height:28px;border-color:#fff;border-style:solid;}
+.sf-tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.sf-tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.sf-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.sf-br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.scan-line{
+  position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);
+  animation:scanline 2s ease-in-out infinite;
+}
+@keyframes scanline{0%{top:4px;opacity:.3}50%{opacity:1}100%{top:calc(100% - 6px);opacity:.3}}
+.scan-hint{
+  position:absolute;bottom:12px;left:0;right:0;text-align:center;
+  font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.08em;
+}
+
+/* 結果フラッシュ */
+#result-flash{
+  position:absolute;inset:0;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:24px;text-align:center;
+}
+#result-flash.show{display:flex;}
+.rf-icon{font-size:64px;line-height:1;}
+.rf-status{font-size:18px;font-weight:700;}
+.rf-name{font-size:24px;font-weight:700;margin-top:4px;}
+.rf-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:2px;}
+.rf-btn{
+  margin-top:16px;padding:12px 32px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;
+}
+#result-flash.ok    {background:rgba(0,0,0,.92);}
+#result-flash.warn  {background:rgba(0,0,0,.93);}
+#result-flash.error {background:rgba(0,0,0,.93);}
+#result-flash.ok    .rf-icon::after{content:'✓';}
+#result-flash.warn  .rf-icon::after{content:'⚠';}
+#result-flash.error .rf-icon::after{content:'✕';}
+#result-flash.ok    .rf-status{color:var(--green);}
+#result-flash.warn  .rf-status{color:var(--yellow);}
+#result-flash.error .rf-status{color:var(--red);}
+#result-flash.ok    .rf-btn{background:var(--green);color:#fff;}
+#result-flash.warn  .rf-btn{background:var(--yellow);color:#000;}
+#result-flash.error .rf-btn{background:var(--dim);color:#fff;}
+
+/* 強制入場ボタン（未払い警告時） */
+#force-btn{
+  padding:10px 24px;border:1.5px solid var(--yellow);border-radius:12px;
+  background:none;color:var(--yellow);font-size:13px;font-weight:700;cursor:pointer;
+  display:none;
+}
+
+/* 未入場リストタブ */
+#tab-list{flex:1;overflow-y:auto;display:none;padding-bottom:calc(var(--safe-bot) + 16px);}
+.list-hdr{padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+.list-hdr h3{font-size:13px;font-weight:700;}
+.refresh-btn{
+  padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:none;color:var(--mid);font-size:11px;cursor:pointer;
+}
+.list-empty{text-align:center;padding:48px 24px;color:var(--mid);font-size:13px;}
+.list-item{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.li-perf{
+  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:700;flex-shrink:0;
+}
+.li-perf.p1st{background:rgba(192,64,96,.2);color:var(--1st);}
+.li-perf.p2nd{background:rgba(91,63,160,.2);color:#a080e0;}
+.li-name{flex:1;min-width:0;}
+.li-name b{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.li-name span{font-size:11px;color:var(--mid);font-family:'DM Mono',monospace;}
+.li-seat{font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);text-align:right;flex-shrink:0;}
+
+/* カメラ非対応 */
+.no-cam{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;gap:12px;padding:32px;text-align:center;color:var(--mid);
+}
+.no-cam h3{color:var(--text);font-size:16px;}
+.no-cam p{font-size:12px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<!-- ログイン -->
+<div id="login-screen">
+  <div class="login-logo">
+    <b>AMILY</b>
+    SUMMER SHOWCASE 2026
+  </div>
+  <div class="login-title">入場スキャン スタッフ用</div>
+  <input class="login-input" type="password" id="pw-input" placeholder="管理者パスワード" autocomplete="current-password">
+  <div class="login-err" id="login-err">パスワードが違います</div>
+  <button class="login-btn" onclick="doLogin()">ログイン</button>
+</div>
+
+<!-- メイン -->
+<div id="main-screen">
+  <!-- ヘッダー -->
+  <div class="hdr">
+    <div class="hdr-title">AMILY 入場スキャン</div>
+    <div class="perf-toggle">
+      <button class="ptbtn" id="ptbtn-all" onclick="setPerf('all')">ALL</button>
+      <button class="ptbtn" id="ptbtn-1st" onclick="setPerf('1st')">1st</button>
+      <button class="ptbtn" id="ptbtn-2nd" onclick="setPerf('2nd')">2nd</button>
+    </div>
+  </div>
+
+  <!-- 統計バー -->
+  <div class="stat-bar">
+    <div class="stat-item">
+      <div class="stat-num green" id="s-checked">—</div>
+      <div class="stat-lbl">入場済</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item">
+      <div class="stat-num yellow" id="s-notyet">—</div>
+      <div class="stat-lbl">未入場</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item" style="flex:3">
+      <div class="stat-prog"><div class="stat-prog-fill" id="s-fill" style="width:0%"></div></div>
+      <div class="stat-lbl" id="s-pct">— / —</div>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <div class="tab active" id="tab-btn-scan" onclick="switchTab('scan')">📷 スキャン</div>
+    <div class="tab" id="tab-btn-list" onclick="switchTab('list')">📋 未入場リスト</div>
+  </div>
+
+  <!-- スキャン画面 -->
+  <div id="tab-scan">
+    <div class="cam-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="qr-canvas"></canvas>
+      <!-- スキャン枠 -->
+      <div class="scan-frame">
+        <div class="sf-corner sf-tl"></div>
+        <div class="sf-corner sf-tr"></div>
+        <div class="sf-corner sf-bl"></div>
+        <div class="sf-corner sf-br"></div>
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-hint">チケットのQRコードをフレームに合わせてください</div>
+
+      <!-- 結果フラッシュ -->
+      <div id="result-flash">
+        <div class="rf-icon"></div>
+        <div class="rf-status" id="rf-status">—</div>
+        <div class="rf-name" id="rf-name"></div>
+        <div class="rf-sub" id="rf-sub"></div>
+        <button id="force-btn" onclick="forceCheckin()">強制入場させる</button>
+        <button class="rf-btn" id="rf-close" onclick="closeResult()">次へ</button>
+      </div>
+
+      <!-- カメラ非対応 -->
+      <div class="no-cam" id="no-cam" style="display:none">
+        <h3>カメラが使用できません</h3>
+        <p>このページはHTTPS環境（またはlocalhost）でのみ<br>カメラにアクセスできます。<br><br>GAS Web Appとして公開するか、<br>HTTPS対応のサーバーで開いてください。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 未入場リスト -->
+  <div id="tab-list">
+    <div class="list-hdr">
+      <h3 id="list-title">未入場者リスト</h3>
+      <button class="refresh-btn" onclick="loadStats()">更新</button>
+    </div>
+    <div id="list-body"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 設定
+// ============================================================
+// GAS HTML Serviceとして配信された場合は自動でURLを取得
+const GAS_URL = window.location.hostname.includes('script.google.com')
+  ? window.location.href.split('?')[0]
+  : 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec'; // ローカル確認時のみここを置き換え
+
+let adminPw   = '';
+let scanPerf  = 'all';
+let scanning  = false;
+let lastScan  = '';
+let lastScanTime = 0;
+let pendingForce = null; // 強制入場待ちのticketNo
+
+// ============================================================
+// ログイン
+// ============================================================
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value.trim();
+  if (!pw) return;
+
+  // GAS に接続確認（checkinStats で認証テスト）
+  try {
+    const res = await gasGet({ action:'checkinStats', pw, perf:'all' });
+    if (res.status === 'error') {
+      document.getElementById('login-err').style.display = 'block';
+      return;
+    }
+  } catch(e) {
+    // GAS未接続でも開発時はパス（ローカルテスト用）
+    if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
+      // デモモード
+    } else {
+      document.getElementById('login-err').style.display = 'block';
+      document.getElementById('login-err').textContent = '接続エラー: ' + e.message;
+      return;
+    }
+  }
+
+  adminPw = pw;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display  = 'flex';
+
+  setPerf('all');
+  loadStats();
+  startCamera();
+}
+
+// ============================================================
+// 公演切替
+// ============================================================
+function setPerf(p) {
+  scanPerf = p;
+  ['all','1st','2nd'].forEach(x => {
+    const btn = document.getElementById(`ptbtn-${x}`);
+    btn.className = 'ptbtn' + (x === p ? ` active-${p === '1st' ? '1st' : p === '2nd' ? '2nd' : '1st'}` : '');
+    if (x === p && p === 'all') btn.className = 'ptbtn active-1st'; // allは赤系
+  });
+  loadStats();
+}
+
+// ============================================================
+// 統計ロード
+// ============================================================
+async function loadStats() {
+  try {
+    const res = await gasGet({ action:'checkinStats', pw: adminPw, perf: scanPerf });
+    if (res.status === 'ok') {
+      updateStatBar(res.data);
+      renderList(res.data.notYetList);
+    }
+  } catch(e) {
+    // デモ表示
+    updateStatBar({ total:150, checked:0, notYet:150, notYetList:[] });
+  }
+}
+
+function updateStatBar(data) {
+  document.getElementById('s-checked').textContent = data.checked;
+  document.getElementById('s-notyet').textContent  = data.notYet;
+  const pct = data.total > 0 ? Math.round(data.checked / data.total * 100) : 0;
+  document.getElementById('s-fill').style.width = pct + '%';
+  document.getElementById('s-pct').textContent   = `${data.checked} / ${data.total}`;
+}
+
+function renderList(list) {
+  const body = document.getElementById('list-body');
+  const title = document.getElementById('list-title');
+  title.textContent = `未入場者リスト（${list.length}名）`;
+  if (!list || list.length === 0) {
+    body.innerHTML = '<div class="list-empty">未入場者はいません 🎉</div>';
+    return;
+  }
+  body.innerHTML = list.map(r => `
+    <div class="list-item">
+      <div class="li-perf ${r.perf === '1st' ? 'p1st' : 'p2nd'}">${r.perf}</div>
+      <div class="li-name">
+        <b>${esc(r.name)}</b>
+        <span>No.${String(r.ticketNo || '').padStart(5,'0')}</span>
+      </div>
+      <div class="li-seat">${esc(r.seats || (r.ticketType === 'free' ? '自由席' : '—'))}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// カメラ起動
+// ============================================================
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById('no-cam').style.display = 'flex';
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width:{ ideal:1280 }, height:{ ideal:720 } }
+    });
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.play();
+    video.addEventListener('loadedmetadata', () => {
+      scanning = true;
+      requestAnimationFrame(scanFrame);
+    });
+  } catch(e) {
+    document.getElementById('no-cam').style.display = 'flex';
+    console.warn('Camera error:', e);
+  }
+}
+
+function scanFrame() {
+  if (!scanning) return;
+  const video  = document.getElementById('video');
+  const canvas = document.getElementById('qr-canvas');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+    requestAnimationFrame(scanFrame);
+    return;
+  }
+
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+
+  if (code) {
+    const now = Date.now();
+    const val = code.data.trim();
+    // 同じQRを連続スキャンしないよう2秒クールダウン
+    if (val !== lastScan || now - lastScanTime > 2000) {
+      lastScan = val;
+      lastScanTime = now;
+      processQR(val);
+    }
+  }
+
+  requestAnimationFrame(scanFrame);
+}
+
+// ============================================================
+// QR処理
+// ============================================================
+async function processQR(raw) {
+  // 数字のみ抽出（QRに余計な文字が入っている場合も対応）
+  const m = raw.match(/\d{4,5}/);
+  if (!m) {
+    showResult('error', 'エラー', '読み取れません', raw, null);
+    return;
+  }
+  const ticketNo = m[0];
+
+  try {
+    const res = await gasPost({ action:'checkin', pw: adminPw, ticketNo, force: false });
+    handleCheckinRes(res, ticketNo);
+  } catch(e) {
+    // GAS未接続時のデモ表示
+    if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
+      showResult('ok', '入場済（デモ）', 'デモユーザー 様', `No.${ticketNo} / 1st Stage / A-14`, ticketNo);
+    } else {
+      showResult('error', '通信エラー', e.message, '', null);
+    }
+  }
+}
+
+function handleCheckinRes(res, ticketNo) {
+  if (res.status === 'ok') {
+    const sub = `No.${String(ticketNo).padStart(5,'0')} / ${res.perf} / ${res.seats || '自由席'}`;
+    showResult('ok', '入場済', (res.name || '') + ' 様', sub, null);
+    loadStats();
+    vibrate([80]);
+
+  } else if (res.status === 'warn' && res.code === 'ALREADY_CHECKED') {
+    showResult('warn', '既に入場済み', (res.name || '') + ' 様', `No.${String(ticketNo).padStart(5,'0')}`, null);
+    vibrate([40, 40, 40]);
+
+  } else if (res.status === 'warn' && res.code === 'NOT_PAID') {
+    pendingForce = ticketNo;
+    showResult('warn', '未払いチケット', (res.name || '') + ' 様', `No.${String(ticketNo).padStart(5,'0')} / 強制入場も可能です`, ticketNo);
+    document.getElementById('force-btn').style.display = 'inline-block';
+    vibrate([40, 40, 40]);
+
+  } else {
+    showResult('error', 'チケット未登録', '', `スキャン値: ${ticketNo}`, null);
+    vibrate([200]);
+  }
+}
+
+async function forceCheckin() {
+  if (!pendingForce) return;
+  try {
+    const res = await gasPost({ action:'checkin', pw: adminPw, ticketNo: pendingForce, force: true });
+    document.getElementById('force-btn').style.display = 'none';
+    handleCheckinRes({ ...res, status:'ok' }, pendingForce);
+  } catch(e) {
+    alert('エラー: ' + e.message);
+  }
+  pendingForce = null;
+}
+
+// ============================================================
+// UI ヘルパー
+// ============================================================
+function showResult(type, status, name, sub, ticketNo) {
+  const el = document.getElementById('result-flash');
+  el.className = 'show ' + type;
+  document.getElementById('rf-status').textContent = status;
+  document.getElementById('rf-name').textContent   = name;
+  document.getElementById('rf-sub').textContent    = sub;
+  document.getElementById('force-btn').style.display = 'none';
+
+  // 成功は2秒後に自動閉じ
+  if (type === 'ok') {
+    setTimeout(closeResult, 2000);
+  }
+}
+
+function closeResult() {
+  document.getElementById('result-flash').className = '';
+  pendingForce = null;
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-scan').style.display  = tab === 'scan' ? 'flex' : 'none';
+  document.getElementById('tab-list').style.display  = tab === 'list' ? 'block' : 'none';
+  document.getElementById('tab-btn-scan').className  = 'tab' + (tab === 'scan' ? ' active' : '');
+  document.getElementById('tab-btn-list').className  = 'tab' + (tab === 'list' ? ' active' : '');
+  if (tab === 'list') loadStats();
+}
+
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// GAS API
+// ============================================================
+async function gasGet(params) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${GAS_URL}?${qs}`);
+  return res.json();
+}
+
+async function gasPost(body) {
+  const res = await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+</script>
+</body>
+</html>

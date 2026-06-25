@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電子チケット確認 — Amily Summer Showcase 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
+:root{
+  --bg:#fafaf8;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;
+  --gold:#d4a84b;--gold-l:#f5e8c4;
+  --green:#2e7d52;--amber:#d4822b;--amber-l:#fdf3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#1a0a10 0%,#2d1020 45%,#1a0a18 100%);padding:28px 24px 22px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.18),transparent 70%);pointer-events:none;}
+.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--rose);margin-bottom:6px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(18px,4vw,28px);font-weight:700;color:#fff;line-height:1.2;margin-bottom:3px;}
+.hero-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.45);}
+
+.container{max-width:520px;margin:0 auto;padding:32px 16px 56px;}
+
+/* ── LOGIN ── */
+.login-h{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:6px;}
+.login-sub{font-size:12px;color:var(--mid);margin-bottom:24px;line-height:1.9;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--mid);margin-bottom:4px;}
+.field input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;font-family:'Noto Sans JP',sans-serif;font-size:15px;color:var(--ink);background:#fff;outline:none;transition:border-color .2s;}
+.field input:focus{border-color:var(--rose);}
+.btn-login{width:100%;background:var(--rose);color:#fff;border:none;padding:14px;border-radius:9px;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:.04em;margin-top:6px;}
+.btn-login:hover{background:var(--rose-d);}
+.btn-login:disabled{background:#ccc;cursor:not-allowed;}
+.login-err{margin-top:10px;padding:11px 14px;background:var(--rose-l);border:1px solid rgba(200,80,110,.25);border-radius:8px;font-size:12px;color:var(--rose-d);line-height:1.7;display:none;}
+
+/* ── TICKET SCREEN ── */
+#ticket-screen{display:none;}
+
+/* ticket card grid (used in JS-generated HTML) */
+.et-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+@media(max-width:380px){.et-grid{grid-template-columns:1fr;}}
+.etf{display:flex;flex-direction:column;gap:3px;}
+.etfl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.17em;color:rgba(255,255,255,.32);}
+.etfv{font-size:13px;color:#fff;}
+.et-wide{grid-column:1/-1;}
+.et-seat-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.et-seat-tag{background:rgba(212,168,75,.22);border:1px solid rgba(212,168,75,.35);border-radius:4px;padding:3px 9px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--gold-l);letter-spacing:.06em;}
+.et-ticketno-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:.15em;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── PENDING DETAIL ── */
+.sum-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:14px;}
+.sum-card-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:11px;text-transform:uppercase;}
+.sum-row{display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid #f0efec;}
+.sum-row:last-child{border-bottom:none;}
+.sum-k{color:var(--mid);}
+.sum-v{font-weight:500;font-family:'DM Mono',monospace;font-size:11px;}
+
+.pay-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:14px;}
+.pay-box-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:11px;}
+.pay-info{font-size:13px;line-height:2.2;}
+.pi-l{font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);display:block;margin-top:7px;line-height:1;}
+.pi-l:first-child{margin-top:0;}
+.pay-warn{margin-top:12px;padding:10px 13px;background:var(--rose-l);border-radius:8px;font-size:11px;color:var(--rose-d);line-height:1.8;}
+
+/* ── FREE TICKET INPUT ── */
+/* 出演者用：座席ごとにチケット番号を入力 */
+.fti-sec{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:17px;margin-bottom:14px;}
+.fti-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:4px;text-transform:uppercase;}
+.fti-desc{font-size:11px;color:var(--mid);margin-bottom:14px;line-height:1.8;}
+.fti-reservation{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+.fti-res-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+.fti-res-seat{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);}
+.fti-res-perf{font-size:10px;color:var(--mid);}
+.fti-status-badge{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:3px 10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.fti-status-badge.linked{background:#edf7f2;color:var(--green);border:1px solid rgba(46,125,82,.3);}
+.fti-status-badge.not-linked{background:var(--amber-l);color:var(--amber);border:1px solid rgba(212,130,43,.3);}
+.fti-linked-info{font-family:'DM Mono',monospace;font-size:14px;color:var(--green);font-weight:700;letter-spacing:.08em;margin-bottom:6px;}
+.fti-change-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 11px;font-size:10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--mid);transition:border-color .2s;}
+.fti-change-btn:hover{border-color:var(--ink);}
+.fti-input-row{display:flex;gap:7px;}
+.fti-input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:9px 11px;font-family:'DM Mono',monospace;font-size:14px;outline:none;transition:border-color .2s;color:var(--ink);background:#fff;letter-spacing:.05em;}
+.fti-input:focus{border-color:var(--rose);}
+.fti-submit-btn{background:var(--rose);color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;transition:background .2s;}
+.fti-submit-btn:hover{background:var(--rose-d);}
+.fti-msg{font-size:11px;margin-top:5px;display:none;}
+.fti-msg.err{color:var(--rose-d);}
+.fti-msg.ok{color:var(--green);}
+
+/* ── MULTIPLE RESERVATIONS (performer) ── */
+.reserv-list{display:flex;flex-direction:column;gap:0;}
+
+.logout-link{display:block;text-align:center;margin-top:22px;font-size:12px;color:var(--mid);cursor:pointer;text-decoration:underline;}
+
+/* Loading */
+.loading{position:fixed;inset:0;background:rgba(250,250,248,.86);display:none;align-items:center;justify-content:center;z-index:100;gap:10px;font-size:13px;color:var(--mid);}
+.loading.show{display:flex;}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--rose);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eye">E-TICKET — AMILY DANCE COMPANY</div>
+  <div class="hero-title">Amily Summer Showcase 2026</div>
+  <div class="hero-sub">ふるさと劇場（川崎市民プラザ）</div>
+</div>
+
+<div class="container">
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-h">電子チケット確認</div>
+  <div class="login-sub">
+    お申込み時のメールアドレスを入力してください。<br>
+    該当する予約が表示されます。
+  </div>
+  <div class="field">
+    <label>メールアドレス</label>
+    <input type="email" id="l-email" placeholder="example@email.com" autocomplete="email"
+      onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  <button class="btn-login" id="btn-login" onclick="doLogin()">チケットを確認する</button>
+  <div class="login-err" id="login-err"></div>
+</div>
+
+<!-- ── TICKET SCREEN ── -->
+<div id="ticket-screen">
+
+  <div class="sum-card" style="margin-bottom:14px;">
+    <div class="sum-card-t">ログイン中</div>
+    <div style="font-family:'DM Mono',monospace;font-size:13px;word-break:break-all;" id="login-email-disp">—</div>
+  </div>
+
+  <!-- 全予約カードをここに動的生成 -->
+  <div id="all-reserv-list"></div>
+
+  <span class="logout-link" onclick="doLogout()">← ログアウト</span>
+</div>
+
+</div><!-- /container -->
+
+<div class="loading" id="loading"><div class="spin"></div><span>確認中...</span></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec'; // ← デプロイ後に設定
+
+// ============================================================
+// DEMO DATA — メアド→予約配列（種別混在OK）
+// ============================================================
+const DEMO_DB = {
+  // 一般のみ・1件
+  'general@test.com': [
+    { ticketNo:'1397', perf:'1st', ticketType:'reserved', name:'鈴木 太郎', seats:'D18,E19', total:8000, payStatus:'pending', freeTicketNo:null }
+  ],
+  // 一般のみ・振込済
+  'general2@test.com': [
+    { ticketNo:'1430', perf:'1st', ticketType:'reserved', name:'高橋 花子', seats:'G21', total:4000, payStatus:'paid', freeTicketNo:null }
+  ],
+  // 一般・1st+2nd両方購入
+  'general5@test.com': [
+    { ticketNo:'1398', perf:'1st', ticketType:'reserved', name:'木村 健太', seats:'E14', total:4000, payStatus:'paid',    freeTicketNo:null },
+    { ticketNo:'2399', perf:'2nd', ticketType:'reserved', name:'木村 健太', seats:'E14', total:4000, payStatus:'pending', freeTicketNo:null },
+  ],
+  // 出演者のみ
+  'perf@test.com': [
+    { ticketNo:null, perf:'1st', ticketType:'upgrade', name:'山田 花子', performer:'山田 花子', seats:'B15', total:500, payStatus:'pending', freeTicketNo:null },
+    { ticketNo:null, perf:'1st', ticketType:'upgrade', name:'山田 花子', performer:'山田 花子', seats:'C16', total:500, payStatus:'paid',    freeTicketNo:'1023' },
+  ],
+  // ★ 出演者 + 一般両方
+  'both@test.com': [
+    { ticketNo:null,   perf:'1st', ticketType:'upgrade',  name:'田中 さくら', performer:'田中 さくら', seats:'F14', total:500,  payStatus:'paid',    freeTicketNo:null },
+    { ticketNo:'1440', perf:'2nd', ticketType:'reserved', name:'田中 さくら', seats:'I15',            total:4000, payStatus:'pending', freeTicketNo:null },
+    { ticketNo:'2441', perf:'2nd', ticketType:'free',     name:'田中 さくら', seats:'',               total:3500, payStatus:'paid',    freeTicketNo:null },
+  ],
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentEmail = null;
+let currentRecords = []; // 全予約（種別混在）
+
+// ============================================================
+// LOGIN — メアドのみ
+// ============================================================
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  if (!email) { showErr('メールアドレスを入力してください。'); return; }
+
+  setLoading(true);
+  document.getElementById('btn-login').disabled = true;
+  document.getElementById('login-err').style.display = 'none';
+
+  await new Promise(r => setTimeout(r, 500));
+  // Production: fetch(`${GAS_URL}?action=getByEmail&email=${encodeURIComponent(email)}`)
+  // → { status:'ok', data:[...全予約配列...] }
+
+  const recs = DEMO_DB[email] || null;
+
+  setLoading(false);
+  document.getElementById('btn-login').disabled = false;
+
+  if (!recs || recs.length === 0) {
+    showErr('このメールアドレスで登録された予約が見つかりません。\nご確認の上、再度お試しください。');
+    return;
+  }
+
+  currentEmail = email;
+  currentRecords = JSON.parse(JSON.stringify(recs));
+  renderAll(currentEmail, currentRecords);
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('ticket-screen').style.display = 'block';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ============================================================
+// RENDER ALL — 全予約を1リストに統合表示
+// ============================================================
+function renderAll(email, records) {
+  document.getElementById('login-email-disp').textContent = email;
+  const container = document.getElementById('all-reserv-list');
+  container.innerHTML = '';
+
+  records.forEach((d, idx) => renderCard(container, d, idx));
+}
+
+function renderCard(container, d, idx) {
+  const isPaid     = d.payStatus === 'paid';
+  const isUpgrade  = d.ticketType === 'upgrade';
+  const isFree     = d.ticketType === 'free';
+  const perfLabel  = d.perf === '1st' ? '1st Stage 14:30' : '2nd Stage 18:00';
+  const typeLabels = { reserved:'指定席', upgrade:'差額変更（指定席）', free:'自由席' };
+  const typeLabel  = typeLabels[d.ticketType] || d.ticketType;
+
+  const card = document.createElement('div');
+  card.id = `card-${idx}`;
+  card.style.cssText = 'background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;';
+
+  // ── カードヘッダー ──
+  const hdrBg = isPaid ? '#edf7f2' : 'var(--amber-l)';
+  const hdrBdr = isPaid ? 'rgba(46,125,82,.2)' : 'rgba(212,130,43,.25)';
+  card.innerHTML = `
+    <div style="background:${hdrBg};border-bottom:1px solid ${hdrBdr};padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--ink)">${esc(perfLabel)}</span>
+        <span style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:2px 9px;font-size:10px;color:var(--mid)">${esc(typeLabel)}</span>
+        ${isUpgrade ? `<span style="background:#f0f0ff;border:1px solid rgba(100,80,200,.2);border-radius:10px;padding:2px 9px;font-size:10px;color:#5040a0;">🎭 出演者</span>` : ''}
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:3px 10px;font-size:10px;font-weight:700;
+        background:${isPaid?'#edf7f2':'var(--amber-l)'};color:${isPaid?'var(--green)':'var(--amber)'};
+        border:1px solid ${isPaid?'rgba(46,125,82,.3)':'rgba(212,130,43,.3)'};">
+        ${isPaid ? '✓ 振込済' : '⏳ 振込待ち'}
+      </span>
+    </div>
+    <div id="card-body-${idx}" style="padding:16px;"></div>`;
+
+  container.appendChild(card);
+  renderCardBody(idx, d);
+}
+
+function renderCardBody(idx, d) {
+  const body    = document.getElementById(`card-body-${idx}`);
+  const isPaid  = d.payStatus === 'paid';
+  const isUpgrade = d.ticketType === 'upgrade';
+  const isFree  = d.ticketType === 'free';
+  const perfLabel = d.perf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
+
+  // ── 振込済：電子チケット表示 ──
+  if (isPaid) {
+    const nameLbl = isUpgrade ? '出演者名' : 'お名前';
+    const nameVal = isUpgrade ? (d.performer || d.name) : d.name;
+
+    // 1st=赤、2nd=紫
+    const ticketBg  = d.perf === '1st' ? '#7B1022' : '#2B0F65';
+    const ticketBg2 = d.perf === '1st' ? '#5E0C1A' : '#200B4E';
+
+    // QRコードに使う番号（出演者は自由席チケット番号、一般は通し番号）
+    const qrValue     = isUpgrade ? (d.freeTicketNo || null) : (d.ticketNo || null);
+    const ticketNoStr = qrValue ? String(qrValue).padStart(5, '0') : null;
+
+    const seatLine = (d.seats && !isFree)
+      ? `<div style="margin-top:8px;"><div style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;opacity:.5;margin-bottom:2px;">SEAT</div><div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;letter-spacing:.08em;line-height:1.2;">${esc(d.seats)}</div></div>` : '';
+
+    const upgradeNote = isUpgrade
+      ? `<div style="background:rgba(212,130,43,.2);border:1px solid rgba(212,130,43,.4);border-radius:7px;padding:8px 11px;font-size:10px;color:#f5c07a;line-height:1.7;margin-top:10px;">
+          ⚠️ 自由席チケット原本も当日必ずご持参ください。</div>` : '';
+
+    const noQrMsg = isUpgrade
+      ? `<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#aaa;text-align:center;line-height:1.5;">チケット番号<br>未登録</div>`
+      : `<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#aaa;text-align:center;line-height:1.5;">番号<br>未割当</div>`;
+
+    body.innerHTML = `
+      <div style="border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.22);margin-bottom:6px;">
+
+        <!-- ── チケット表面 ── -->
+        <div style="background:linear-gradient(135deg,${ticketBg} 0%,${ticketBg2} 100%);padding:18px 16px 16px;color:#fff;position:relative;overflow:hidden;">
+          <!-- 装飾サークル -->
+          <div style="position:absolute;top:-50px;left:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%);pointer-events:none;"></div>
+          <div style="position:absolute;bottom:-40px;right:100px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.04),transparent 70%);pointer-events:none;"></div>
+
+          <div style="display:flex;gap:14px;align-items:flex-start;position:relative;z-index:1;">
+
+            <!-- 左：公演情報 -->
+            <div style="flex:1;min-width:0;">
+              <div style="margin-bottom:11px;">
+                <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:11px;opacity:.5;letter-spacing:.06em;line-height:1;">Amily</div>
+                <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;line-height:1.15;">Summer ShowCase</div>
+                <div style="font-family:'Playfair Display',serif;font-size:13px;opacity:.55;letter-spacing:.04em;">2026</div>
+              </div>
+              <div style="font-size:11px;line-height:1.85;opacity:.85;">
+                <div>🎭 ${esc(perfLabel)}</div>
+                <div>📍 川崎市民プラザ ふるさとホール</div>
+                ${seatLine}
+              </div>
+              <div style="margin-top:10px;font-size:12px;font-weight:500;opacity:.9;">${esc(nameVal)} 様</div>
+              ${upgradeNote}
+            </div>
+
+            <!-- 右：No. + QR + 種別チェック -->
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px;">
+              <div style="text-align:center;">
+                <div style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.15em;opacity:.5;line-height:1;">No.</div>
+                <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;letter-spacing:.06em;line-height:1.2;">${ticketNoStr || '—'}</div>
+              </div>
+              <div style="background:#fff;border-radius:6px;padding:5px;${ticketNoStr ? '' : 'opacity:.35;'}" id="qr-${idx}">
+                ${ticketNoStr ? '' : noQrMsg}
+              </div>
+              <div style="font-size:9px;line-height:1.8;text-align:left;">
+                <div style="display:flex;align-items:center;gap:4px;opacity:.85;">
+                  <span style="width:12px;height:12px;border:1.5px solid rgba(255,255,255,.6);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">${!isFree ? '✓' : ''}</span>
+                  指定席 ¥4,000
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;opacity:.85;">
+                  <span style="width:12px;height:12px;border:1.5px solid rgba(255,255,255,.6);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">${isFree ? '✓' : ''}</span>
+                  自由席 ¥3,500
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── フッター：VALID TICKET ── -->
+        <div style="background:#111;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.13em;color:#7de8aa;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#7de8aa;display:inline-block;animation:pulse 1.8s infinite;flex-shrink:0;"></span>VALID TICKET
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.38);">振込確認済 — Amily 2026</div>
+        </div>
+
+      </div>`;
+
+    // QRコード生成
+    if (ticketNoStr) {
+      try {
+        new QRCode(document.getElementById(`qr-${idx}`), {
+          text: ticketNoStr,
+          width: 80, height: 80,
+          colorDark: '#1a1a1a', colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e) { /* QRライブラリ未ロード時は無視 */ }
+    }
+
+  // ── 振込待ち：サマリー＋振込先 ──
+  } else {
+    const seatsRow = (d.seats && !isFree)
+      ? `<div class="sum-row"><span class="sum-k">座席</span><span class="sum-v">${esc(d.seats)}</span></div>` : '';
+    const ticketNoRow = d.ticketNo
+      ? `<div class="sum-row"><span class="sum-k">チケット番号</span><span class="sum-v">${esc(d.ticketNo)}</span></div>` : '';
+    const upgradeNote = isUpgrade
+      ? `<div style="margin-top:10px;padding:9px 12px;background:#f0f0ff;border-radius:8px;font-size:11px;color:#5040a0;line-height:1.8;">
+          🎭 自由席チケットが届いたら、下の入力欄に番号を入力してください。</div>` : '';
+
+    body.innerHTML = `
+      <div class="sum-card" style="margin-bottom:12px;">
+        <div class="sum-card-t">BOOKING SUMMARY</div>
+        <div class="sum-row"><span class="sum-k">公演</span><span class="sum-v">${esc(perfLabel)}</span></div>
+        ${seatsRow}
+        ${ticketNoRow}
+        <div class="sum-row"><span class="sum-k">お支払い金額</span><span class="sum-v">¥${Number(d.total).toLocaleString()}</span></div>
+        ${upgradeNote}
+      </div>
+      <div class="pay-box" style="margin-bottom:${isUpgrade?'12px':'0'}">
+        <div class="pay-box-t">PAYMENT — お振込み先</div>
+        <div class="pay-info">
+          <span class="pi-l">金融機関</span>りそな銀行 東青梅支店（店番771）
+          <span class="pi-l">口座種別 / 番号</span>普通 3501521
+          <span class="pi-l">口座名義</span>伊藤杏莉（イトウアンリ）
+          <span class="pi-l">振込期限</span>公演日の5日前まで
+        </div>
+        <div class="pay-warn">
+          ※ 振込名義に${d.ticketNo ? `チケット番号（<strong>${esc(d.ticketNo)}</strong>）` : '受付番号（確認メール記載）'}を必ずご記入ください。<br>
+          ※ 振込確認後、メールにてご案内いたします。
+        </div>
+      </div>`;
+  }
+
+  // ── 出演者：自由席チケット番号入力（振込済・未済 問わず表示） ──
+  if (isUpgrade) {
+    const linked = !!d.freeTicketNo;
+    const ftDiv = document.createElement('div');
+    ftDiv.style.cssText = `background:var(--bg);border-radius:8px;padding:12px 14px;${isPaid?'':'margin-top:0;'}`;
+    ftDiv.id = `fti-wrap-${idx}`;
+
+    if (linked) {
+      ftDiv.innerHTML = `
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--mid);margin-bottom:6px;">自由席チケット番号</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <div>
+            <span class="fti-status-badge linked">✓ 登録済み</span>
+            <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--green);letter-spacing:.1em;margin-top:4px;">No. ${esc(d.freeTicketNo)}</div>
+          </div>
+          <button class="fti-change-btn" onclick="startEditFreeTicket(${idx})">変更する</button>
+        </div>`;
+    } else {
+      ftDiv.innerHTML = ftiInputHTML(idx, d.perf);
+    }
+
+    body.appendChild(ftDiv);
+  }
+}
+
+function ftiInputHTML(idx, perf) {
+  const range = perf === '1st' ? '1001〜1396' : '2001〜2396';
+  return `
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--mid);margin-bottom:6px;">自由席チケット番号を入力</div>
+    <span class="fti-status-badge not-linked" style="margin-bottom:8px;">⚠ 未入力</span>
+    <div style="font-size:11px;color:var(--mid);margin-bottom:8px;line-height:1.7;">
+      チケットが届いたら記載の番号（${range}）を入力してください。
+    </div>
+    <div style="display:flex;gap:7px;">
+      <input class="fti-input" type="text" placeholder="${range}" maxlength="6" id="fti-input-${idx}"
+        onkeydown="if(event.key==='Enter')submitFreeTicket(${idx})">
+      <button class="fti-submit-btn" onclick="submitFreeTicket(${idx})">登録</button>
+    </div>
+    <div class="fti-msg" id="fti-msg-${idx}"></div>`;
+}
+
+function startEditFreeTicket(idx) {
+  const wrap = document.getElementById(`fti-wrap-${idx}`);
+  const d = currentRecords[idx];
+  wrap.innerHTML = ftiInputHTML(idx, d.perf);
+  const inp = document.getElementById(`fti-input-${idx}`);
+  if (inp) { inp.value = d.freeTicketNo || ''; inp.focus(); }
+}
+
+async function submitFreeTicket(idx) {
+  const d = currentRecords[idx];
+  const inputEl = document.getElementById(`fti-input-${idx}`);
+  const msgEl   = document.getElementById(`fti-msg-${idx}`);
+  if (!inputEl || !msgEl) return;
+
+  const val = inputEl.value.trim();
+  msgEl.style.display = 'none';
+
+  if (!val || isNaN(Number(val))) {
+    msgEl.textContent = '番号は数字で入力してください。';
+    msgEl.className = 'fti-msg err'; msgEl.style.display = 'block'; return;
+  }
+  const num = Number(val);
+  const [lo, hi] = d.perf === '1st' ? [1001,1396] : [2001,2396];
+  if (num < lo || num > hi) {
+    msgEl.textContent = `${d.perf==='1st'?'1st':'2nd'}公演の出演者番号（${lo}〜${hi}）を入力してください。`;
+    msgEl.className = 'fti-msg err'; msgEl.style.display = 'block'; return;
+  }
+
+  setLoading(true);
+  await new Promise(r => setTimeout(r, 400));
+  // Production: POST to GAS { action:'linkFreeTicket', email:currentEmail, seats:d.seats, perf:d.perf, freeTicketNo:val }
+  currentRecords[idx].freeTicketNo = val;
+  setLoading(false);
+
+  // カードだけ再描画
+  const body = document.getElementById(`card-body-${idx}`);
+  body.innerHTML = '';
+  renderCardBody(idx, currentRecords[idx]);
+}
+
+// ============================================================
+// LOGOUT
+// ============================================================
+function doLogout() {
+  currentEmail = null; currentRecords = [];
+  document.getElementById('ticket-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('all-reserv-list').innerHTML = '';
+  document.getElementById('l-email').value = '';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+function setLoading(on) { document.getElementById('loading').classList.toggle('show', on); }
+
+function esc(s) {
+  if (s == null) return '—';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

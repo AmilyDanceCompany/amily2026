@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amily Summer Showcase 2026 — 受付開始前</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
+:root{
+  --bg:#fafaf8;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;
+  --gold:#d4a84b;--green:#2e7d52;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#1a0a10 0%,#2d1020 45%,#1a0a18 100%);padding:40px 24px 32px;position:relative;overflow:hidden;text-align:center;}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.15),transparent 70%);pointer-events:none;}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,75,.1),transparent 70%);pointer-events:none;}
+.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.35em;color:var(--rose);margin-bottom:10px;}
+.hero-mode-badge{display:inline-block;border-radius:16px;padding:4px 14px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:12px;}
+.hero-mode-badge.general{background:rgba(200,80,110,.25);border:1px solid rgba(200,80,110,.4);color:#f4a8bc;}
+.hero-mode-badge.performer{background:rgba(212,168,75,.25);border:1px solid rgba(212,168,75,.4);color:#f5d98a;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(22px,5vw,38px);font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px;}
+.hero-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.45);margin-bottom:24px;}
+.hero-venue{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.15em;}
+
+/* ── COUNTDOWN ── */
+.container{max-width:600px;margin:0 auto;padding:32px 16px 60px;}
+
+.countdown-card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:28px 20px;text-align:center;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.cd-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;color:var(--mid);margin-bottom:16px;text-transform:uppercase;}
+.cd-open-date{font-family:'Playfair Display',serif;font-size:clamp(20px,4vw,28px);font-weight:700;color:var(--rose);margin-bottom:6px;}
+.cd-open-time{font-size:13px;color:var(--mid);margin-bottom:20px;}
+.cd-boxes{display:flex;justify-content:center;gap:10px;margin-bottom:6px;}
+.cd-box{background:var(--ink);color:#fff;border-radius:10px;width:64px;padding:10px 0;text-align:center;}
+.cd-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;line-height:1;display:block;}
+.cd-unit{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.45);display:block;margin-top:3px;}
+.cd-sep{font-size:24px;color:var(--border);align-self:center;margin-top:-8px;}
+
+/* ── PRICING ── */
+.section-h{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.22em;color:var(--mid);margin-bottom:14px;text-transform:uppercase;}
+
+.price-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.price-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px 16px;text-align:center;}
+.price-card.highlight{border-color:var(--rose);background:var(--rose-l);}
+.price-card.performer-only{border-color:var(--gold);background:#fffdf4;}
+.pc-icon{font-size:26px;display:block;margin-bottom:8px;}
+.pc-name{font-weight:700;font-size:14px;margin-bottom:4px;}
+.pc-price{font-family:'DM Mono',monospace;font-size:20px;color:var(--rose);margin-bottom:4px;font-weight:700;}
+.price-card.performer-only .pc-price{color:#b88a20;}
+.pc-note{font-size:11px;color:var(--mid);line-height:1.6;}
+.pc-badge{display:inline-block;background:var(--rose);color:#fff;border-radius:10px;padding:2px 8px;font-size:9px;font-family:'DM Mono',monospace;margin-bottom:6px;}
+.price-card.performer-only .pc-badge{background:var(--gold);color:#fff;}
+
+/* ── SEAT MAP ── */
+.seatmap-card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:22px 16px;margin-bottom:24px;}
+.seatmap-img-wrap{
+  width:100%;
+  border-radius:10px;
+  overflow:hidden;
+  background:#f4f1ec;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:200px;
+  position:relative;
+}
+.seatmap-img-wrap img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+/* 画像未設定時のプレースホルダー */
+.seatmap-placeholder{
+  text-align:center;
+  padding:40px 20px;
+  color:var(--mid);
+  font-size:12px;
+  line-height:2;
+}
+.seatmap-placeholder .ph-icon{font-size:36px;display:block;margin-bottom:8px;}
+
+.seatmap-note{margin-top:12px;font-size:11px;color:var(--mid);line-height:1.9;padding:0 4px;}
+.seatmap-note strong{color:var(--ink);}
+
+/* highlighted area note */
+.area-note{background:var(--rose-l);border:1px solid rgba(200,80,110,.2);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;margin-top:10px;}
+
+/* ── PERF INFO ── */
+.perf-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.perf-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+.perf-tag{display:inline-block;background:var(--rose);color:#fff;border-radius:12px;padding:2px 10px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:7px;}
+.perf-time{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:2px;}
+.perf-open{font-size:11px;color:var(--mid);}
+
+/* ── FOOTER NOTE ── */
+.foot-note{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;font-size:12px;color:var(--mid);line-height:1.9;}
+.foot-note strong{color:var(--ink);}
+
+@media(max-width:420px){
+  .price-cards{grid-template-columns:1fr;}
+  .perf-cards{grid-template-columns:1fr 1fr;}
+  .cd-box{width:54px;}
+  .cd-num{font-size:22px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eye">TICKET INFORMATION</div>
+  <div class="hero-mode-badge" id="hero-mode-badge">一般用</div>
+  <div class="hero-title">Amily Summer Showcase 2026</div>
+  <div class="hero-sub">from Amily Dance Company</div>
+  <div class="hero-venue">ふるさと劇場（川崎市民プラザ）</div>
+</div>
+
+<div class="container">
+
+  <!-- カウントダウン -->
+  <div class="countdown-card">
+    <div class="cd-label">申込受付開始まで</div>
+    <div class="cd-open-date">2026年7月5日（日）</div>
+    <div class="cd-open-time">10:00 より受付開始</div>
+    <div class="cd-boxes">
+      <div class="cd-box"><span class="cd-num" id="cd-d">--</span><span class="cd-unit">DAYS</span></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-unit">HRS</span></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-unit">MIN</span></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-unit">SEC</span></div>
+    </div>
+  </div>
+
+  <!-- イベント概要 -->
+  <div class="countdown-card" style="text-align:left;padding:22px 22px 20px;">
+    <div class="cd-label" style="margin-bottom:10px;">EVENT</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:4px;">Amily Summer Showcase 2026</div>
+    <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
+    <p style="font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
+      年に一度のSummer Showcase 開催！<br>
+      Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする<strong>80分のshowcase</strong>！
+    </p>
+    <p style="font-size:13px;color:var(--mid);line-height:1.95;">
+      積み重ねた挑戦と成長を、それぞれの輝きに変えて💎<br>
+      Amily Dance Companyならではの世界観をお楽しみください💋
+    </p>
+  </div>
+
+  <!-- 公演情報 -->
+  <div class="section-h">PERFORMANCE — 8月14日（金）</div>
+  <div class="perf-cards">
+    <div class="perf-card">
+      <div class="perf-tag">1st Stage</div>
+      <div class="perf-time">14:30</div>
+      <div class="perf-open">開場 14:00</div>
+    </div>
+    <div class="perf-card">
+      <div class="perf-tag">2nd Stage</div>
+      <div class="perf-time">18:00</div>
+      <div class="perf-open">開場 17:30</div>
+    </div>
+  </div>
+
+  <!-- 会場・アクセス -->
+  <div class="section-h">VENUE & ACCESS</div>
+  <div class="seatmap-card" style="margin-bottom:24px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px;"><a href="https://www.kawasaki-shiminplaza.jp/access/" target="_blank" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">川崎市民プラザ ふるさとホール</a></div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:16px;">〒213-0014 神奈川県川崎市高津区新作1-19-1</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="background:var(--bg);border-radius:10px;padding:13px 15px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「梶が谷駅」から</div>
+        <div style="font-size:12px;line-height:1.85;color:var(--ink);">
+          ■ 市バス4番のりば（溝23系統）溝の口駅南口行き乗車（約5分）→ 市民プラザ下車<br>
+          ■ 梶が谷駅より徒歩（約15分）
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:13px 15px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「溝の口駅」・JR南武線「武蔵溝ノ口駅」から</div>
+        <div style="font-size:12px;line-height:1.85;color:var(--ink);">
+          ■ 市バス溝の口駅南口1番のりば（溝23系統）梶が谷駅行き乗車（約10分）→ 市民プラザ下車
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 料金 -->
+  <div class="section-h">TICKET PRICE</div>
+  <div class="price-cards" id="price-cards">
+    <!-- JSで切替 -->
+  </div>
+
+  <!-- 座席図 -->
+  <div class="seatmap-card">
+    <div class="section-h">SEAT MAP — ふるさと劇場</div>
+    <div class="seatmap-img-wrap">
+      <!--
+        ★ 座席表PDFを画像に変換して下記 img タグの src に設定してください ★
+        例: src="seatmap.jpg" または src="seatmap.png"
+        推奨: 幅1200px以上、JPGまたはPNG
+        設定するまでは下のプレースホルダーが表示されます
+      -->
+      <img src="seatmap.jpg" alt="ふるさと劇場 座席表"
+        onerror="this.style.display='none'; document.getElementById('seatmap-ph').style.display='block';">
+      <div id="seatmap-ph" class="seatmap-placeholder" style="display:none;">
+        <span class="ph-icon">🗺</span>
+        <strong>座席表画像を設定してください</strong><br>
+        PDFを画像（JPG/PNG）に変換し、<br>
+        同じフォルダに <code>seatmap.jpg</code> として保存してください。
+      </div>
+    </div>
+    <div class="seatmap-note">
+      客席数489席（移動席A〜D列118席・固定席E〜O列371席）<br>
+      <div class="area-note" id="area-note">
+        <!-- JSで切替 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 注意事項 -->
+  <div class="foot-note" id="foot-note">
+    <!-- JSで切替 -->
+  </div>
+
+</div>
+
+<script>
+// モード判定（フォームと同じ ?mode=performer）
+const params = new URLSearchParams(location.search);
+const MODE = params.get('mode') === 'performer' ? 'performer' : 'general';
+
+// ── モード別コンテンツ ──
+const badge = document.getElementById('hero-mode-badge');
+const priceCards = document.getElementById('price-cards');
+const areaNote = document.getElementById('area-note');
+const footNote = document.getElementById('foot-note');
+
+if (MODE === 'performer') {
+  badge.textContent = '出演者用';
+  badge.classList.add('performer');
+
+  priceCards.innerHTML = `
+    <div class="price-card performer-only">
+      <span class="pc-badge">出演者のみ</span>
+      <span class="pc-icon">⬆️</span>
+      <div class="pc-name">差額変更</div>
+      <div class="pc-price">¥500<span style="font-size:13px;font-weight:400;">/席</span></div>
+      <div class="pc-note">自由席チケットを<br>指定席に変更</div>
+    </div>
+    <div class="price-card" style="border-color:var(--border);background:var(--bg);opacity:.6;pointer-events:none;">
+      <span class="pc-icon">🎟</span>
+      <div class="pc-name">自由席</div>
+      <div class="pc-price" style="color:var(--mid);font-size:16px;">¥3,500</div>
+      <div class="pc-note">（このページでは<br>申込不要）</div>
+    </div>`;
+
+  areaNote.innerHTML = `
+    <strong>🎭 出演者指定席エリア（赤枠）</strong><br>
+    A列13〜16・21〜24 ／ B〜G列13〜24 ／ I〜K列13〜24<br>
+    合計116席（各公演）`;
+
+  footNote.innerHTML = `
+    <strong>出演者の皆様へ</strong><br>
+    ・差額変更（¥500/席）は自由席チケットをお持ちの出演者が対象です。<br>
+    ・自由席チケットが届いた後、チケット確認ページからチケット番号を入力してください。<br>
+    ・1回の申込で最大6席まで選択できます。<br>
+    ・お支払いについては別途ご連絡いたします。<br>
+    ・各回、時間には余裕を持ってお越しください。<br>
+    ・ご来場の際は、なるべく公共交通機関をご利用ください。<br><br>
+    <strong>お問い合わせ</strong><br>
+    インスタアカウントまたはメールにてご連絡ください。<br>
+    Instagram：<a href="https://www.instagram.com/amilydancecompany" target="_blank" style="color:var(--rose);">@amilydancecompany</a><br>
+    メール：<a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a>`;
+
+} else {
+  badge.textContent = '一般用';
+  badge.classList.add('general');
+
+  priceCards.innerHTML = `
+    <div class="price-card highlight">
+      <span class="pc-badge">指定席</span>
+      <span class="pc-icon">🎫</span>
+      <div class="pc-name">指定席</div>
+      <div class="pc-price">¥4,000<span style="font-size:13px;font-weight:400;">/席</span></div>
+      <div class="pc-note">お好きな座席を<br>事前に確保</div>
+    </div>
+    <div class="price-card">
+      <span class="pc-badge" style="background:var(--mid);">自由席</span>
+      <span class="pc-icon">🎟</span>
+      <div class="pc-name">自由席</div>
+      <div class="pc-price" style="color:var(--mid);">¥3,500<span style="font-size:13px;font-weight:400;">/枚</span></div>
+      <div class="pc-note">当日お好きな席に<br>お座りください</div>
+    </div>`;
+
+  areaNote.innerHTML = `
+    <strong>🎫 指定席エリア（座席表の赤枠エリア）</strong><br>
+    A列13〜16・21〜24 ／ B〜G列13〜24 ／ I〜K列13〜24<br>
+    合計116席（各公演） ／ 1回の申込で最大6席まで`;
+
+  footNote.innerHTML = `
+    <strong>ご注意</strong><br>
+    ・指定席は各公演116席のみです。お早めにお申し込みください。<br>
+    ・自由席チケットは当日自由席エリアにてご着席ください。<br>
+    ・お支払いはPayPayまたはお振込みです。詳細は申込完了メールをご確認ください。<br>
+    ・各回、時間には余裕を持ってお越しください。<br>
+    ・ご来場の際は、なるべく公共交通機関をご利用ください。<br>
+    ・自由席のお客様の整列は、各回開場60分前より開始いたします。それ以前の整列はご遠慮ください。<br><br>
+    <strong>お問い合わせ</strong><br>
+    インスタアカウントまたはメールにてご連絡ください。<br>
+    Instagram：<a href="https://www.instagram.com/amilydancecompany" target="_blank" style="color:var(--rose);">@amilydancecompany</a><br>
+    メール：<a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a>`;
+}
+
+// ── カウントダウン ──
+const OPEN = new Date('2026-07-05T10:00:00+09:00');
+
+function updateCountdown() {
+  const now  = new Date();
+  const diff = OPEN - now;
+
+  if (diff <= 0) {
+    // 開始時刻を超えたらフォームへ自動遷移（previewパラメータは引き継がない）
+    location.replace('amilydancecompany-form.html' + location.search.replace(/[?&]?preview=1/,''));
+    return;
+  }
+
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+
+  document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+  document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
