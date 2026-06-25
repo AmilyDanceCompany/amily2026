@@ -105,6 +105,34 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   .cd-box{width:54px;}
   .cd-num{font-size:22px;}
 }
+/* 座席図 */
+.sm-wrap{width:100%;overflow:hidden;}
+.sm-inner{display:inline-block;position:relative;padding:4px 0;zoom:0.68;}
+.sm-outer-row{display:flex;align-items:center;}
+.sm-outer-lbl{width:36px;flex-shrink:0;position:relative;}
+.sm-seat-row{display:flex;align-items:center;margin-bottom:3px;}
+.sm-row-lbl{width:24px;font-family:'DM Mono',monospace;font-size:8px;color:var(--mid);text-align:center;flex-shrink:0;}
+.sm-seat{width:15px;height:11px;border-radius:2px 2px 1px 1px;border:1px solid transparent;flex-shrink:0;margin:0 1px 2px;position:relative;}
+.sm-seat::after{content:'';position:absolute;bottom:-2px;left:2px;right:2px;height:2px;border-radius:0 0 2px 2px;background:inherit;filter:brightness(.65);}
+.sm-avail{background:#3a8c5c;border-color:rgba(46,125,82,.6);}
+.sm-free{background:#dedad5;border-color:#c8c4c0;opacity:.55;}
+.sm-free::after{background:#bbb7b2;}
+.sm-unavail{background:#b8b3ae;border-color:#9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);}
+.sm-unavail::after{display:none;}
+.sm-hidden{opacity:0;pointer-events:none;}
+.sm-hidden::after{display:none;}
+.sm-wc{width:15px;height:11px;border-radius:2px;border:1px solid #a0b8d0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#5b7fc4;background:#dce8f0;margin:0 1px 2px;}
+.sm-aisle{display:flex;align-items:center;margin:4px 0;width:100%;}
+.sm-aisle-line{flex:1;height:1px;background:var(--border);}
+.sm-aisle-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--mid);padding:0 6px;white-space:nowrap;}
+.sm-slope{position:relative;border:1.5px solid #d4822b;border-radius:4px;padding:3px 0;}
+.sm-slope-lbl{position:absolute;top:0;bottom:0;width:34px;writing-mode:vertical-rl;font-family:'DM Mono',monospace;font-size:7px;color:#d4822b;letter-spacing:.1em;white-space:nowrap;display:flex;align-items:center;justify-content:center;}
+.sm-slope-lbl.l{left:-36px;}
+.sm-slope-lbl.r{right:-36px;}
+.sm-stage{background:var(--ink);color:#fff;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.2em;text-align:center;padding:5px 0;border-radius:3px 3px 0 0;margin-bottom:6px;}
+.sm-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.sm-lg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mid);}
+.sm-lg-dot{width:11px;height:8px;border-radius:1px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -124,7 +152,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="cd-label">申込受付開始まで</div>
     <div class="cd-open-date">2026年7月5日（日）</div>
     <div class="cd-open-time">10:00 より受付開始</div>
-    <div class="cd-boxes">
+    <div class="cd-boxes" id="cd-boxes">
       <div class="cd-box"><span class="cd-num" id="cd-d">--</span><span class="cd-unit">DAYS</span></div>
       <div class="cd-sep">:</div>
       <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-unit">HRS</span></div>
@@ -132,6 +160,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-unit">MIN</span></div>
       <div class="cd-sep">:</div>
       <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-unit">SEC</span></div>
+    </div>
+    <!-- 受付開始後に表示 -->
+    <div id="open-btns" style="display:none;margin-top:20px;flex-direction:column;gap:10px;">
+      <a id="btn-general" href="amilydancecompany-form.html" style="display:block;background:var(--rose);color:#fff;text-decoration:none;border-radius:12px;padding:14px 20px;font-size:14px;font-weight:700;letter-spacing:.04em;">チケット申し込み →</a>
+      <a id="btn-performer" href="amilydancecompany-form.html?mode=performer" style="display:block;background:#fff;color:var(--rose);text-decoration:none;border-radius:12px;padding:14px 20px;font-size:14px;font-weight:700;border:1.5px solid var(--rose);letter-spacing:.04em;">チケット申し込み →</a>
     </div>
   </div>
 
@@ -196,21 +229,17 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <!-- 座席図 -->
   <div class="seatmap-card">
     <div class="section-h">SEAT MAP — ふるさと劇場</div>
-    <div class="seatmap-img-wrap">
-      <!--
-        ★ 座席表PDFを画像に変換して下記 img タグの src に設定してください ★
-        例: src="seatmap.jpg" または src="seatmap.png"
-        推奨: 幅1200px以上、JPGまたはPNG
-        設定するまでは下のプレースホルダーが表示されます
-      -->
-      <img src="seatmap.jpg" alt="ふるさと劇場 座席表"
-        onerror="this.style.display='none'; document.getElementById('seatmap-ph').style.display='block';">
-      <div id="seatmap-ph" class="seatmap-placeholder" style="display:none;">
-        <span class="ph-icon">🗺</span>
-        <strong>座席表画像を設定してください</strong><br>
-        PDFを画像（JPG/PNG）に変換し、<br>
-        同じフォルダに <code>seatmap.jpg</code> として保存してください。
+    <div class="sm-wrap">
+      <div class="sm-inner">
+        <div class="sm-stage">— STAGE —</div>
+        <div id="cs-seatmap"></div>
       </div>
+    </div>
+    <div class="sm-legend">
+      <div class="sm-lg"><div class="sm-lg-dot" style="background:#3a8c5c;"></div>指定席</div>
+      <div class="sm-lg"><div class="sm-lg-dot" style="background:#dedad5;"></div>自由席</div>
+      <div class="sm-lg"><div class="sm-lg-dot" style="background:#b8b3ae;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);"></div>選択不可</div>
+      <div class="sm-lg"><div class="sm-lg-dot" style="background:#dce8f0;border:1px solid #a0b8d0;"></div>車椅子席</div>
     </div>
     <div class="seatmap-note">
       客席数489席（移動席A〜D列118席・固定席E〜O列371席）<br>
@@ -228,9 +257,103 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </div>
 
 <script>
+// ── 座席図 ──
+(function(){
+  const RC={
+    A:{l:[6,12],r:[25,31],s:[13,14,15,16,21,22,23,24]},
+    B:{l:[5,12],r:[25,32],s:rng(13,24)},C:{l:[4,12],r:[25,33],s:rng(13,24)},
+    D:{l:[2,12],r:[25,35],s:rng(13,24)},E:{l:[2,12],r:[25,35],s:rng(13,24)},
+    F:{l:[2,12],r:[25,35],s:rng(13,24)},G:{l:[1,12],r:[25,36],s:rng(13,24)},
+    H:{l:[1,12],r:[25,36],s:[]},I:{l:[1,12],r:[25,36],s:rng(13,24)},
+    J:{l:[1,12],r:[25,36],s:rng(13,24)},K:{l:[1,12],r:[25,36],s:rng(13,24)},
+    L:{l:[1,12],r:[25,36],s:[]},M:{l:[2,12],r:[25,35],s:[]},
+    N:{l:[3,12],r:[25,34],s:[]},O:{l:null,r:[25,33],s:[],wc:true}
+  };
+  function rng(a,b){const x=[];for(let i=a;i<=b;i++)x.push(i);return x;}
+  function mk(cls){const d=document.createElement('div');d.className='sm-seat sm-'+cls;return d;}
+  function wrap(inner){
+    const o=document.createElement('div');o.className='sm-outer-row';
+    const l=document.createElement('div');l.className='sm-outer-lbl';
+    const r=document.createElement('div');r.className='sm-outer-lbl';
+    o.appendChild(l);o.appendChild(inner);o.appendChild(r);return o;
+  }
+  function hdr(){
+    const row=document.createElement('div');row.className='sm-seat-row';row.style.marginBottom='5px';
+    const sp=()=>{const d=document.createElement('div');d.style.cssText='width:24px;flex-shrink:0;';return d;};
+    const gp=()=>{const d=document.createElement('div');d.style.cssText='width:8px;flex-shrink:0;';return d;};
+    const n=v=>{const d=document.createElement('div');d.style.cssText='width:17px;flex-shrink:0;text-align:center;font-family:"DM Mono",monospace;font-size:6px;color:rgba(120,120,120,.6);';d.textContent=v;return d;};
+    row.appendChild(sp());
+    for(let c=1;c<=12;c++)row.appendChild(n(c));row.appendChild(gp());
+    for(let c=13;c<=24;c++)row.appendChild(n(c));row.appendChild(gp());
+    for(let c=25;c<=36;c++)row.appendChild(n(c));row.appendChild(sp());
+    return wrap(row);
+  }
+  function bldRow(nm){
+    const cfg=RC[nm];
+    const row=document.createElement('div');row.className='sm-seat-row';
+    const lbl=()=>{const d=document.createElement('div');d.className='sm-row-lbl';d.textContent=nm;return d;};
+    const gp=()=>{const d=document.createElement('div');d.style.cssText='width:8px;flex-shrink:0;';return d;};
+    row.appendChild(lbl());
+    if(cfg.wc){
+      for(let c=1;c<=7;c++)row.appendChild(mk('hidden'));
+      for(let c=8;c<=12;c++){const d=document.createElement('div');d.className='sm-wc';d.textContent='♿';row.appendChild(d);}
+    } else if(cfg.l){
+      const[lf,lt]=cfg.l;
+      for(let c=1;c<lf;c++)row.appendChild(mk('hidden'));
+      for(let c=lf;c<=lt;c++)row.appendChild(mk('free'));
+      for(let c=lt+1;c<=12;c++)row.appendChild(mk('hidden'));
+    } else {for(let c=1;c<=12;c++)row.appendChild(mk('hidden'));}
+    row.appendChild(gp());
+    for(let c=13;c<=24;c++){
+      if((nm==='A'&&c>=17&&c<=20)||(nm==='H'))row.appendChild(mk('unavail'));
+      else if(cfg.s.includes(c))row.appendChild(mk('avail'));
+      else row.appendChild(mk('free'));
+    }
+    row.appendChild(gp());
+    if(cfg.r){
+      const[rf,rt]=cfg.r;
+      for(let c=25;c<rf;c++)row.appendChild(mk('hidden'));
+      for(let c=rf;c<=rt;c++)row.appendChild(mk('free'));
+      for(let c=rt+1;c<=36;c++)row.appendChild(mk('hidden'));
+    } else {for(let c=25;c<=36;c++)row.appendChild(mk('hidden'));}
+    row.appendChild(lbl());return row;
+  }
+  const root=document.getElementById('cs-seatmap');
+  root.appendChild(hdr());
+  const SLOPE=new Set(['H','I','J','K','L','M','N','O']);
+  const ss=document.createElement('div');ss.className='sm-slope';
+  const sl=document.createElement('div');sl.className='sm-slope-lbl l';sl.textContent='傾斜型座席・段差あり';
+  const sr=document.createElement('div');sr.className='sm-slope-lbl r';sr.textContent='傾斜型座席・段差あり';
+  ss.appendChild(sl);ss.appendChild(sr);
+  ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'].forEach(nm=>{
+    if(nm==='E'){
+      const a=document.createElement('div');a.className='sm-aisle';
+      const ll=document.createElement('div');ll.className='sm-row-lbl';ll.style.cssText='font-family:"DM Mono",monospace;font-size:8px;color:#999;';ll.textContent='通路';
+      const line=document.createElement('div');line.className='sm-aisle-line';
+      const rl=document.createElement('div');rl.className='sm-row-lbl';rl.style.cssText='font-family:"DM Mono",monospace;font-size:8px;color:#999;';rl.textContent='通路';
+      a.appendChild(ll);a.appendChild(line);a.appendChild(rl);
+      root.appendChild(wrap(a));
+    }
+    if(SLOPE.has(nm)){
+      ss.appendChild(bldRow(nm));
+      if(nm==='O'){
+        const ow=document.createElement('div');ow.className='sm-outer-row';
+        const ol=document.createElement('div');ol.className='sm-outer-lbl';
+        const or2=document.createElement('div');or2.className='sm-outer-lbl';
+        ow.appendChild(ol);ow.appendChild(ss);ow.appendChild(or2);
+        root.appendChild(ow);
+      }
+    } else {root.appendChild(wrap(bldRow(nm)));}
+  });
+})();
+
 // モード判定（フォームと同じ ?mode=performer）
 const params = new URLSearchParams(location.search);
 const MODE = params.get('mode') === 'performer' ? 'performer' : 'general';
+
+// ── ボタン出し分け ──
+document.getElementById('btn-general').style.display  = MODE === 'general'  ? 'block' : 'none';
+document.getElementById('btn-performer').style.display = MODE === 'performer' ? 'block' : 'none';
 
 // ── モード別コンテンツ ──
 const badge = document.getElementById('hero-mode-badge');
@@ -315,23 +438,39 @@ if (MODE === 'performer') {
 }
 
 // ── カウントダウン ──
-const OPEN = new Date('2026-07-05T10:00:00+09:00');
+const OPEN  = new Date('2026-07-05T10:00:00+09:00');
+const CLOSE = new Date('2026-08-14T00:00:00+09:00');
 
 function updateCountdown() {
-  const now  = new Date();
-  const diff = OPEN - now;
+  const now      = new Date();
+  const cdBoxes  = document.getElementById('cd-boxes');
+  const openBtns = document.getElementById('open-btns');
+  const cdLabel  = document.querySelector('.cd-label');
+  const cdDate   = document.querySelector('.cd-open-date');
+  const cdTime   = document.querySelector('.cd-open-time');
 
-  if (diff <= 0) {
-    // 開始時刻を超えたらフォームへ自動遷移（previewパラメータは引き継がない）
-    location.replace('amilydancecompany-form.html' + location.search.replace(/[?&]?preview=1/,''));
+  if (now >= CLOSE) {
+    cdBoxes.style.display = 'none';
+    cdLabel.textContent = 'チケット申し込み受付は終了しました';
+    cdDate.textContent  = 'ご来場ありがとうございました';
+    cdTime.textContent  = 'Amily Summer Showcase 2026';
     return;
   }
 
+  if (now >= OPEN) {
+    cdBoxes.style.display = 'none';
+    cdLabel.textContent = '申し込み受付中';
+    cdDate.textContent  = '〜 2026年8月13日（木）まで';
+    cdTime.textContent  = '前日までお申し込みいただけます';
+    openBtns.style.display = 'flex';
+    return;
+  }
+
+  const diff = OPEN - now;
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-
   document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
   document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
   document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
