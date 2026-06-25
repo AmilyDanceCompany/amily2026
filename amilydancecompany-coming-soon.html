@@ -1,3 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amily Summer Showcase 2026 — 受付開始前</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
+:root{
+  --bg:#fafaf8;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
+  --rose:#6b3fa0;--rose-l:#f2edf9;--rose-d:#4e2d7a;
+  --gold:#c4973a;--green:#2e7d52;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#1a0a10 0%,#2d1020 45%,#1a0a18 100%);padding:40px 24px 32px;position:relative;overflow:hidden;text-align:center;}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.15),transparent 70%);pointer-events:none;}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,75,.1),transparent 70%);pointer-events:none;}
+.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.35em;color:var(--rose);margin-bottom:10px;}
+.hero-mode-badge{display:inline-block;border-radius:16px;padding:4px 14px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:12px;}
+.hero-mode-badge.general{background:rgba(200,80,110,.25);border:1px solid rgba(200,80,110,.4);color:#f4a8bc;}
+.hero-mode-badge.performer{background:rgba(212,168,75,.25);border:1px solid rgba(212,168,75,.4);color:#f5d98a;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(22px,5vw,38px);font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px;}
+.hero-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.45);margin-bottom:24px;}
+.hero-venue{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.15em;}
+
+/* ── COUNTDOWN ── */
+.container{max-width:600px;margin:0 auto;padding:32px 16px 60px;}
+.countdown-card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:28px 20px;text-align:center;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+.cd-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;color:var(--mid);margin-bottom:16px;text-transform:uppercase;}
+.cd-open-date{font-family:'Playfair Display',serif;font-size:clamp(20px,4vw,28px);font-weight:700;color:var(--rose);margin-bottom:6px;}
+.cd-open-time{font-size:13px;color:var(--mid);margin-bottom:20px;}
+.cd-boxes{display:flex;justify-content:center;gap:10px;margin-bottom:6px;}
+.cd-box{background:var(--ink);color:#fff;border-radius:10px;width:64px;padding:10px 0;text-align:center;}
 .cd-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;line-height:1;display:block;}
 .cd-unit{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.45);display:block;margin-top:3px;}
 .cd-sep{font-size:24px;color:var(--border);align-self:center;margin-top:-8px;}
@@ -98,7 +134,13 @@
       <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-unit">SEC</span></div>
     </div>
     <!-- 受付開始後に表示 -->
-    <div id="open-btns" style="display:none;margin-top:20px;flex-direction:column;gap:10px;">
+    <div id="cs-notice-general" style="display:none;background:#fff5f7;border:1.5px solid #e8a0ae;border-radius:10px;padding:11px 14px;margin-top:16px;font-size:11px;color:#8a2a3a;line-height:1.8;">
+      ⚠ お支払い後の返金はできません。
+    </div>
+    <div id="cs-notice-performer" style="display:none;background:#fffdf4;border:1.5px solid #e8c96a;border-radius:10px;padding:11px 14px;margin-top:16px;font-size:11px;color:#7a5a00;line-height:1.8;">
+      ⚠ 申し込み後の席変更・キャンセルはできません。
+    </div>
+    <div id="open-btns" style="display:none;margin-top:14px;flex-direction:column;gap:10px;">
       <a id="btn-general" href="amilydancecompany-form.html" style="display:block;background:var(--rose);color:#fff;text-decoration:none;border-radius:12px;padding:14px 20px;font-size:14px;font-weight:700;letter-spacing:.04em;">チケット申し込み →</a>
       <a id="btn-performer" href="amilydancecompany-form.html?mode=performer" style="display:block;background:#fff;color:var(--rose);text-decoration:none;border-radius:12px;padding:14px 20px;font-size:14px;font-weight:700;border:1.5px solid var(--rose);letter-spacing:.04em;">チケット申し込み →</a>
     </div>
@@ -299,8 +341,10 @@ const params = new URLSearchParams(location.search);
 const MODE = params.get('mode') === 'performer' ? 'performer' : 'general';
 
 // ── ボタン出し分け ──
-document.getElementById('btn-general').style.display  = MODE === 'general'  ? 'block' : 'none';
-document.getElementById('btn-performer').style.display = MODE === 'performer' ? 'block' : 'none';
+document.getElementById('btn-general').style.display          = MODE === 'general'  ? 'block' : 'none';
+document.getElementById('btn-performer').style.display         = MODE === 'performer' ? 'block' : 'none';
+document.getElementById('cs-notice-general').style.display    = MODE === 'general'   ? 'block' : 'none';
+document.getElementById('cs-notice-performer').style.display  = MODE === 'performer' ? 'block' : 'none';
 
 // ── モード別コンテンツ ──
 const badge = document.getElementById('hero-mode-badge');
@@ -312,20 +356,16 @@ if (MODE === 'performer') {
   badge.textContent = '出演者用';
   badge.classList.add('performer');
 
+  priceCards.style.gridTemplateColumns = '1fr';
   priceCards.innerHTML = `
     <div class="price-card performer-only">
       <span class="pc-badge">出演者のみ</span>
       <span class="pc-icon">⬆️</span>
       <div class="pc-name">差額変更</div>
       <div class="pc-price">¥500<span style="font-size:13px;font-weight:400;">/席</span></div>
-      <div class="pc-note">自由席チケットを<br>指定席に変更</div>
+      <div class="pc-note">自由席チケットを指定席に変更</div>
     </div>
-    <div class="price-card" style="border-color:var(--border);background:var(--bg);opacity:.6;pointer-events:none;">
-      <span class="pc-icon">🎟</span>
-      <div class="pc-name">自由席</div>
-      <div class="pc-price" style="color:var(--mid);font-size:16px;">¥3,500</div>
-      <div class="pc-note">（このページでは<br>申込不要）</div>
-    </div>`;
+    `;
 
   areaNote.innerHTML = `
     <strong>🎭 出演者指定席エリア（赤枠）</strong><br>
@@ -337,9 +377,7 @@ if (MODE === 'performer') {
     ・差額変更（¥500/席）は自由席チケットをお持ちの出演者が対象です。<br>
     ・自由席チケットが届いた後、チケット確認ページからチケット番号を入力してください。<br>
     ・1回の申込で最大6席まで選択できます。<br>
-    ・お支払いについては別途ご連絡いたします。<br>
-    ・各回、時間には余裕を持ってお越しください。<br>
-    ・ご来場の際は、なるべく公共交通機関をご利用ください。<br><br>
+    ・お支払いについては別途ご連絡いたします。<br><br>
     <strong>お問い合わせ</strong><br>
     Instagramアカウント または <a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a>`;
 
@@ -381,11 +419,16 @@ if (MODE === 'performer') {
 }
 
 // ── カウントダウン ──
+const SOLD_OUT = false; // ★ 売り切れ時は true に変更してアップロード
+
 const OPEN  = new Date('2026-07-05T10:00:00+09:00');
 const CLOSE = new Date('2026-08-14T00:00:00+09:00');
 
 function updateCountdown() {
-  const now      = new Date();
+  const preview  = new URLSearchParams(location.search).get('preview');
+  const now      = preview === 'open'  ? new Date('2026-07-10T10:00:00+09:00')
+                 : preview === 'close' ? new Date('2026-08-14T10:00:00+09:00')
+                 : new Date();
   const cdBoxes  = document.getElementById('cd-boxes');
   const openBtns = document.getElementById('open-btns');
   const cdLabel  = document.querySelector('.cd-label');
@@ -394,9 +437,17 @@ function updateCountdown() {
 
   if (now >= CLOSE) {
     cdBoxes.style.display = 'none';
-    cdLabel.textContent = 'チケット申し込み受付は終了しました';
-    cdDate.textContent  = 'ご来場ありがとうございました';
-    cdTime.textContent  = 'Amily Summer Showcase 2026';
+    cdLabel.textContent = '';
+    cdDate.textContent  = 'チケット申し込み受付は終了しました';
+    cdTime.textContent  = 'ご来場ありがとうございました';
+    return;
+  }
+
+  if (SOLD_OUT) {
+    cdBoxes.style.display = 'none';
+    cdLabel.textContent = '';
+    cdDate.textContent  = '一般販売分は満席となりました';
+    cdTime.textContent  = 'たくさんのお申し込みありがとうございました';
     return;
   }
 
