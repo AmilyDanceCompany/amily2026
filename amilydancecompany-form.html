@@ -1350,7 +1350,7 @@ function submitForm() {
   document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
 
   // comp-sub と支払い案内をフェーズ・モードで動的切替
-  renderPaymentInfo(ref, ticketType, ticketNo, freeCount);
+  renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt);
 
   // Mark seats as booked
   selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
@@ -1384,7 +1384,7 @@ function submitForm() {
 // ============================================================
 // PAYMENT INFO — フェーズ×モード で完了画面の案内を切替
 // ============================================================
-function renderPaymentInfo(ref, ticketType, ticketNo, freeCount) {
+function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt) {
   const area = document.getElementById('pay-info-area');
   const sub  = document.getElementById('comp-sub');
   const phase = window.PHASE || 1;
