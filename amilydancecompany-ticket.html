@@ -59,6 +59,14 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 
 .page-lbl{font-size:12px;color:var(--mid);margin-bottom:14px;letter-spacing:.05em;}
 .btn-logout{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--mid);cursor:pointer;font-family:inherit;margin-top:4px;}
+
+.seatmap-box{border-top:1px dashed var(--border);padding:14px 18px 16px;}
+.seatmap-lbl{font-size:10px;color:var(--mid);margin-bottom:8px;text-align:center;letter-spacing:.1em;}
+.seatmap-wrap{overflow:hidden;border-radius:4px;background:#f9f7f4;touch-action:none;cursor:grab;height:150px;position:relative;}
+.seatmap-hint{font-size:10px;color:#ccc;text-align:center;margin-top:6px;}
+.seatmap-legend{display:flex;gap:10px;margin-top:8px;font-size:10px;color:var(--mid);justify-content:center;flex-wrap:wrap;}
+.seatmap-legend span{display:flex;align-items:center;gap:4px;}
+.seatmap-legend i{width:9px;height:9px;border-radius:1px;display:inline-block;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -253,7 +261,172 @@ function buildCard(t) {
     }, 80);
   }
 
+  // 座席図（指定席のみ）
+  if (!isFree) {
+    const mapId = `smap-${noStr}-${Math.random().toString(36).slice(2)}`;
+    card.innerHTML += `
+      <div class="seatmap-box">
+        <div class="seatmap-lbl">— 座席図 —</div>
+        <div class="seatmap-wrap" id="${mapId}">
+          <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;transform-origin:0 0;"></svg>
+        </div>
+        <div class="seatmap-hint">ピンチ・スクロールでズーム</div>
+        <div class="seatmap-legend">
+          <span><i style="background:#dedad5;"></i>自由席</span>
+          <span><i style="background:#3a8c5c;"></i>指定席</span>
+          <span><i style="background:#8C2D3F;"></i>あなたの席</span>
+        </div>
+      </div>`;
+    setTimeout(() => buildSeatMap(mapId, t.seatType), 100);
+  }
+
   return card;
+}
+
+function buildSeatMap(wrapperId, seatType) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  const svg = wrap.querySelector('svg');
+  const ns = 'http://www.w3.org/2000/svg';
+
+  const parts = (seatType || '').split('-');
+  const TR = parts[0] || '';
+  const TC = parseInt(parts[1], 10) || 0;
+
+  const ROWS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
+  const ROW_CFG = {
+    A:{left:[6,12],right:[25,31],sel:[13,14,15,16,21,22,23,24]},
+    B:{left:[5,12],right:[25,32],sel:rng(13,24)},
+    C:{left:[4,12],right:[25,33],sel:rng(13,24)},
+    D:{left:[2,12],right:[25,35],sel:rng(13,24)},
+    E:{left:[2,12],right:[25,35],sel:rng(13,24)},
+    F:{left:[2,12],right:[25,35],sel:rng(13,24)},
+    G:{left:[1,12],right:[25,36],sel:rng(13,24)},
+    H:{left:[1,12],right:[25,36],sel:[]},
+    I:{left:[1,12],right:[25,36],sel:rng(13,24)},
+    J:{left:[1,12],right:[25,36],sel:rng(13,24)},
+    K:{left:[1,12],right:[25,36],sel:rng(13,24)},
+    L:{left:[1,12],right:[25,36],sel:[]},
+    M:{left:[2,12],right:[25,35],sel:[]},
+    N:{left:[3,12],right:[25,34],sel:[]},
+    O:{left:null,right:[25,33],sel:[],wc:true}
+  };
+  const UNAVAIL = {A:[17,18,19,20],H:rng(13,24),M:rng(13,16),N:rng(13,16),O:rng(13,16)};
+  function rng(a,b){const x=[];for(let i=a;i<=b;i++)x.push(i);return x;}
+
+  const S=6,G=1.5,STEP=S+G,AISLE=10,HDR=8;
+  function colToX(c){
+    if(c>=1&&c<=12) return (c-1)*STEP;
+    if(c>=13&&c<=24) return 12*STEP+AISLE+(c-13)*STEP;
+    if(c>=25&&c<=36) return 12*STEP+AISLE+12*STEP+AISLE+(c-25)*STEP;
+    return 0;
+  }
+  const totalW=12*STEP+AISLE+12*STEP+AISLE+12*STEP;
+  const totalH=HDR+STEP+ROWS.length*STEP;
+  svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+  svg.setAttribute('width',totalW);svg.setAttribute('height',totalH);
+
+  const defs=document.createElementNS(ns,'defs');
+  const pat=document.createElementNS(ns,'pattern');
+  pat.setAttribute('id',`h-${wrapperId}`);pat.setAttribute('patternUnits','userSpaceOnUse');
+  pat.setAttribute('width','4');pat.setAttribute('height','4');pat.setAttribute('patternTransform','rotate(45)');
+  const ln=document.createElementNS(ns,'line');
+  ln.setAttribute('x1','0');ln.setAttribute('y1','0');ln.setAttribute('x2','0');ln.setAttribute('y2','4');
+  ln.setAttribute('stroke','rgba(0,0,0,0.22)');ln.setAttribute('stroke-width','2');
+  pat.appendChild(ln);defs.appendChild(pat);svg.appendChild(defs);
+
+  for(let c=13;c<=24;c++){
+    const t2=document.createElementNS(ns,'text');
+    t2.setAttribute('x',colToX(c)+S/2);t2.setAttribute('y',HDR-1);
+    t2.setAttribute('text-anchor','middle');t2.setAttribute('font-size','5');
+    t2.setAttribute('font-family','monospace');t2.setAttribute('fill','#aaa');
+    t2.textContent=c;svg.appendChild(t2);
+  }
+
+  const lAx=12*STEP+AISLE/2, rAx=12*STEP+AISLE+12*STEP+AISLE/2;
+  ROWS.forEach((r,ri)=>{
+    const y=HDR+STEP+ri*STEP;
+    const cfg=ROW_CFG[r];
+    const unavCols=UNAVAIL[r]||[];
+    [lAx,rAx].forEach(lx=>{
+      const lbl=document.createElementNS(ns,'text');
+      lbl.setAttribute('x',lx);lbl.setAttribute('y',y+S/2+2);
+      lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','6');
+      lbl.setAttribute('font-family','monospace');lbl.setAttribute('fill','#bbb');
+      lbl.textContent=r;svg.appendChild(lbl);
+    });
+    for(let c=1;c<=36;c++){
+      const inL=cfg.left&&c>=cfg.left[0]&&c<=cfg.left[1];
+      const inR=cfg.right&&c>=cfg.right[0]&&c<=cfg.right[1];
+      const inC=c>=13&&c<=24;
+      if(!inL&&!inR&&!inC) continue;
+      const x=colToX(c);
+      const isUnavail=unavCols.includes(c);
+      const isTarget=r===TR&&c===TC;
+      const isSel2=!isUnavail&&cfg.sel.includes(c);
+      const isWC=cfg.wc&&inL;
+      let fill;
+      if(isTarget) fill='#8C2D3F';
+      else if(isWC) fill='#dce8f0';
+      else if(isUnavail) fill='#c8c4c0';
+      else if(isSel2) fill='#3a8c5c';
+      else fill='#dedad5';
+      const rect=document.createElementNS(ns,'rect');
+      rect.setAttribute('x',x);rect.setAttribute('y',y);rect.setAttribute('width',S);rect.setAttribute('height',S);
+      rect.setAttribute('rx','0.8');rect.setAttribute('fill',fill);svg.appendChild(rect);
+      if(isUnavail&&!isTarget){
+        const h=document.createElementNS(ns,'rect');
+        h.setAttribute('x',x);h.setAttribute('y',y);h.setAttribute('width',S);h.setAttribute('height',S);
+        h.setAttribute('rx','0.8');h.setAttribute('fill',`url(#h-${wrapperId})`);svg.appendChild(h);
+      }
+      if(isTarget){
+        const o=document.createElementNS(ns,'rect');
+        o.setAttribute('x',x-1.5);o.setAttribute('y',y-1.5);o.setAttribute('width',S+3);o.setAttribute('height',S+3);
+        o.setAttribute('rx','1.5');o.setAttribute('fill','none');
+        o.setAttribute('stroke','#5a1a28');o.setAttribute('stroke-width','1.5');svg.appendChild(o);
+      }
+    }
+  });
+
+  let scale=1,tx=0,ty=0;
+  const MIN_SCALE=0.5,MAX_SCALE=6;
+  const ww=wrap.clientWidth,wh=wrap.clientHeight;
+  scale=Math.min(ww/totalW,wh/totalH)*0.95;
+  tx=(ww-totalW*scale)/2;ty=(wh-totalH*scale)/2;
+  function apply(){svg.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;}
+  apply();
+
+  let drag=null;
+  wrap.addEventListener('mousedown',e=>{drag={x:e.clientX-tx,y:e.clientY-ty};wrap.style.cursor='grabbing';});
+  window.addEventListener('mousemove',e=>{if(!drag)return;tx=e.clientX-drag.x;ty=e.clientY-drag.y;apply();});
+  window.addEventListener('mouseup',()=>{drag=null;wrap.style.cursor='grab';});
+  wrap.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const rc=wrap.getBoundingClientRect();
+    const mx=e.clientX-rc.left,my=e.clientY-rc.top;
+    const d=e.deltaY<0?1.12:0.9;
+    const ns2=Math.min(MAX_SCALE,Math.max(MIN_SCALE,scale*d));
+    tx=mx-(mx-tx)*(ns2/scale);ty=my-(my-ty)*(ns2/scale);scale=ns2;apply();
+  },{passive:false});
+  let lastDist=null;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===2)lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    else if(e.touches.length===1)drag={x:e.touches[0].clientX-tx,y:e.touches[0].clientY-ty};
+  },{passive:true});
+  wrap.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length===2&&lastDist!==null){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+      const rc=wrap.getBoundingClientRect();
+      const mx=mid.x-rc.left,my=mid.y-rc.top;
+      const ns2=Math.min(MAX_SCALE,Math.max(MIN_SCALE,scale*(d/lastDist)));
+      tx=mx-(mx-tx)*(ns2/scale);ty=my-(my-ty)*(ns2/scale);scale=ns2;lastDist=d;apply();
+    } else if(e.touches.length===1&&drag){
+      tx=e.touches[0].clientX-drag.x;ty=e.touches[0].clientY-drag.y;apply();
+    }
+  },{passive:false});
+  wrap.addEventListener('touchend',()=>{drag=null;lastDist=null;});
 }
 
 document.getElementById('email-input').addEventListener('keydown', e => {
