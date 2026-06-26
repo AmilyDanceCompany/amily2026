@@ -30,9 +30,9 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .err-msg{margin-top:12px;font-size:12px;color:var(--rose);text-align:center;display:none;}
 
 .ticket-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;}
-.tc-head{background:#6b2340;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;}
-.tc-head-icon{width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0;}
-.tc-head-text{flex:1;}
+.tc-head{background:#6b2340;color:#fff;padding:14px 18px;position:relative;overflow:hidden;}
+.tc-head-wm{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.18;pointer-events:none;}
+.tc-head-text{position:relative;}
 .tc-brand{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;opacity:.6;margin-bottom:2px;}
 .tc-event{font-family:'Playfair Display',serif;font-size:15px;}
 .tc-body{padding:16px 18px 12px;}
@@ -176,7 +176,7 @@ function buildCard(t) {
   // ヘッダー
   card.innerHTML += `
     <div class="tc-head">
-      <img class="tc-head-icon" src="amily-icon.png" alt="">
+      <img class="tc-head-wm" src="amily-icon.png" alt="">
       <div class="tc-head-text">
         <div class="tc-brand">AMILY DANCE COMPANY</div>
         <div class="tc-event">Amily Summer Showcase 2026</div>
