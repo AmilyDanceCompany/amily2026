@@ -206,7 +206,6 @@ function buildCard(t) {
   }
 
   // チケット情報
-  const isFree = !t.seatType || t.seatType === '自由席';
   const seatLabel = isFree ? '自由席' : `指定席　${t.seatType}`;
   card.innerHTML += `
     <div class="tc-body">
