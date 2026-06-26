@@ -186,8 +186,9 @@ function buildCard(t) {
   card.className = 'ticket-card';
 
   // ヘッダー
+  const headColor = t.perf === '2nd' ? '#5C3080' : '#8C2D3F';
   card.innerHTML += `
-    <div class="tc-head">
+    <div class="tc-head" style="background:${headColor};">
       <img class="tc-head-wm" src="amily-icon.png" alt="">
       <div class="tc-head-text">
         <div class="tc-brand">AMILY DANCE COMPANY</div>
