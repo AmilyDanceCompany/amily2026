@@ -10,7 +10,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#f9f7f4;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
-  --rose:#6b3fa0;--gold:#c4973a;
+  --rose:#c0435a;--gold:#b88a20;
   --green:#2d7a4f;--warn:#b86a00;--warn-l:#fff8ee;
 }
 body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink);min-height:100vh;}
@@ -30,7 +30,9 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .err-msg{margin-top:12px;font-size:12px;color:var(--rose);text-align:center;display:none;}
 
 .ticket-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;}
-.tc-head{background:var(--ink);color:#fff;padding:14px 18px;}
+.tc-head{background:#6b2340;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;}
+.tc-head-icon{width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0;}
+.tc-head-text{flex:1;}
 .tc-brand{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;opacity:.6;margin-bottom:2px;}
 .tc-event{font-family:'Playfair Display',serif;font-size:15px;}
 .tc-body{padding:16px 18px 12px;}
@@ -174,8 +176,11 @@ function buildCard(t) {
   // ヘッダー
   card.innerHTML += `
     <div class="tc-head">
-      <div class="tc-brand">AMILY DANCE COMPANY</div>
-      <div class="tc-event">Amily Summer Showcase 2026</div>
+      <img class="tc-head-icon" src="amily-icon.png" alt="">
+      <div class="tc-head-text">
+        <div class="tc-brand">AMILY DANCE COMPANY</div>
+        <div class="tc-event">Amily Summer Showcase 2026</div>
+      </div>
     </div>`;
 
   // 未払いアラート（QRスキャンアクセスで指定席+未払い）
@@ -188,7 +193,8 @@ function buildCard(t) {
   }
 
   // チケット情報
-  const name = t.name || t.handling || '';
+  const isFree = !t.seatType || t.seatType === '自由席';
+  const seatLabel = isFree ? '自由席' : `指定席　${t.seatType}`;
   card.innerHTML += `
     <div class="tc-body">
       <div class="tc-row">
@@ -196,8 +202,7 @@ function buildCard(t) {
         <span class="tc-no">${noStr}${isChecked ? '<span class="checked-badge">入場済み</span>' : ''}</span>
       </div>
       <div class="tc-row"><span class="tc-lbl">公演</span><span class="tc-val" style="font-size:12px;">${perfLabel}</span></div>
-      ${t.seatType ? `<div class="tc-row"><span class="tc-lbl">座席</span><span class="tc-val">${t.seatType}</span></div>` : ''}
-      ${name ? `<div class="tc-row"><span class="tc-lbl">氏名</span><span class="tc-val">${name}</span></div>` : ''}
+      <div class="tc-row"><span class="tc-lbl">座席</span><span class="tc-val">${seatLabel}</span></div>
     </div>`;
 
   // イベント詳細（金額なし）
