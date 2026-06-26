@@ -8,8 +8,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
 :root {
   --bg:#fafaf8;--white:#fff;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
-  --rose:#6b3fa0;--rose-l:#f2edf9;--rose-d:#4e2d7a;
-  --gold:#c4973a;--green:#2e7d52;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;
+  --gold:#d4a84b;--green:#2e7d52;
   --avail:#3a8c5c;--sel:#c8506e;--taken:#6b7a90;--outside:#e8e5e0;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -53,7 +53,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .perf-card{border:2px solid var(--border);border-radius:12px;padding:20px 16px;cursor:pointer;transition:all .2s;background:#fff;text-align:center;}
 .perf-card:hover{border-color:var(--rose);transform:translateY(-2px);box-shadow:0 4px 16px rgba(200,80,110,.12);}
 .perf-card.selected{border-color:var(--rose);background:var(--rose-l);}
-.pc-tag{display:inline-block;background:var(--rose);color:#fff;border-radius:14px;padding:3px 12px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:8px;}
+.pc-tag{display:inline-block;color:#fff;border-radius:14px;padding:3px 12px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:8px;}
+.pc-tag.tag-1st{background:#8C2D3F;}
+.pc-tag.tag-2nd{background:#5C3080;}
 .pc-time{font-size:24px;font-family:'Playfair Display',serif;font-weight:700;margin-bottom:2px;}
 .pc-date{font-size:11px;color:var(--mid);}
 .pc-remain{font-size:10px;color:var(--green);margin-top:8px;font-family:'DM Mono',monospace;}
@@ -299,10 +301,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <body>
 
 <div class="hero">
+  <img src="amily-icon.png" alt="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;height:260px;object-fit:contain;opacity:.22;pointer-events:none;mix-blend-mode:screen;">
   <div class="hero-eye">TICKET RESERVATION — AMILY DANCE COMPANY</div>
   <div class="hero-mode" id="hero-mode">一般用</div>
   <div class="hero-title">Amily Summer Showcase 2026</div>
-  <div class="hero-sub">ふるさと劇場（川崎市民プラザ）</div>
+  <div class="hero-sub">2026年8月14日（金）｜ふるさと劇場（川崎市民プラザ）</div>
 </div>
 
 <div class="steps">
@@ -356,13 +359,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <div class="section-h">PERFORMANCE — 公演回</div>
   <div class="perf-cards">
     <div class="perf-card" id="pc-1st" onclick="selPerf('1st')">
-      <div class="pc-tag">1st Stage</div>
+      <div class="pc-tag tag-1st">1st Stage</div>
       <div class="pc-time">14:30</div>
       <div class="pc-date">開場 14:00</div>
       <div class="pc-remain" id="rem-1st">残席確認中...</div>
     </div>
     <div class="perf-card" id="pc-2nd" onclick="selPerf('2nd')">
-      <div class="pc-tag">2nd Stage</div>
+      <div class="pc-tag tag-2nd">2nd Stage</div>
       <div class="pc-time">18:00</div>
       <div class="pc-date">開場 17:30</div>
       <div class="pc-remain" id="rem-2nd">残席確認中...</div>
@@ -568,7 +571,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
       <p style="font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
         年に一度のSummer Showcase 開催！<br>
-        Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする<strong>80分のshowcase</strong>！
+        Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする80分のshowcase！
       </p>
       <p style="font-size:13px;color:var(--mid);line-height:1.95;">
         積み重ねた挑戦と成長を、それぞれの輝きに変えて💎<br>
@@ -692,11 +695,12 @@ if (MODE === 'performer') {
   document.getElementById('hero-mode').style.background = 'rgba(212,168,75,.25)';
   document.getElementById('hero-mode').style.borderColor = 'rgba(212,168,75,.4)';
   document.getElementById('hero-mode').style.color = '#f5d98a';
-  // Hide general type cards, show upgrade only
+  // 出演者モード：差額変更のみ横長1列で表示
   document.getElementById('tt-reserved').style.display = 'none';
   document.getElementById('tt-free').style.display = 'none';
   document.getElementById('tt-upgrade').classList.remove('hidden-card');
   document.getElementById('tt-upgrade').classList.add('selected');
+  document.getElementById('type-cards').style.gridTemplateColumns = '1fr';
 }
 
 // ============================================================
@@ -712,10 +716,10 @@ const ticketCounters = {
   '2nd': { performer: 2001, general_reserved: 2397, general_free: 2397 }
 };
 
-// Simulated booked seats per perf
+// Booked seats (fetched from GAS at runtime)
 const bookedSeats = {
-  '1st': new Set(['B15','C18','D21','E14','E23','F17','G13','I16','I22','J14','J20','K18']),
-  '2nd': new Set(['B13','C16','D19','E15','E24','F18','G14','I17','I23','J15','J21','K19'])
+  '1st': new Set(),
+  '2nd': new Set()
 };
 
 // ============================================================
@@ -1363,7 +1367,7 @@ function submitForm() {
     ref,
     perf: selectedPerf,
     ticketType,
-    sei, mei,
+    sei, mei, seiK, meiK,
     email,
     tel: document.getElementById('f-tel')?.value?.trim() || '',
     performer: ticketType === 'upgrade' ? performer : '',

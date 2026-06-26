@@ -8,8 +8,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
 :root{
   --bg:#fafaf8;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
-  --rose:#6b3fa0;--rose-l:#f2edf9;--rose-d:#4e2d7a;
-  --gold:#c4973a;--green:#2e7d52;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;
+  --gold:#d4a84b;--green:#2e7d52;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
@@ -17,8 +17,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 /* ── HERO ── */
 .hero{background:linear-gradient(135deg,#1a0a10 0%,#2d1020 45%,#1a0a18 100%);padding:40px 24px 32px;position:relative;overflow:hidden;text-align:center;}
 .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(200,80,110,.15),transparent 70%);pointer-events:none;}
-.hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,75,.1),transparent 70%);pointer-events:none;}
-.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.35em;color:var(--rose);margin-bottom:10px;}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,75,.1),transparent 70%);pointer-events:none;}.hero-eye{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.35em;color:var(--rose);margin-bottom:10px;}
 .hero-mode-badge{display:inline-block;border-radius:16px;padding:4px 14px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:12px;}
 .hero-mode-badge.general{background:rgba(200,80,110,.25);border:1px solid rgba(200,80,110,.4);color:#f4a8bc;}
 .hero-mode-badge.performer{background:rgba(212,168,75,.25);border:1px solid rgba(212,168,75,.4);color:#f5d98a;}
@@ -61,7 +60,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 /* ── PERF INFO ── */
 .perf-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
 .perf-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
-.perf-tag{display:inline-block;background:var(--rose);color:#fff;border-radius:12px;padding:2px 10px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:7px;}
+.perf-tag{display:inline-block;color:#fff;border-radius:12px;padding:2px 10px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:7px;}
+.perf-tag.tag-1st{background:#8C2D3F;}
+.perf-tag.tag-2nd{background:#5C3080;}
 .perf-time{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:2px;}
 .perf-open{font-size:11px;color:var(--mid);}
 
@@ -169,12 +170,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     </div>
     <div class="perf-cards" style="margin-bottom:0;">
       <div class="perf-card">
-        <div class="perf-tag">1st Stage</div>
+        <div class="perf-tag tag-1st">1st Stage</div>
         <div class="perf-time">14:30</div>
         <div class="perf-open">開場 14:00</div>
       </div>
       <div class="perf-card">
-        <div class="perf-tag">2nd Stage</div>
+        <div class="perf-tag tag-2nd">2nd Stage</div>
         <div class="perf-time">18:00</div>
         <div class="perf-open">開場 17:30</div>
       </div>
