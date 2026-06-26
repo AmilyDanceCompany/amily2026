@@ -31,7 +31,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 
 .ticket-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;}
 .tc-head{background:#6b2340;color:#fff;padding:14px 18px;position:relative;overflow:hidden;}
-.tc-head-wm{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.18;pointer-events:none;}
+.tc-head-wm{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.22;pointer-events:none;mix-blend-mode:screen;}
 .tc-head-text{position:relative;}
 .tc-brand{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;opacity:.6;margin-bottom:2px;}
 .tc-event{font-family:'Playfair Display',serif;font-size:15px;}
@@ -46,7 +46,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 
 .event-detail{padding:12px 18px 14px;border-top:1px dashed var(--border);font-size:11px;color:var(--mid);line-height:1.9;}
 
-.qr-wrap{text-align:center;padding:16px 18px 20px;border-top:1px dashed var(--border);}
+.qr-wrap{text-align:center;padding:16px 18px 20px;border-top:1px dashed var(--border);display:flex;flex-direction:column;align-items:center;}
 .qr-note{font-size:10px;color:var(--mid);margin-top:8px;}
 
 .unpaid-box{text-align:center;padding:20px 18px;border-top:1px dashed var(--border);color:var(--mid);}
@@ -166,9 +166,21 @@ function hideLoading() {
 function buildCard(t) {
   const noStr     = String(t.ticketNo || '').padStart(5, '0') || t.ticketNoStr || '';
   const perfLabel = t.perf === '1st' ? '1st Stage　14:30開演（開場 14:00）' : '2nd Stage　18:00開演（開場 17:30）';
-  const isPaid    = t.paid || t.payment === '振込済';
-  const isChecked = t.checkin === '入場済';
-  const showQR    = isPaid || !!directId;
+  const isPaid      = t.paid || t.payment === '振込済';
+  const isChecked   = t.checkin === '入場済';
+  const isFree      = !t.seatType || t.seatType === '自由席';
+  const isPerformer = t.handling && t.handling !== '一般';
+  let showQR;
+  if (!isFree) {
+    // 指定席：紙QR・メールログインともに入金済のみ表示
+    showQR = isPaid;
+  } else if (isPerformer) {
+    // 出演者・自由席：常に表示
+    showQR = true;
+  } else {
+    // 一般・自由席：紙QRは常に表示、メールログインは入金状況に従う
+    showQR = !!directId || isPaid;
+  }
 
   const card = document.createElement('div');
   card.className = 'ticket-card';
