@@ -233,9 +233,9 @@ function reloadByEmail() {
 }
 
 function buildCard(t) {
-  const noStr     = t.needsTicketNo ? '—' : (String(t.ticketNo || '').padStart(5, '0') || t.ticketNoStr || '');
+  const noStr     = t.needsTicketNo ? '—' : String(t.ticketNo || t.ticketNoStr || '').replace(/^0+/, '');
   const perfLabel = t.perf === '1st' ? '1st Stage　14:30開演（開場 14:00）' : '2nd Stage　18:00開演（開場 17:30）';
-  const isPaid      = t.paid || t.payment === '振込済';
+  const isPaid      = t.paid || t.payment === '支払済';
   const isChecked   = t.checkin === '入場済';
   const isFree      = !t.seatType || t.seatType === '自由席';
   const isPerformer = t.handling && t.handling !== '一般';
@@ -245,7 +245,7 @@ function buildCard(t) {
     // 番号未登録 → QR非表示（未入金と同様）
     showQR = false;
   } else if (!isFree) {
-    // 指定席：紙QR・メールログインともに入金済のみ表示
+    // 指定席：紙QR・メールログインともに支払済のみ表示
     showQR = isPaid;
   } else if (isPerformer) {
     // 出演者・自由席：常に表示
@@ -278,8 +278,10 @@ function buildCard(t) {
       </div>`;
   }
 
-  // チケット情報
-  const seatLabel = needsReg ? '指定席（番号登録待ち）' : (isFree ? '自由席' : `指定席　${t.seatType}`);
+  // チケット情報（座席コードは形式に依存せず抽出して表示）
+  const sc = String(t.seatType || '').match(/([A-O])\s*-?\s*0*(\d+)/i);
+  const seatDisp = sc ? `${sc[1].toUpperCase()}${parseInt(sc[2],10)}` : t.seatType;
+  const seatLabel = needsReg ? '指定席（番号登録待ち）' : (isFree ? '自由席' : `指定席　${seatDisp}`);
   card.innerHTML += `
     <div class="tc-body">
       <div class="tc-row">
@@ -374,9 +376,10 @@ function buildSeatMap(wrapperId, seatType) {
   const svg = wrap.querySelector('svg');
   const ns = 'http://www.w3.org/2000/svg';
 
-  const parts = (seatType || '').split('-');
-  const TR = parts[0] || '';
-  const TC = parseInt(parts[1], 10) || 0;
+  // 「C18」「C-18」「指定席（C18）」など、どの形式でも 行(A-O)+列番号 を抽出
+  const m = String(seatType || '').match(/([A-O])\s*-?\s*0*(\d+)/i);
+  const TR = m ? m[1].toUpperCase() : '';
+  const TC = m ? parseInt(m[2], 10) : 0;
 
   const ROWS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
   const ROW_CFG = {

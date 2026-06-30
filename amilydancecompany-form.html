@@ -150,7 +150,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .seat.free-seat{background:#dedad5;border-color:#c8c4c0;cursor:default;opacity:.55;}
 .seat.free-seat::after{background:#bbb7b2;}
 /* ズームコントロール */
-.map-outer-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+.map-outer-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;}
 .map-zoom-inner{transform-origin:top left;transition:transform .2s;display:inline-block;}
 .zoom-controls{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;}
 .zoom-btn{background:#fff;border:1.5px solid var(--border);border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:700;line-height:1;transition:border-color .2s;flex-shrink:0;}
@@ -297,7 +297,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   .type-cards,.perf-cards{grid-template-columns:1fr 1fr;}
 }
 /* ── 静的座席図 ── */
-.sm-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.sm-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:18px;}
 .sm-inner{display:inline-block;position:relative;padding:4px 0;}
 .sm-outer-row{display:flex;align-items:center;}
 .sm-outer-lbl{width:36px;flex-shrink:0;position:relative;}
@@ -516,7 +516,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="sec-h">— 出演者情報</div>
     <div class="frow full">
       <div class="field">
-        <label>チケット記載の出演者名 <span class="req">*</span></label>
+        <label>チケット扱い（ダンサー名を記載ください） <span class="req">*</span></label>
         <input id="f-performer" placeholder="例: 山田 花子" type="text">
       </div>
     </div>
@@ -708,11 +708,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 // 現在時刻（日本時間）をもとにフェーズを決定する
 //
 // PHASE 0: 〜2026/7/5 09:59  → 準備画面へリダイレクト
-// PHASE 1: 2026/7/5 10:00〜2026/7/10 23:59
-//   - 出演者: 振込案内なし（一括請求）
+// PHASE 1: 2026/7/5 10:00〜2026/7/8 14:59
+//   - 出演者: 振込案内なし（一括請求）／自由席チケット番号は自動紐付け
 //   - 一般:   受付番号のみ返信（支払案内なし）
-// PHASE 2: 2026/7/11〜2026/7/12 23:59
-//   - 出演者: PayPay or 振込案内あり
+// PHASE 2: 2026/7/8 15:00〜2026/7/12 23:59
+//   - 出演者: 振込案内あり／自由席チケット番号は手入力
 //   - 一般:   受付番号のみ返信（まだ支払案内なし）
 // PHASE 3: 2026/7/13〜
 //   - 出演者: PayPay or 振込案内あり
@@ -731,7 +731,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
   const OPEN   = new Date('2026-07-05T10:00:00+09:00');
   const CLOSE  = new Date('2026-08-14T00:00:00+09:00');
-  const PHASE2 = new Date('2026-07-11T00:00:00+09:00');
+  const PHASE2 = new Date('2026-07-08T15:00:00+09:00');
   const PHASE3 = new Date('2026-07-13T00:00:00+09:00');
 
   if (now < OPEN) {
@@ -802,7 +802,7 @@ if (MODE === 'performer') {
       <strong>ご注意</strong><br>
       ・指定席は各公演116席のみです。お早めにお申し込みください。<br>
       ・自由席チケットは当日自由席エリアにてご着席ください。<br>
-      ・お支払いはPayPayまたはお振込みです。詳細は申込完了メールをご確認ください。<br>
+      ・お支払いはお振込みです。詳細は申込完了メールをご確認ください。<br>
       ・各回、時間には余裕を持ってお越しください。<br>
       ・自由席のお客様の整列は、各回開場60分前より開始いたします。それ以前の整列はご遠慮ください。<br>
       ・ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。`;
@@ -874,7 +874,7 @@ function zoomMap(delta) {
   document.getElementById('zoom-lbl').textContent = Math.round(mapScale * 100) + '%';
   // transform-origin が top left なので親コンテナの高さも更新
   const inner = document.getElementById('map-zoom-inner');
-  inner.parentElement.style.minHeight = (inner.scrollHeight * mapScale) + 'px';
+  inner.parentElement.style.minHeight = (inner.scrollHeight * mapScale + 28) + 'px';
 }
 
 function makeHiddenSeat() {
@@ -949,7 +949,7 @@ function buildSeatMap() {
     if (!innerEl || !scrollEl) return;
     mapScale = 1.0;
     innerEl.style.transform = 'scale(1)';
-    innerEl.parentElement.style.minHeight = innerEl.scrollHeight + 'px';
+    innerEl.parentElement.style.minHeight = (innerEl.scrollHeight + 28) + 'px';
     document.getElementById('zoom-lbl').textContent = '100%';
     // A18とA19の境界をスクロールコンテナ中央に合わせる（DOM実測）
     const col18 = innerEl.querySelector('[data-id="D18"]');
@@ -1431,7 +1431,7 @@ function submitForm() {
   let freeTicketNo = '';
   if (ticketType === 'upgrade') {
     performer = document.getElementById('f-performer').value.trim();
-    if (!performer) { alert('チケット記載の出演者名をご入力ください。'); return; }
+    if (!performer) { alert('チケット扱い（ダンサー名）をご入力ください。'); return; }
     // 7/11以降は手持ちの自由席チケット番号を入力できる（任意）
     if (PHASE >= 2) {
       freeTicketNo = document.getElementById('f-free-tno').value.trim();
@@ -1454,7 +1454,7 @@ function submitForm() {
 
   // 完了画面の表示内容を準備
   const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
-  const typeLabel = { reserved:'新規指定席', upgrade:'差額変更（指定席）', free:'自由席' }[ticketType];
+  const typeLabel = { reserved:'指定席', upgrade:'差額変更（指定席）', free:'自由席' }[ticketType];
   const cnt = ticketType === 'free' ? freeCount : selSeats.size;
   const price = getPrice();
   const total = cnt * price;
@@ -1476,8 +1476,8 @@ function submitForm() {
     note: '',
   };
 
-  // 完了画面を描画する処理（送信成功後に呼ぶ）
-  function showCompletion() {
+  // 完了画面を描画する処理（送信成功後に呼ぶ。serverNos = GASが採番した番号）
+  function showCompletion(serverNos) {
     document.getElementById('c-perf').textContent = perfLabel;
     document.getElementById('c-type').textContent = typeLabel;
     document.getElementById('c-email').textContent = email;
@@ -1506,42 +1506,49 @@ function submitForm() {
       seatsWrap.style.display = 'none';
     }
 
+    const dispNo = (serverNos && serverNos.length) ? serverNos[0] : ticketNo;
     if (ticketType === 'upgrade' && freeTicketNo) {
       document.getElementById('c-ticketno').textContent = freeTicketNo;
+    } else if (serverNos && serverNos.length) {
+      document.getElementById('c-ticketno').textContent =
+        serverNos.length > 1 ? `${serverNos[0]}〜${serverNos[serverNos.length-1]}` : `${serverNos[0]}`;
     } else {
       const endNo = ticketNo + cnt - 1;
       document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
     }
 
-    renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt);
+    renderPaymentInfo(ref, ticketType, dispNo, freeCount, cnt);
     selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
     setScreen(3);
   }
 
   const btn = document.querySelector('#scr2 .btn-fs');
 
-  // 自由席は座席競合がないため即時完了
+  // GASへはGETで送信（POSTのリダイレクトはブラウザがクロスオリジンで読めないため）
+  const reserveUrl = `${GAS_URL}?` + Object.entries(payload)
+    .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v == null ? '' : v)}`).join('&');
+
+  // 自由席：座席競合はないが、番号はサーバー採番なので応答を待って表示
   if (ticketType === 'free') {
-    showCompletion();
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-    }).catch(err => console.warn('GAS送信エラー:', err));
+    if (btn) { btn.disabled = true; btn.textContent = '確定処理中…'; }
+    fetch(reserveUrl)
+      .then(r => r.json())
+      .then(res => {
+        if (res.status === 'ok') showCompletion(res.ticketNos);
+        else alert(res.message || '申し込みの確定に失敗しました。お手数ですが再度お試しください。');
+      })
+      .catch(err => { console.warn('GAS送信エラー:', err); alert('通信エラーが発生しました。再度お試しください。'); })
+      .finally(() => { if (btn) { btn.disabled = false; btn.textContent = '予約を確定する'; } });
     return;
   }
 
   // 指定席・差額変更：送信が成功（＝座席確保）してから完了画面へ
   if (btn) { btn.disabled = true; btn.textContent = '確定処理中…'; }
-  fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload),
-  })
+  fetch(reserveUrl)
     .then(r => r.json())
     .then(res => {
       if (res.status === 'ok') {
-        showCompletion();
+        showCompletion(res.ticketNos);
         return;
       }
       if (res.code === 'seat_taken') {
@@ -1615,17 +1622,11 @@ function payPayOrTransferHTML(ticketNo, cnt) {
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
       <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:14px;">PAYMENT — お支払い方法</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-        <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:6px;">📱</div>
-          <div style="font-weight:700;font-size:13px;margin-bottom:4px;">PayPay</div>
-          <div style="font-size:11px;color:var(--mid);line-height:1.6;">PayPay ID またはQRコードで送金</div>
-          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--rose);margin-top:8px;">@amily2026<br><span style="font-size:10px;font-weight:400;color:var(--mid)">（PayPay ID）</span></div>
-        </div>
+      <div style="margin-bottom:16px;">
         <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
           <div style="font-size:24px;margin-bottom:6px;">🏦</div>
           <div style="font-weight:700;font-size:13px;margin-bottom:4px;">お振込み</div>
-          <div style="font-size:11px;color:var(--mid);line-height:1.7;text-align:left;">
+          <div style="font-size:11px;color:var(--mid);line-height:1.7;text-align:left;max-width:240px;margin:0 auto;">
             <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-bottom:1px;">金融機関</span>りそな銀行 東青梅支店（771）
             <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">口座番号</span>普通 3501521
             <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">名義</span>伊藤杏莉（イトウアンリ）
@@ -1634,8 +1635,7 @@ function payPayOrTransferHTML(ticketNo, cnt) {
       </div>
 
       <div style="background:var(--rose-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;">
-        ※ PayPayの場合：メモ欄に${tnoStr}をご記入ください。<br>
-        ※ 振込の場合：振込名義に${tnoStr}を必ずご記入ください。<br>
+        ※ 振込名義に${tnoStr}を必ずご記入ください。<br>
         ※ お申し込みから <strong>1週間以内</strong> にお支払いをお願いいたします。<br>
         ※ 振込確認後に電子チケットのQRコードが表示されます。確認までお時間をいただく場合がございます。
       </div>
