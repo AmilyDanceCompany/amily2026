@@ -296,6 +296,33 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   .tk-grid{grid-template-columns:1fr;}
   .type-cards,.perf-cards{grid-template-columns:1fr 1fr;}
 }
+/* ── 静的座席図 ── */
+.sm-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.sm-inner{display:inline-block;position:relative;padding:4px 0;}
+.sm-outer-row{display:flex;align-items:center;}
+.sm-outer-lbl{width:36px;flex-shrink:0;position:relative;}
+.sm-seat-row{display:flex;align-items:center;margin-bottom:3px;}
+.sm-row-lbl{width:24px;font-family:'DM Mono',monospace;font-size:8px;color:var(--mid);text-align:center;flex-shrink:0;}
+.sm-seat{width:15px;height:11px;border-radius:2px 2px 1px 1px;border:1px solid transparent;flex-shrink:0;margin:0 1px 2px;position:relative;}
+.sm-seat::after{content:'';position:absolute;bottom:-2px;left:2px;right:2px;height:2px;border-radius:0 0 2px 2px;background:inherit;filter:brightness(.65);}
+.sm-avail{background:#3a8c5c;border-color:rgba(46,125,82,.6);}
+.sm-free{background:#dedad5;border-color:#c8c4c0;opacity:.55;}
+.sm-free::after{background:#bbb7b2;}
+.sm-unavail{background:#b8b3ae;border-color:#9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);}
+.sm-unavail::after{display:none;}
+.sm-hidden{opacity:0;pointer-events:none;}
+.sm-hidden::after{display:none;}
+.sm-wc{width:15px;height:11px;border-radius:2px;border:1px solid #a0b8d0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#5b7fc4;background:#dce8f0;margin:0 1px 2px;}
+.sm-aisle{display:flex;align-items:center;margin:4px 0;width:100%;}
+.sm-aisle-line{flex:1;height:1px;background:var(--border);}
+.sm-slope{position:relative;border:1.5px solid #d4822b;border-radius:4px;padding:3px 0;}
+.sm-slope-lbl{position:absolute;top:0;bottom:0;width:34px;writing-mode:vertical-rl;font-family:'DM Mono',monospace;font-size:7px;color:#d4822b;letter-spacing:.1em;white-space:nowrap;display:flex;align-items:center;justify-content:center;}
+.sm-slope-lbl.l{left:-36px;}
+.sm-slope-lbl.r{right:-36px;}
+.sm-stage{background:var(--ink);color:#fff;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.2em;text-align:center;padding:5px 0;border-radius:3px 3px 0 0;margin-bottom:6px;}
+.sm-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.sm-lg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mid);}
+.sm-lg-dot{width:11px;height:8px;border-radius:1px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -493,6 +520,19 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
         <input id="f-performer" placeholder="例: 山田 花子" type="text">
       </div>
     </div>
+    <!-- 7/11以降：手持ちの自由席チケット番号で紐付け（任意） -->
+    <div class="frow full" id="f-free-tno-sec" style="display:none;">
+      <div class="field">
+        <label>自由席チケット番号</label>
+        <input id="f-free-tno" placeholder="例: 1050（複数席は 1050, 1051）" type="text" inputmode="numeric">
+        <div style="font-size:11px;color:var(--mid);margin-top:6px;line-height:1.7;">
+          ※ <strong>お手持ちに自由席チケットがある方は必ずご入力ください。</strong>（券面に記載の番号）<br>
+          ※ 複数席を変更する場合はカンマ区切りで席数分ご入力ください。<br>
+          ※ まだチケットがお手元にない方は、後ほど電子チケット画面からご登録いただけます。<br>
+          ※ <strong>番号をご登録いただくまで電子チケット（QR）は表示されません。</strong>
+        </div>
+      </div>
+    </div>
     <div style="font-size:11px;color:var(--mid);margin-bottom:12px;line-height:1.8;">
       ※ 申し込み後の席変更・キャンセルはできません。
     </div>
@@ -567,8 +607,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <!-- EVENT概要 -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 22px 20px;margin-bottom:24px;">
       <div class="section-h">EVENT</div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:4px;">Amily Summer Showcase 2026</div>
-      <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
+      <div style="font-size:20px;font-weight:700;line-height:1.3;margin-bottom:4px;">Amily Summer Showcase 2026</div>
+      <div style="font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
       <p style="font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
         年に一度のSummer Showcase 開催！<br>
         Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする80分のshowcase！
@@ -580,17 +620,22 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     </div>
 
     <!-- 公演情報 -->
-    <div class="section-h">PERFORMANCE — 8月14日（金）</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;">
-      <div style="border:2px solid var(--border);border-radius:12px;padding:20px 16px;background:#fff;text-align:center;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--rose);margin-bottom:6px;">1st Stage</div>
-        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1;">14:30</div>
-        <div style="font-size:11px;color:var(--mid);margin-top:4px;">開場 14:00</div>
+    <div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:22px 22px 20px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.04);">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;">
+        <div class="section-h" style="margin-bottom:0;">PERFORMANCE</div>
+        <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);">8月14日（金）</div>
       </div>
-      <div style="border:2px solid var(--border);border-radius:12px;padding:20px 16px;background:#fff;text-align:center;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--rose);margin-bottom:6px;">2nd Stage</div>
-        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1;">18:00</div>
-        <div style="font-size:11px;color:var(--mid);margin-top:4px;">開場 17:30</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+          <div style="display:inline-block;background:#8C2D3F;color:#fff;border-radius:12px;padding:2px 10px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:7px;">1st Stage</div>
+          <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:2px;">14:30</div>
+          <div style="font-size:11px;color:var(--mid);">開場 14:00</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+          <div style="display:inline-block;background:#5C3080;color:#fff;border-radius:12px;padding:2px 10px;font-size:10px;font-family:'DM Mono',monospace;margin-bottom:7px;">2nd Stage</div>
+          <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:2px;">18:00</div>
+          <div style="font-size:11px;color:var(--mid);">開場 17:30</div>
+        </div>
       </div>
     </div>
 
@@ -613,6 +658,23 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
             ■ 市バス溝の口駅南口1番のりば（溝23系統）梶が谷駅行き乗車（約10分）→ 市民プラザ下車
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 座席図 -->
+    <div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:22px 16px;margin-bottom:24px;">
+      <div class="section-h">SEAT MAP — ふるさと劇場</div>
+      <div class="sm-wrap">
+        <div class="sm-inner">
+          <div class="sm-stage">— STAGE —</div>
+          <div id="ei-seatmap"></div>
+        </div>
+      </div>
+      <div class="sm-legend">
+        <div class="sm-lg"><div class="sm-lg-dot" style="background:#3a8c5c;"></div>指定席</div>
+        <div class="sm-lg"><div class="sm-lg-dot" style="background:#dedad5;"></div>自由席</div>
+        <div class="sm-lg"><div class="sm-lg-dot" style="background:#b8b3ae;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);"></div>選択不可</div>
+        <div class="sm-lg"><div class="sm-lg-dot" style="background:#dce8f0;border:1px solid #a0b8d0;"></div>車椅子席</div>
       </div>
     </div>
 
@@ -703,6 +765,13 @@ if (MODE === 'performer') {
   document.getElementById('type-cards').style.gridTemplateColumns = '1fr';
 }
 
+// フェーズ（テスト用に ?phase=2 で上書き可能）
+const PHASE = parseInt(params.get('phase'), 10) || window.PHASE || 1;
+// 7/11以降（PHASE 2〜）かつ出演者：自由席チケット番号の入力を必須表示
+if (MODE === 'performer' && PHASE >= 2) {
+  document.getElementById('f-free-tno-sec').style.display = '';
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -712,8 +781,8 @@ let selSeats = new Map();
 
 // Ticket number counters (simulated; in production managed by GAS/sheet)
 const ticketCounters = {
-  '1st': { performer: 1001, general_reserved: 1397, general_free: 1397 },
-  '2nd': { performer: 2001, general_reserved: 2397, general_free: 2397 }
+  '1st': { performer: 1001, general_reserved: 1393, general_free: 1393 },
+  '2nd': { performer: 2001, general_reserved: 2393, general_free: 2393 }
 };
 
 // Booked seats (fetched from GAS at runtime)
@@ -1192,6 +1261,24 @@ function checkNext() {
   document.getElementById('btn-next0').disabled = !selectedPerf;
 }
 
+// 予約済み指定席をGASから取得して bookedSeats に反映
+function loadTakenSeats() {
+  return fetch(`${GAS_URL}?action=getTakenSeats`)
+    .then(r => r.json())
+    .then(res => {
+      if (res.status !== 'ok' || !res.seats) return;
+      ['1st','2nd'].forEach(p => {
+        const set = new Set();
+        // 自分のセッションで選択済みの席は残す
+        (bookedSeats[p] || new Set()).forEach(id => set.add(id));
+        (res.seats[p] || []).forEach(id => set.add(String(id).trim()));
+        bookedSeats[p] = set;
+      });
+      updateRemaining();
+    })
+    .catch(err => console.warn('予約済み席の取得に失敗:', err));
+}
+
 function updateRemaining() {
   ['1st','2nd'].forEach(p => {
     const rem = 116 - (bookedSeats[p]?.size || 0);
@@ -1226,10 +1313,12 @@ function goToStep1() {
     return;
   }
   selSeats.clear();
-  buildSeatMap();
-  renderCart();
   document.getElementById('map-badge').textContent = selectedPerf === '1st' ? '1st公演 14:30' : '2nd公演 18:00';
   setScreen(1);
+  buildSeatMap();
+  renderCart();
+  // 最新の予約済み席を取得してから再描画（二重予約防止）
+  loadTakenSeats().then(() => buildSeatMap());
 }
 
 function goToScreen0() { selSeats.clear(); setScreen(0); }
@@ -1295,9 +1384,14 @@ function submitForm() {
   if (email !== email2) { alert('メールアドレスが一致しません。'); return; }
 
   let performer = '';
+  let freeTicketNo = '';
   if (ticketType === 'upgrade') {
     performer = document.getElementById('f-performer').value.trim();
     if (!performer) { alert('チケット記載の出演者名をご入力ください。'); return; }
+    // 7/11以降は手持ちの自由席チケット番号を入力できる（任意）
+    if (PHASE >= 2) {
+      freeTicketNo = document.getElementById('f-free-tno').value.trim();
+    }
   }
 
   let freeCount = 1;
@@ -1314,55 +1408,13 @@ function submitForm() {
 
   const ref = (selectedPerf === '1st' ? 'S1' : 'S2') + '-' + Date.now().toString(36).toUpperCase().slice(-5);
 
-  // Populate completion screen
+  // 完了画面の表示内容を準備
   const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
   const typeLabel = { reserved:'新規指定席', upgrade:'差額変更（指定席）', free:'自由席' }[ticketType];
   const cnt = ticketType === 'free' ? freeCount : selSeats.size;
   const price = getPrice();
   const total = cnt * price;
 
-  document.getElementById('c-perf').textContent = perfLabel;
-  document.getElementById('c-type').textContent = typeLabel;
-  document.getElementById('c-email').textContent = email;
-  document.getElementById('c-total').textContent = `¥${total.toLocaleString()}`;
-  document.getElementById('c-ref').textContent = ref;
-
-  if (ticketType === 'upgrade') {
-    document.getElementById('c-name-lbl').textContent = '出演者名';
-    document.getElementById('c-name').textContent = performer;
-    document.getElementById('c-upgrade-note').style.display = 'inline';
-  } else {
-    document.getElementById('c-name-lbl').textContent = 'お名前';
-    document.getElementById('c-name').textContent = `${sei} ${mei}`;
-    document.getElementById('c-upgrade-note').style.display = 'none';
-  }
-
-  // Seats
-  const seatsWrap = document.getElementById('c-seats-wrap');
-  if (ticketType !== 'free' && selSeats.size > 0) {
-    seatsWrap.style.display = 'flex';
-    const seatsEl = document.getElementById('c-seats');
-    seatsEl.innerHTML = '';
-    selSeats.forEach((_,id) => {
-      const s = document.createElement('span'); s.className='tst'; s.textContent=id; seatsEl.appendChild(s);
-    });
-  } else {
-    seatsWrap.style.display = 'none';
-  }
-
-  // Ticket number
-  const endNo = ticketNo + cnt - 1;
-  document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
-
-  // comp-sub と支払い案内をフェーズ・モードで動的切替
-  renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt);
-
-  // Mark seats as booked
-  selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
-
-  setScreen(3);
-
-  // GASに予約データを送信
   const payload = {
     action: 'reserve',
     ref,
@@ -1376,14 +1428,100 @@ function submitForm() {
     seats: ticketType !== 'free' ? [...selSeats.keys()].join(', ') : '',
     count: cnt,
     total,
-    freeTicket: '',
+    freeTicketNo,
     note: '',
   };
+
+  // 完了画面を描画する処理（送信成功後に呼ぶ）
+  function showCompletion() {
+    document.getElementById('c-perf').textContent = perfLabel;
+    document.getElementById('c-type').textContent = typeLabel;
+    document.getElementById('c-email').textContent = email;
+    document.getElementById('c-total').textContent = `¥${total.toLocaleString()}`;
+    document.getElementById('c-ref').textContent = ref;
+
+    if (ticketType === 'upgrade') {
+      document.getElementById('c-name-lbl').textContent = '出演者名';
+      document.getElementById('c-name').textContent = performer;
+      document.getElementById('c-upgrade-note').style.display = 'inline';
+    } else {
+      document.getElementById('c-name-lbl').textContent = 'お名前';
+      document.getElementById('c-name').textContent = `${sei} ${mei}`;
+      document.getElementById('c-upgrade-note').style.display = 'none';
+    }
+
+    const seatsWrap = document.getElementById('c-seats-wrap');
+    if (ticketType !== 'free' && selSeats.size > 0) {
+      seatsWrap.style.display = 'flex';
+      const seatsEl = document.getElementById('c-seats');
+      seatsEl.innerHTML = '';
+      selSeats.forEach((_,id) => {
+        const s = document.createElement('span'); s.className='tst'; s.textContent=id; seatsEl.appendChild(s);
+      });
+    } else {
+      seatsWrap.style.display = 'none';
+    }
+
+    if (ticketType === 'upgrade' && freeTicketNo) {
+      document.getElementById('c-ticketno').textContent = freeTicketNo;
+    } else {
+      const endNo = ticketNo + cnt - 1;
+      document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
+    }
+
+    renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt);
+    selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
+    setScreen(3);
+  }
+
+  const btn = document.querySelector('#scr2 .btn-fs');
+
+  // 自由席は座席競合がないため即時完了
+  if (ticketType === 'free') {
+    showCompletion();
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    }).catch(err => console.warn('GAS送信エラー:', err));
+    return;
+  }
+
+  // 指定席・差額変更：送信が成功（＝座席確保）してから完了画面へ
+  if (btn) { btn.disabled = true; btn.textContent = '確定処理中…'; }
   fetch(GAS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(payload),
-  }).catch(err => console.warn('GAS送信エラー:', err));
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'ok') {
+        showCompletion();
+        return;
+      }
+      if (res.code === 'seat_taken') {
+        // 他の方が先に確定 → 該当席を売り切れにして座席選択へ戻す
+        (res.conflictSeats || []).forEach(id => bookedSeats[selectedPerf].add(String(id).trim()));
+        selSeats.clear();
+        const conf = (res.conflictSeats || []).join('・');
+        alert(
+          `選択された座席${conf ? '（' + conf + '）' : ''}は、ちょうど他の方のお申し込みが先に確定し、売り切れとなりました。\n` +
+          `恐れ入りますが、最初から座席をお選び直しください。`
+        );
+        setScreen(1);
+        loadTakenSeats().then(() => { buildSeatMap(); renderCart(); });
+      } else {
+        alert(res.message || '申し込みの確定に失敗しました。お手数ですが再度お試しください。');
+      }
+    })
+    .catch(err => {
+      console.warn('GAS送信エラー:', err);
+      alert('通信エラーが発生しました。電波状況をご確認のうえ再度お試しください。');
+    })
+    .finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = '予約を確定する'; }
+    });
 }
 
 // ============================================================
@@ -1474,8 +1612,105 @@ function resetAll() {
   setScreen(0);
 }
 
+// ── 静的座席図（event-info用） ──
+(function(){
+  const RC={
+    A:{l:[6,12],r:[25,31],s:[13,14,15,16,21,22,23,24]},
+    B:{l:[5,12],r:[25,32],s:rng(13,24)},C:{l:[4,12],r:[25,33],s:rng(13,24)},
+    D:{l:[2,12],r:[25,35],s:rng(13,24)},E:{l:[2,12],r:[25,35],s:rng(13,24)},
+    F:{l:[2,12],r:[25,35],s:rng(13,24)},G:{l:[1,12],r:[25,36],s:rng(13,24)},
+    H:{l:[1,12],r:[25,36],s:[]},I:{l:[1,12],r:[25,36],s:rng(13,24)},
+    J:{l:[1,12],r:[25,36],s:rng(13,24)},K:{l:[1,12],r:[25,36],s:rng(13,24)},
+    L:{l:[1,12],r:[25,36],s:[]},M:{l:[2,12],r:[25,35],s:[]},
+    N:{l:[3,12],r:[25,34],s:[]},O:{l:null,r:[25,33],s:[],wc:true}
+  };
+  function rng(a,b){const x=[];for(let i=a;i<=b;i++)x.push(i);return x;}
+  function mk(cls){const d=document.createElement('div');d.className='sm-seat sm-'+cls;return d;}
+  function wrapRow(inner){
+    const o=document.createElement('div');o.className='sm-outer-row';
+    const l=document.createElement('div');l.className='sm-outer-lbl';
+    const r=document.createElement('div');r.className='sm-outer-lbl';
+    o.appendChild(l);o.appendChild(inner);o.appendChild(r);return o;
+  }
+  function hdr(){
+    const row=document.createElement('div');row.className='sm-seat-row';row.style.marginBottom='5px';
+    const sp=()=>{const d=document.createElement('div');d.style.cssText='width:24px;flex-shrink:0;';return d;};
+    const gp=()=>{const d=document.createElement('div');d.style.cssText='width:8px;flex-shrink:0;';return d;};
+    const n=v=>{const d=document.createElement('div');d.style.cssText='width:17px;flex-shrink:0;text-align:center;font-family:"DM Mono",monospace;font-size:6px;color:rgba(120,120,120,.6);';d.textContent=v;return d;};
+    row.appendChild(sp());
+    for(let c=1;c<=12;c++)row.appendChild(n(c));row.appendChild(gp());
+    for(let c=13;c<=24;c++)row.appendChild(n(c));row.appendChild(gp());
+    for(let c=25;c<=36;c++)row.appendChild(n(c));row.appendChild(sp());
+    return wrapRow(row);
+  }
+  function bldRow(nm){
+    const cfg=RC[nm];
+    const row=document.createElement('div');row.className='sm-seat-row';
+    const lbl=()=>{const d=document.createElement('div');d.className='sm-row-lbl';d.textContent=nm;return d;};
+    const gp=()=>{const d=document.createElement('div');d.style.cssText='width:8px;flex-shrink:0;';return d;};
+    row.appendChild(lbl());
+    if(cfg.wc){
+      for(let c=1;c<=7;c++)row.appendChild(mk('hidden'));
+      for(let c=8;c<=12;c++){const d=document.createElement('div');d.className='sm-wc';d.textContent='♿';row.appendChild(d);}
+    } else if(cfg.l){
+      const[lf,lt]=cfg.l;
+      for(let c=1;c<lf;c++)row.appendChild(mk('hidden'));
+      for(let c=lf;c<=lt;c++)row.appendChild(mk('free'));
+      for(let c=lt+1;c<=12;c++)row.appendChild(mk('hidden'));
+    } else {for(let c=1;c<=12;c++)row.appendChild(mk('hidden'));}
+    row.appendChild(gp());
+    for(let c=13;c<=24;c++){
+      if((nm==='A'&&c>=17&&c<=20)||(nm==='H')||(['M','N','O'].includes(nm)&&c>=13&&c<=16))row.appendChild(mk('unavail'));
+      else if(cfg.s.includes(c))row.appendChild(mk('avail'));
+      else row.appendChild(mk('free'));
+    }
+    row.appendChild(gp());
+    if(cfg.r){
+      const[rf,rt]=cfg.r;
+      for(let c=25;c<rf;c++)row.appendChild(mk('hidden'));
+      for(let c=rf;c<=rt;c++)row.appendChild(mk('free'));
+      for(let c=rt+1;c<=36;c++)row.appendChild(mk('hidden'));
+    } else {for(let c=25;c<=36;c++)row.appendChild(mk('hidden'));}
+    row.appendChild(lbl());return row;
+  }
+  const root=document.getElementById('ei-seatmap');
+  if(!root)return;
+  root.appendChild(hdr());
+  const SLOPE=new Set(['H','I','J','K','L','M','N','O']);
+  const ss=document.createElement('div');ss.className='sm-slope';
+  const sl=document.createElement('div');sl.className='sm-slope-lbl l';sl.textContent='傾斜型座席・段差あり';
+  const sr=document.createElement('div');sr.className='sm-slope-lbl r';sr.textContent='傾斜型座席・段差あり';
+  ss.appendChild(sl);ss.appendChild(sr);
+  ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'].forEach(nm=>{
+    if(nm==='E'){
+      const a=document.createElement('div');a.className='sm-aisle';
+      const ll=document.createElement('div');ll.className='sm-row-lbl';ll.style.cssText='font-size:8px;color:#999;';ll.textContent='通路';
+      const line=document.createElement('div');line.className='sm-aisle-line';
+      const rl=document.createElement('div');rl.className='sm-row-lbl';rl.style.cssText='font-size:8px;color:#999;';rl.textContent='通路';
+      a.appendChild(ll);a.appendChild(line);a.appendChild(rl);
+      root.appendChild(wrapRow(a));
+    }
+    if(SLOPE.has(nm)){
+      ss.appendChild(bldRow(nm));
+      if(nm==='O'){
+        const ow=document.createElement('div');ow.className='sm-outer-row';
+        const ol=document.createElement('div');ol.className='sm-outer-lbl';
+        const or2=document.createElement('div');or2.className='sm-outer-lbl';
+        ow.appendChild(ol);ow.appendChild(ss);ow.appendChild(or2);
+        root.appendChild(ow);
+      }
+    } else {root.appendChild(wrapRow(bldRow(nm)));}
+  });
+  setTimeout(()=>{
+    const inner=document.querySelector('#ei-seatmap')?.closest('.sm-inner');
+    const wrap=document.querySelector('#ei-seatmap')?.closest('.sm-wrap');
+    if(wrap) wrap.scrollLeft=374-wrap.clientWidth/2;
+  },60);
+})();
+
 // init
 updateRemaining();
+loadTakenSeats();  // 起動時に予約済み席を取得（残席表示・売り切れ反映）
 
 // ── トラックパッド・ピンチ操作でズーム ──
 (function() {

@@ -52,6 +52,12 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .unpaid-box{text-align:center;padding:20px 18px;border-top:1px dashed var(--border);color:var(--mid);}
 .unpaid-icon{font-size:32px;margin-bottom:8px;}
 .unpaid-txt{font-size:12px;line-height:1.7;}
+.reg-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.reg-input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:14px;color:#1a1a1a;outline:none;text-align:center;}
+.reg-input:focus{border-color:#8C2D3F;}
+.reg-btn{width:100%;background:#8C2D3F;color:#fff;border:none;padding:11px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;}
+.reg-btn:disabled{opacity:.6;cursor:default;}
+.reg-msg{font-size:11px;line-height:1.6;margin-top:2px;}
 
 .loading{text-align:center;padding:60px 0;color:var(--mid);font-size:13px;}
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--rose);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
@@ -105,6 +111,7 @@ const GAS_URL        = 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS
 const TICKET_BASE    = location.origin + location.pathname;
 const params         = new URLSearchParams(location.search);
 const directId       = params.get('id');
+let   loggedInEmail  = '';  // メールログイン時のアドレス（番号登録に使用）
 
 window.addEventListener('DOMContentLoaded', () => {
   if (directId) {
@@ -123,6 +130,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function loginByEmail() {
   const email = document.getElementById('email-input').value.trim().toLowerCase();
   if (!email) { showErr('メールアドレスを入力してください。'); return; }
+  loggedInEmail = email;
   const btn = document.getElementById('login-btn');
   btn.disabled = true;
   showLoading();
@@ -171,15 +179,72 @@ function hideLoading() {
   document.getElementById('view-loading').style.display = 'none';
 }
 
+// 自由席チケット番号を登録（差額変更の番号未登録カードから）
+function registerFreeTicket(ref, inp, btn, msg) {
+  const val = (inp.value || '').trim();
+  msg.style.display = 'none';
+  if (!val) { showRegMsg(msg, '自由席チケット番号を入力してください。', false); return; }
+  if (!loggedInEmail) { showRegMsg(msg, 'お手数ですが、再度メールアドレスでログインしてください。', false); return; }
+
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '登録中…';
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'linkFreeTicket', ref, email: loggedInEmail, freeTicket: val }),
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'ok') {
+        showRegMsg(msg, '登録が完了しました。最新の状態を読み込みます…', true);
+        // 一覧を再取得して表示を更新
+        setTimeout(() => reloadByEmail(), 800);
+      } else {
+        btn.disabled = false; btn.textContent = orig;
+        showRegMsg(msg, res.message || '登録に失敗しました。番号をご確認ください。', false);
+      }
+    })
+    .catch(() => {
+      btn.disabled = false; btn.textContent = orig;
+      showRegMsg(msg, '通信エラーが発生しました。再度お試しください。', false);
+    });
+}
+
+function showRegMsg(el, text, ok) {
+  el.textContent = text;
+  el.style.color = ok ? '#2e7d4f' : '#c0392b';
+  el.style.display = 'block';
+}
+
+// メールアドレスで一覧を再取得（登録後の更新用）
+function reloadByEmail() {
+  if (!loggedInEmail) return;
+  showLoading();
+  fetch(`${GAS_URL}?action=getTicketsByEmail&email=${encodeURIComponent(loggedInEmail)}`)
+    .then(r => r.json())
+    .then(res => {
+      hideLoading();
+      if (res.status !== 'ok') { showErr(res.message || 'チケットが見つかりません。'); return; }
+      showTickets(res.tickets, true);
+    })
+    .catch(() => { hideLoading(); showErr('通信エラーが発生しました。'); });
+}
+
 function buildCard(t) {
-  const noStr     = String(t.ticketNo || '').padStart(5, '0') || t.ticketNoStr || '';
+  const noStr     = t.needsTicketNo ? '—' : (String(t.ticketNo || '').padStart(5, '0') || t.ticketNoStr || '');
   const perfLabel = t.perf === '1st' ? '1st Stage　14:30開演（開場 14:00）' : '2nd Stage　18:00開演（開場 17:30）';
   const isPaid      = t.paid || t.payment === '振込済';
   const isChecked   = t.checkin === '入場済';
   const isFree      = !t.seatType || t.seatType === '自由席';
   const isPerformer = t.handling && t.handling !== '一般';
+  const needsReg    = !!t.needsTicketNo;  // 差額変更で自由席チケット番号が未登録
   let showQR;
-  if (!isFree) {
+  if (needsReg) {
+    // 番号未登録 → QR非表示（未入金と同様）
+    showQR = false;
+  } else if (!isFree) {
     // 指定席：紙QR・メールログインともに入金済のみ表示
     showQR = isPaid;
   } else if (isPerformer) {
@@ -214,7 +279,7 @@ function buildCard(t) {
   }
 
   // チケット情報
-  const seatLabel = isFree ? '自由席' : `指定席　${t.seatType}`;
+  const seatLabel = needsReg ? '指定席（番号登録待ち）' : (isFree ? '自由席' : `指定席　${t.seatType}`);
   card.innerHTML += `
     <div class="tc-body">
       <div class="tc-row">
@@ -241,6 +306,26 @@ function buildCard(t) {
         <div id="${qrId}"></div>
         <div class="qr-note">入場時にこちらのQRコードをご提示ください</div>
       </div>`;
+  } else if (needsReg) {
+    const regId = `reg-${Math.random().toString(36).slice(2)}`;
+    card.innerHTML += `
+      <div class="unpaid-box">
+        <div class="unpaid-icon">🎫</div>
+        <div class="unpaid-txt">お手持ちの<strong>自由席チケット番号の登録</strong>が必要です。<br>券面に記載の番号をご登録いただくと、お支払い確認後に電子チケット（QRコード）が表示されます。</div>
+        <div class="reg-box" id="${regId}">
+          <input class="reg-input" type="text" inputmode="numeric" placeholder="例: 1050（複数席は 1050, 1051）">
+          <button class="reg-btn" type="button">この番号で登録する</button>
+          <div class="reg-msg" style="display:none;"></div>
+        </div>
+      </div>`;
+    setTimeout(() => {
+      const boxEl = document.getElementById(regId);
+      if (!boxEl) return;
+      const inp = boxEl.querySelector('.reg-input');
+      const b   = boxEl.querySelector('.reg-btn');
+      const msg = boxEl.querySelector('.reg-msg');
+      b.addEventListener('click', () => registerFreeTicket(t.ref, inp, b, msg));
+    }, 50);
   } else {
     card.innerHTML += `
       <div class="unpaid-box">
@@ -261,8 +346,8 @@ function buildCard(t) {
     }, 80);
   }
 
-  // 座席図（指定席のみ）
-  if (!isFree) {
+  // 座席図（指定席のみ・番号登録待ちは非表示）
+  if (!isFree && !needsReg) {
     const mapId = `smap-${noStr}-${Math.random().toString(36).slice(2)}`;
     card.innerHTML += `
       <div class="seatmap-box">
