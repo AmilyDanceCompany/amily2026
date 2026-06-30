@@ -48,6 +48,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 
 .qr-wrap{text-align:center;padding:16px 18px 20px;border-top:1px dashed var(--border);display:flex;flex-direction:column;align-items:center;}
 .qr-note{font-size:10px;color:var(--mid);margin-top:8px;}
+.qr-subnote{display:inline-block;margin-top:4px;font-size:9px;color:var(--mid);opacity:.85;}
 
 .unpaid-box{text-align:center;padding:20px 18px;border-top:1px dashed var(--border);color:var(--mid);}
 .unpaid-icon{font-size:32px;margin-bottom:8px;}
@@ -306,7 +307,7 @@ function buildCard(t) {
     card.innerHTML += `
       <div class="qr-wrap">
         <div id="${qrId}"></div>
-        <div class="qr-note">入場時にこちらのQRコードをご提示ください</div>
+        <div class="qr-note">入場時にこちらのQRコードをご提示ください${isPerformer ? '' : '<br><span class="qr-subnote">紙チケットをご希望の場合は当日受付にてお申し付けください</span>'}</div>
       </div>`;
   } else if (needsReg) {
     const regId = `reg-${Math.random().toString(36).slice(2)}`;
@@ -476,45 +477,12 @@ function buildSeatMap(wrapperId, seatType) {
     }
   });
 
-  let scale=1,tx=0,ty=0;
-  const MIN_SCALE=0.5,MAX_SCALE=6;
+  // 全体フィット表示（ズーム・ドラッグなし）
   const ww=wrap.clientWidth,wh=wrap.clientHeight;
-  scale=Math.min(ww/totalW,wh/totalH)*0.95;
-  tx=(ww-totalW*scale)/2;ty=(wh-totalH*scale)/2;
-  function apply(){svg.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;}
-  apply();
-
-  let drag=null;
-  wrap.addEventListener('mousedown',e=>{drag={x:e.clientX-tx,y:e.clientY-ty};wrap.style.cursor='grabbing';});
-  window.addEventListener('mousemove',e=>{if(!drag)return;tx=e.clientX-drag.x;ty=e.clientY-drag.y;apply();});
-  window.addEventListener('mouseup',()=>{drag=null;wrap.style.cursor='grab';});
-  wrap.addEventListener('wheel',e=>{
-    e.preventDefault();
-    const rc=wrap.getBoundingClientRect();
-    const mx=e.clientX-rc.left,my=e.clientY-rc.top;
-    const d=e.deltaY<0?1.12:0.9;
-    const ns2=Math.min(MAX_SCALE,Math.max(MIN_SCALE,scale*d));
-    tx=mx-(mx-tx)*(ns2/scale);ty=my-(my-ty)*(ns2/scale);scale=ns2;apply();
-  },{passive:false});
-  let lastDist=null;
-  wrap.addEventListener('touchstart',e=>{
-    if(e.touches.length===2)lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    else if(e.touches.length===1)drag={x:e.touches[0].clientX-tx,y:e.touches[0].clientY-ty};
-  },{passive:true});
-  wrap.addEventListener('touchmove',e=>{
-    e.preventDefault();
-    if(e.touches.length===2&&lastDist!==null){
-      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2};
-      const rc=wrap.getBoundingClientRect();
-      const mx=mid.x-rc.left,my=mid.y-rc.top;
-      const ns2=Math.min(MAX_SCALE,Math.max(MIN_SCALE,scale*(d/lastDist)));
-      tx=mx-(mx-tx)*(ns2/scale);ty=my-(my-ty)*(ns2/scale);scale=ns2;lastDist=d;apply();
-    } else if(e.touches.length===1&&drag){
-      tx=e.touches[0].clientX-drag.x;ty=e.touches[0].clientY-drag.y;apply();
-    }
-  },{passive:false});
-  wrap.addEventListener('touchend',()=>{drag=null;lastDist=null;});
+  const scale=Math.min(ww/totalW,wh/totalH)*0.95;
+  const tx=(ww-totalW*scale)/2,ty=(wh-totalH*scale)/2;
+  svg.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+  wrap.style.cursor='default';
 }
 
 document.getElementById('email-input').addEventListener('keydown', e => {
