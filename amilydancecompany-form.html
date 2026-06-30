@@ -526,10 +526,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
         <label>自由席チケット番号</label>
         <input id="f-free-tno" placeholder="例: 1050（複数席は 1050, 1051）" type="text" inputmode="numeric">
         <div style="font-size:11px;color:var(--mid);margin-top:6px;line-height:1.7;">
-          ※ <strong>お手持ちに自由席チケットがある方は必ずご入力ください。</strong>（券面に記載の番号）<br>
-          ※ 複数席を変更する場合はカンマ区切りで席数分ご入力ください。<br>
-          ※ まだチケットがお手元にない方は、後ほど電子チケット画面からご登録いただけます。<br>
-          ※ <strong>番号をご登録いただくまで電子チケット（QR）は表示されません。</strong>
+          お持ちの自由席チケットを指定席に変更します。<strong>券面に記載の番号</strong>をご入力ください。<br>
+          ・チケットがお手元にある方は<strong>必ずご入力ください</strong><br>
+          ・複数席の場合はカンマ区切りで（例：1050, 1051）<br>
+          ・まだお手元にない方は空欄でOK。後日、電子チケット画面から登録できます<br>
+          ・<strong>番号を登録するまで電子チケット（QR）は表示されません</strong>
         </div>
       </div>
     </div>
@@ -541,6 +542,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <!-- 一般向け注意事項 -->
   <div id="general-notice" style="display:none;font-size:11px;color:var(--mid);margin-bottom:12px;line-height:1.8;">
     ※ お支払い後の返金はできません。
+  </div>
+
+  <div style="font-size:11px;color:var(--mid);margin-bottom:12px;line-height:1.8;text-align:center;">
+    ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。
   </div>
 
   <div class="form-btns">
@@ -609,11 +614,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div class="section-h">EVENT</div>
       <div style="font-size:20px;font-weight:700;line-height:1.3;margin-bottom:4px;">Amily Summer Showcase 2026</div>
       <div style="font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
-      <p style="font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
         年に一度のSummer Showcase 開催！<br>
         Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする80分のshowcase！
       </p>
-      <p style="font-size:13px;color:var(--mid);line-height:1.95;">
+      <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);line-height:1.95;">
         積み重ねた挑戦と成長を、それぞれの輝きに変えて💎<br>
         Amily Dance Companyならではの世界観をお楽しみください💋
       </p>
@@ -646,18 +651,21 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div style="font-size:12px;color:var(--mid);margin-bottom:16px;">〒213-0014 神奈川県川崎市高津区新作1-19-1</div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div style="background:var(--bg);border-radius:10px;padding:13px 15px;">
-          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「梶が谷駅」から</div>
+          <div style="font-size:13px;line-height:1.85;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「梶が谷駅」から</div>
           <div style="font-size:12px;line-height:1.85;color:var(--ink);">
             ■ 市バス4番のりば（溝23系統）溝の口駅南口行き乗車（約5分）→ 市民プラザ下車<br>
             ■ 梶が谷駅より徒歩（約15分）
           </div>
         </div>
         <div style="background:var(--bg);border-radius:10px;padding:13px 15px;">
-          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「溝の口駅」・JR南武線「武蔵溝ノ口駅」から</div>
+          <div style="font-size:13px;line-height:1.85;color:var(--mid);margin-bottom:7px;">🚃 東急田園都市線「溝の口駅」・JR南武線「武蔵溝ノ口駅」から</div>
           <div style="font-size:12px;line-height:1.85;color:var(--ink);">
             ■ 市バス溝の口駅南口1番のりば（溝23系統）梶が谷駅行き乗車（約10分）→ 市民プラザ下車
           </div>
         </div>
+      </div>
+      <div style="font-size:12px;color:var(--mid);line-height:1.85;margin-top:14px;">
+        ※ ご来場の際は、なるべく公共交通機関をご利用ください。
       </div>
     </div>
 
@@ -676,7 +684,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
         <div class="sm-lg"><div class="sm-lg-dot" style="background:#b8b3ae;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 3px);"></div>選択不可</div>
         <div class="sm-lg"><div class="sm-lg-dot" style="background:#dce8f0;border:1px solid #a0b8d0;"></div>車椅子席</div>
       </div>
+      <div id="ei-area-note" style="background:var(--rose-l);border:1px solid rgba(200,80,110,.2);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;margin-top:12px;"></div>
     </div>
+
+    <!-- 注意事項（モード別・受付前サイトと同内容） -->
+    <div class="section-h" id="notes-h">NOTES</div>
+    <div id="ei-notes" style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 18px 16px;margin-bottom:24px;font-size:12px;color:var(--mid);line-height:1.9;"></div>
 
     <!-- 問い合わせ -->
     <div style="text-align:center;padding-top:20px;font-size:12px;color:var(--mid);line-height:2;">
@@ -764,6 +777,37 @@ if (MODE === 'performer') {
   document.getElementById('tt-upgrade').classList.add('selected');
   document.getElementById('type-cards').style.gridTemplateColumns = '1fr';
 }
+
+// 指定席エリア説明・注意事項（受付前サイトと同内容・モード別）
+(function setNotes() {
+  const areaEl  = document.getElementById('ei-area-note');
+  const notesEl = document.getElementById('ei-notes');
+  if (MODE === 'performer') {
+    areaEl.innerHTML = `
+      <strong>🎭 指定席エリア</strong><br>
+      A列13〜16・21〜24 ／ B〜G列13〜24 ／ I〜K列13〜24<br>
+      合計116席（各公演）`;
+    notesEl.innerHTML = `
+      <strong>出演者の皆様へ</strong><br>
+      ・差額変更（¥500/席）は自由席チケットをお持ちの出演者が対象です。<br>
+      ・1回の申込で最大6席まで選択できます。<br>
+      ・お支払い（精算）については別途ご連絡いたします。<br>
+      ・ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。`;
+  } else {
+    areaEl.innerHTML = `
+      <strong>🎫 指定席エリア（座席表の緑エリア）</strong><br>
+      A列13〜16・21〜24 ／ B〜G列13〜24 ／ I〜K列13〜24<br>
+      合計116席（各公演） ／ 1回の申込で最大6席まで`;
+    notesEl.innerHTML = `
+      <strong>ご注意</strong><br>
+      ・指定席は各公演116席のみです。お早めにお申し込みください。<br>
+      ・自由席チケットは当日自由席エリアにてご着席ください。<br>
+      ・お支払いはPayPayまたはお振込みです。詳細は申込完了メールをご確認ください。<br>
+      ・各回、時間には余裕を持ってお越しください。<br>
+      ・自由席のお客様の整列は、各回開場60分前より開始いたします。それ以前の整列はご遠慮ください。<br>
+      ・ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。`;
+  }
+})();
 
 // フェーズ（テスト用に ?phase=2 で上書き可能）
 const PHASE = parseInt(params.get('phase'), 10) || window.PHASE || 1;
