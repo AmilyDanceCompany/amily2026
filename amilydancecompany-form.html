@@ -60,6 +60,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .pc-date{font-size:11px;color:var(--mid);}
 .pc-remain{font-size:10px;color:var(--green);margin-top:8px;font-family:'DM Mono',monospace;}
 .pc-remain.low{color:#d4822b;}
+.pc-remain.soldout{color:#b03a4a;font-weight:700;}
+.perf-card.soldout{cursor:not-allowed;opacity:.55;background:#f4f2f0;border-color:var(--border);position:relative;}
+.perf-card.soldout:hover{transform:none;box-shadow:none;border-color:var(--border);}
+.pc-soldout-badge{display:inline-block;background:#b03a4a;color:#fff;border-radius:12px;padding:2px 12px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;margin-top:8px;}
 .btn-next{display:block;width:100%;background:var(--rose);color:#fff;border:none;padding:15px;border-radius:10px;font-family:'Noto Sans JP',sans-serif;font-size:14px;letter-spacing:.06em;cursor:pointer;transition:background .2s;font-weight:700;}
 .btn-next:hover{background:var(--rose-d);}
 .btn-next:disabled{background:#ccc;cursor:not-allowed;}
@@ -315,7 +319,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .sm-wc{width:15px;height:11px;border-radius:2px;border:1px solid #a0b8d0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#5b7fc4;background:#dce8f0;margin:0 1px 2px;}
 .sm-aisle{display:flex;align-items:center;margin:4px 0;width:100%;}
 .sm-aisle-line{flex:1;height:1px;background:var(--border);}
-.sm-slope{position:relative;border:1.5px solid #d4822b;border-radius:4px;padding:3px 0;}
+.sm-slope{position:relative;box-shadow:inset 0 0 0 1.5px #d4822b;border-radius:4px;padding:3px 0;}
 .sm-slope-lbl{position:absolute;top:0;bottom:0;width:34px;writing-mode:vertical-rl;font-family:'DM Mono',monospace;font-size:7px;color:#d4822b;letter-spacing:.1em;white-space:nowrap;display:flex;align-items:center;justify-content:center;}
 .sm-slope-lbl.l{left:-36px;}
 .sm-slope-lbl.r{right:-36px;}
@@ -343,6 +347,57 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </div>
 
 <div class="main">
+
+<!-- ── 受付終了オーバーレイ ── -->
+<div id="closed-screen" style="display:none;text-align:center;padding:60px 24px;">
+  <div style="font-size:48px;margin-bottom:16px;">🙇</div>
+  <h2 id="closed-title" style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:14px;color:var(--ink);">受付を終了しました</h2>
+  <p id="closed-msg" style="font-size:14px;color:var(--mid);line-height:2;"></p>
+  <p style="font-size:12px;color:var(--mid);line-height:2;margin-top:18px;">
+    たくさんのお申し込みをいただき、誠にありがとうございました。<br>
+    ご不明な点は <a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a> までお問い合わせください。
+  </p>
+
+  <!-- 自由席キャンセル待ち（満席締切時・一般のみ表示） -->
+  <div id="waitlist-box" style="display:none;max-width:440px;margin:32px auto 0;text-align:left;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:22px 20px;">
+    <div class="section-h" style="margin-bottom:8px;">CANCEL WAITLIST — 自由席キャンセル待ち</div>
+    <p style="font-size:12px;color:var(--mid);line-height:1.9;margin-bottom:16px;">
+      自由席のキャンセル待ちを受け付けています。空きが出てご用意でき次第、ご登録のメールアドレスへ順番にご案内いたします（先着順・確約ではありません）。
+    </p>
+    <div id="wl-form">
+      <div class="frow">
+        <div class="field"><label>姓 <span class="req">*</span></label><input id="wl-sei" type="text" placeholder="山田"></div>
+        <div class="field"><label>名 <span class="req">*</span></label><input id="wl-mei" type="text" placeholder="花子"></div>
+      </div>
+      <div class="frow" style="margin-top:10px;">
+        <div class="field"><label>姓（フリガナ） <span class="req">*</span></label><input id="wl-sei-k" type="text" placeholder="ヤマダ"></div>
+        <div class="field"><label>名（フリガナ） <span class="req">*</span></label><input id="wl-mei-k" type="text" placeholder="ハナコ"></div>
+      </div>
+      <div class="field" style="margin-top:10px;"><label>メールアドレス <span class="req">*</span></label><input id="wl-email" type="email" placeholder="example@email.com"></div>
+      <div class="frow" style="margin-top:10px;">
+        <div class="field"><label>公演回 <span class="req">*</span></label>
+          <select id="wl-perf">
+            <option value="">選択してください</option>
+            <option value="1st">1st Stage 14:30開演</option>
+            <option value="2nd">2nd Stage 18:00開演</option>
+          </select>
+        </div>
+        <div class="field"><label>希望枚数 <span class="req">*</span></label>
+          <select id="wl-count">
+            <option value="1">1枚</option><option value="2">2枚</option>
+            <option value="3">3枚</option><option value="4">4枚</option>
+            <option value="5">5枚</option><option value="6">6枚</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-next" style="margin-top:18px;" id="wl-submit" onclick="submitWaitlist()">キャンセル待ちに登録する</button>
+    </div>
+    <div id="wl-done" style="display:none;text-align:center;padding:14px 0;">
+      <div style="font-size:32px;margin-bottom:8px;">✓</div>
+      <p style="font-size:13px;color:var(--ink);line-height:1.9;">キャンセル待ちのご登録を受け付けました。<br>空きが出ましたらメールでご案内いたします。</p>
+    </div>
+  </div>
+</div>
 
 <!-- ── SCREEN 0 ── -->
 <div class="screen active" id="scr0">
@@ -441,7 +496,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div class="leg"><div class="leg-dot" style="background:#b8b3ae;border:1px solid #9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);"></div>選択不可</div>
     </div>
     <div style="margin-top:10px;font-size:11px;color:#d4822b;background:#fff8f0;border:1px solid #f8d4a0;border-radius:8px;padding:8px 12px;line-height:1.7;">
-      ⚠ <strong>H〜L列は傾斜型座席・段差あり</strong>です。<br>足元にご注意ください。
+      ⚠ <strong>H〜O列は傾斜型座席・段差あり</strong>です。<br>足元にご注意ください。
     </div>
   </div>
 
@@ -495,7 +550,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   </div>
   <div class="frow">
     <div class="field"><label>電話番号 <span class="req">*</span></label><input id="f-tel" placeholder="090-0000-0000" type="tel"></div>
-    <div class="field"><label>枚数</label><input id="f-count" readonly style="background:var(--bg);color:var(--mid)" type="text"></div>
+    <div class="field" id="reserved-count-field"><label>枚数</label><input id="f-count" readonly style="background:var(--bg);color:var(--mid)" type="text"></div>
   </div>
 
   <!-- 自由席：枚数選択 -->
@@ -517,7 +572,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="frow full">
       <div class="field">
         <label>チケット扱い（ダンサー名を記載ください） <span class="req">*</span></label>
-        <input id="f-performer" placeholder="例: 山田 花子" type="text">
+        <input id="f-performer" placeholder="例: Anri" type="text">
       </div>
     </div>
     <!-- 7/11以降：手持ちの自由席チケット番号で紐付け（任意） -->
@@ -545,7 +600,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   </div>
 
   <div style="font-size:11px;color:var(--mid);margin-bottom:12px;line-height:1.8;text-align:center;">
-    ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。
+    ご登録のメールアドレスに届く申し込み完了メールをもって受付完了となります。
   </div>
 
   <div class="form-btns">
@@ -792,7 +847,7 @@ if (MODE === 'performer') {
       ・差額変更（¥500/席）は自由席チケットをお持ちの出演者が対象です。<br>
       ・1回の申込で最大6席まで選択できます。<br>
       ・お支払い（精算）については別途ご連絡いたします。<br>
-      ・ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。`;
+      ・ご登録のメールアドレスに届く申し込み完了メールをもって受付完了となります。`;
   } else {
     areaEl.innerHTML = `
       <strong>🎫 指定席エリア（座席表の緑エリア）</strong><br>
@@ -805,7 +860,7 @@ if (MODE === 'performer') {
       ・お支払いはお振込みです。詳細は申込完了メールをご確認ください。<br>
       ・各回、時間には余裕を持ってお越しください。<br>
       ・自由席のお客様の整列は、各回開場60分前より開始いたします。それ以前の整列はご遠慮ください。<br>
-      ・ご登録のメールアドレスに届く<strong>申し込み完了メールをもって受付完了</strong>となります。`;
+      ・ご登録のメールアドレスに届く申し込み完了メールをもって受付完了となります。`;
   }
 })();
 
@@ -961,7 +1016,8 @@ function buildSeatMap() {
       const containerRect = scrollEl.getBoundingClientRect();
       scrollEl.scrollLeft += boundary - (containerRect.left + containerRect.width / 2);
     } else {
-      const centerOfBlock = 24 + 18 * 17;
+      // 中央ブロック(13-24)の中心 = cols1-12(12×19) + al(19) + 6×19
+      const centerOfBlock = 12 * 19 + 19 + 6 * 19;
       scrollEl.scrollLeft = centerOfBlock - scrollEl.clientWidth / 2;
     }
   }, 60);
@@ -1281,10 +1337,13 @@ function selType(t) {
     if (el) el.classList.toggle('selected', k === t);
   });
   document.getElementById('free-notice').style.display = t === 'free' ? 'block' : 'none';
+  updateRemaining();  // 種別切替で満席判定を更新（自由席は制限なし）
   checkNext();
 }
 
 function selPerf(p) {
+  // 満席の公演は選択不可
+  if (document.getElementById(`pc-${p}`).classList.contains('soldout')) return;
   selectedPerf = p;
   ['1st','2nd'].forEach(k => document.getElementById(`pc-${k}`).classList.toggle('selected', k === selectedPerf));
   checkNext();
@@ -1313,11 +1372,30 @@ function loadTakenSeats() {
 }
 
 function updateRemaining() {
+  // 自由席は席数制限なし → 満席判定の対象外
+  const limited = ticketType !== 'free';
   ['1st','2nd'].forEach(p => {
     const rem = 116 - (bookedSeats[p]?.size || 0);
     const el = document.getElementById(`rem-${p}`);
-    el.textContent = `指定席 残${rem}席`;
-    el.classList.toggle('low', rem < 20);
+    const card = document.getElementById(`pc-${p}`);
+    if (limited && rem <= 0) {
+      el.innerHTML = '<span class="pc-soldout-badge">満席（SOLD OUT）</span>';
+      el.classList.remove('low');
+      el.classList.add('soldout');
+      card.classList.add('soldout');
+      // 満席公演が選択中だった場合は解除
+      if (selectedPerf === p) { selectedPerf = null; card.classList.remove('selected'); checkNext(); }
+    } else if (!limited) {
+      // 自由席：席数制限なし
+      el.textContent = '自由席（席数制限なし）';
+      el.classList.remove('low','soldout');
+      card.classList.remove('soldout');
+    } else {
+      el.textContent = `指定席 残${rem}席`;
+      el.classList.toggle('low', rem < 20);
+      el.classList.remove('soldout');
+      card.classList.remove('soldout');
+    }
   });
 }
 
@@ -1359,6 +1437,7 @@ function goToScreen0() { selSeats.clear(); setScreen(0); }
 function goToForm() {
   buildFormSummary();
   document.getElementById('f-count').value = `${selSeats.size}席`;
+  document.getElementById('reserved-count-field').style.display = '';
   document.getElementById('free-count-sec').style.display = 'none';
   document.getElementById('upgrade-sec').style.display = ticketType === 'upgrade' ? 'block' : 'none';
   document.getElementById('general-notice').style.display = MODE === 'general' ? 'block' : 'none';
@@ -1368,6 +1447,7 @@ function goToForm() {
 
 function buildFormSummaryFree() {
   document.getElementById('free-count-sec').style.display = 'block';
+  document.getElementById('reserved-count-field').style.display = 'none';
   document.getElementById('upgrade-sec').style.display = 'none';
   document.getElementById('general-notice').style.display = MODE === 'general' ? 'block' : 'none';
   document.getElementById('f-count').value = '';
@@ -1581,7 +1661,7 @@ function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt) {
         <div style="background:#f0f0ff;border:1.5px solid rgba(100,80,200,.2);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
           <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:#7060c0;margin-bottom:10px;">PAYMENT</div>
           <p style="font-size:13px;color:#3a3060;line-height:1.9;">
-            🎭 お支払い方法については <strong>7月13日（月）以降</strong> に<br>
+            🎭 お支払い方法は、後日あらためて<br>
             ご登録のメールアドレスへご案内いたします。<br>
             <span style="font-size:11px;color:var(--mid);">現時点でのお手続きは不要です。</span>
           </p>
@@ -1596,17 +1676,15 @@ function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt) {
 
   // ── 一般（reserved / free）── 全フェーズで即時支払い案内
   if (ticketType === 'free') {
-    sub.textContent = `ご予約を承りました。自由席チケット（No.${ticketNo}〜${ticketNo+freeCount-1}）を当日お持ちください。お支払いは下記をご確認ください。`;
+    sub.textContent = `ご予約を承りました。当日は電子チケットのQRコードをご提示ください。紙チケットをご希望の場合は当日受付にてお申し付けください。お支払いは下記をご確認ください。`;
   } else {
-    sub.textContent = 'ご予約を承りました。下記よりお支払いをお済ませください。';
+    sub.textContent = 'ご予約を承りました。当日は電子チケットのQRコードをご提示ください。紙チケットをご希望の場合は当日受付にてお申し付けください。下記よりお支払いをお済ませください。';
   }
   area.innerHTML = payPayOrTransferHTML(ticketNo, cnt);
 }
 
 // PayPay or 振込の案内HTML（出演者フェーズ2以降・一般フェーズ3以降で共用）
 function payPayOrTransferHTML(ticketNo, cnt) {
-  const endNo = cnt > 1 ? `${ticketNo}〜${ticketNo+cnt-1}` : `${ticketNo}`;
-  const tnoStr = `チケット番号 ${endNo}`;
   return `
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;">
       <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--mid);margin-bottom:14px;">PAYMENT — お支払い方法</div>
@@ -1624,7 +1702,7 @@ function payPayOrTransferHTML(ticketNo, cnt) {
       </div>
 
       <div style="background:var(--rose-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;">
-        ※ 振込名義に${tnoStr}を必ずご記入ください。<br>
+        ※ 振込名義は「チケット番号（代表1つ）＋お名前（フルネーム）」を必ずご記入ください（例：${ticketNo}カトウミキ）。<br>
         ※ お申し込みから <strong>1週間以内</strong> にお支払いをお願いいたします。<br>
         ※ 振込確認後に電子チケットのQRコードが表示されます。確認までお時間をいただく場合がございます。
       </div>
@@ -1733,13 +1811,90 @@ function resetAll() {
   setTimeout(()=>{
     const inner=document.querySelector('#ei-seatmap')?.closest('.sm-inner');
     const wrap=document.querySelector('#ei-seatmap')?.closest('.sm-wrap');
-    if(wrap) wrap.scrollLeft=374-wrap.clientWidth/2;
+    // 中央ブロック(13-24)の中心 = outer-lbl(36) + cols1-12(12×17) + al(16) + 6×17
+    if(wrap) wrap.scrollLeft=(36+12*17+16+6*17)-wrap.clientWidth/2;
   },60);
 })();
 
 // init
 updateRemaining();
 loadTakenSeats();  // 起動時に予約済み席を取得（残席表示・売り切れ反映）
+checkFormStatus(); // 受付状態（手動締め切り）を確認
+
+// 受付終了画面を表示する共通処理
+function showClosedScreen({ title, message, waitlist }) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  const steps = document.querySelector('.steps');     if (steps) steps.style.display = 'none';
+  const evi   = document.getElementById('event-info'); if (evi) evi.style.display = 'block';  // イベント詳細は表示
+  if (title)   document.getElementById('closed-title').textContent = title;
+  document.getElementById('closed-msg').textContent = message || '';
+  document.getElementById('waitlist-box').style.display = waitlist ? 'block' : 'none';
+  document.getElementById('closed-screen').style.display = 'block';
+}
+
+// 受付状態を判定して受付終了画面を出す
+// ① 8/14以降 → 公演終了（自動・キャンセル待ちなし）
+// ② 手動CLOSED → 満席締切（一般は自由席キャンセル待ちを受付）
+function checkFormStatus() {
+  const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  const CLOSE = new Date('2026-08-14T00:00:00+09:00');
+  if (now >= CLOSE) {
+    showClosedScreen({ title:'受付を終了しました', message:'本イベントのチケット受付は終了しました。', waitlist:false });
+    return;
+  }
+  fetch(`${GAS_URL}?action=getFormStatus`)
+    .then(r => r.json())
+    .then(res => {
+      if (res.status !== 'ok' || !res.formStatus) return;
+      const fs = res.formStatus;
+      const closed = MODE === 'performer' ? fs.performer === 'CLOSED' : fs.general === 'CLOSED';
+      if (!closed) return;
+      showClosedScreen({
+        title:'満席のため受付を終了しました',
+        message: fs.message || '満席のため受付を終了しました。',
+        // 一般のみ自由席キャンセル待ちを受付（出演者は対象外）
+        waitlist: MODE !== 'performer'
+      });
+    })
+    .catch(err => console.warn('受付状態の取得に失敗:', err));
+}
+
+// 自由席キャンセル待ち登録
+function submitWaitlist() {
+  const sei    = document.getElementById('wl-sei').value.trim();
+  const mei    = document.getElementById('wl-mei').value.trim();
+  const seiKana = document.getElementById('wl-sei-k').value.trim();
+  const meiKana = document.getElementById('wl-mei-k').value.trim();
+  const email  = document.getElementById('wl-email').value.trim();
+  const perf   = document.getElementById('wl-perf').value;
+  const count  = document.getElementById('wl-count').value;
+  if (!sei || !mei) { alert('お名前をご入力ください。'); return; }
+  if (!seiKana || !meiKana) { alert('フリガナをご入力ください。'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('メールアドレスをご確認ください。'); return; }
+  if (!perf) { alert('公演回を選択してください。'); return; }
+
+  const btn = document.getElementById('wl-submit');
+  btn.disabled = true; btn.textContent = '送信中...';
+
+  const payload = { action:'waitlist', sei, mei, seiKana, meiKana, email, perf, count };
+  const url = `${GAS_URL}?` + Object.entries(payload)
+    .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v == null ? '' : v)}`).join('&');
+  fetch(url)
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'ok') {
+        document.getElementById('wl-form').style.display = 'none';
+        document.getElementById('wl-done').style.display = 'block';
+      } else {
+        alert(res.message || '登録に失敗しました。時間をおいて再度お試しください。');
+        btn.disabled = false; btn.textContent = 'キャンセル待ちに登録する';
+      }
+    })
+    .catch(() => {
+      alert('通信エラーが発生しました。時間をおいて再度お試しください。');
+      btn.disabled = false; btn.textContent = 'キャンセル待ちに登録する';
+    });
+}
 
 // ── トラックパッド・ピンチ操作でズーム ──
 (function() {
