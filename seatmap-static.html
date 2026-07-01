@@ -149,7 +149,7 @@ function buildRow(name){
   row.appendChild(aisleLabel());
   for(let c=13;c<=24;c++){
     if((name==='A'&&c>=17&&c<=20)||(name==='H'&&c>=13&&c<=24)||
-       (['M','N','O'].includes(name)&&c>=13&&c<=16)){
+       (['M','N','O'].includes(name)&&c>=13&&c<=24)){
       row.appendChild(seat('unavail'));
     } else if(cfg.selCols.includes(c)){
       row.appendChild(seat('avail'));
