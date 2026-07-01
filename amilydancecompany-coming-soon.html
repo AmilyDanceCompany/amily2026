@@ -286,7 +286,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     } else {for(let c=1;c<=12;c++)row.appendChild(mk('hidden'));}
     row.appendChild(al());
     for(let c=13;c<=24;c++){
-      if((nm==='A'&&c>=17&&c<=20)||(nm==='H')||(['M','N','O'].includes(nm)&&c>=13&&c<=16))row.appendChild(mk('unavail'));
+      if((nm==='A'&&c>=17&&c<=20)||(nm==='H')||(['M','N','O'].includes(nm)&&c>=13&&c<=24))row.appendChild(mk('unavail'));
       else if(cfg.s.includes(c))row.appendChild(mk('avail'));
       else row.appendChild(mk('free'));
     }
