@@ -880,8 +880,8 @@ let selSeats = new Map();
 
 // Ticket number counters (simulated; in production managed by GAS/sheet)
 const ticketCounters = {
-  '1st': { performer: 1001, general_reserved: 1393, general_free: 1393 },
-  '2nd': { performer: 2001, general_reserved: 2393, general_free: 2393 }
+  '1st': { performer: 1001, general_reserved: 1397, general_free: 1397 },
+  '2nd': { performer: 2001, general_reserved: 2397, general_free: 2397 }
 };
 
 // Booked seats (fetched from GAS at runtime)
@@ -1475,7 +1475,7 @@ function buildFormSummary() {
     <div class="ob-r"><div class="ob-rlbl">合計</div><div class="ob-ramt">¥${total.toLocaleString()}</div></div>`;
 
   const typeMap = { reserved:'指定席 ¥4,000/席', upgrade:'差額変更 ¥500/席' };
-  const typeNote = { reserved:'振込確認後、電子チケットが発行されます。', upgrade:'自由席チケット番号は届き次第チケット確認ページから入力できます。' };
+  const typeNote = { reserved:'振込確認後、電子チケットが発行されます。', upgrade:'' };
   document.getElementById('tib').innerHTML = `<div class="tib-icon">${ticketType==='upgrade'?'⬆️':'🎫'}</div><div><div class="tib-title">${typeMap[ticketType]||''}</div><div class="tib-note">${typeNote[ticketType]||''}</div></div>`;
 }
 
