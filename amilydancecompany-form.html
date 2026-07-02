@@ -528,7 +528,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <div class="screen" id="scr2">
 <div class="form-wrap">
   <div class="form-h">お客様情報</div>
-  <div class="form-sub">ご登録のメールアドレスに受付番号・振込先をお送りします。</div>
+  <div class="form-sub" id="form-sub-text">ご登録のメールアドレスに受付番号・振込先をお送りします。</div>
 
   <div class="order-box" id="order-box"></div>
   <div class="tib" id="tib"></div>
@@ -650,7 +650,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <div id="pay-info-area"></div>
 
   <div class="ticket-link-box">
-    <div class="tlb-note">メールアドレスでログインして電子チケットを確認できます<br><span style="font-size:11px;opacity:.75;">紙チケットをご希望の方は当日受付でお渡しします</span></div>
+    <div class="tlb-note">メールアドレスでログインして電子チケットを確認できます<br><span id="tlb-paper-note" style="font-size:11px;opacity:.75;">紙チケットをご希望の方は当日受付でお渡しします</span></div>
     <a href="amilydancecompany-ticket.html" class="tlb-btn">電子チケット確認ページ →</a>
   </div>
 
@@ -775,11 +775,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 // ============================================================
 (function() {
   // ============================================================
-  // ★ テスト中は日付チェックを無効化しています
-  // 本番公開前に下の return; を削除してください
+  // 日付ガード有効。テスト時は ?preview=1 でスキップできます。
   // ============================================================
-  return;
-
   // ?preview=1 がついている場合は日付チェックをスキップ（開発・確認用）
   if (new URLSearchParams(location.search).get('preview') === '1') return;
 
@@ -1441,6 +1438,10 @@ function goToForm() {
   document.getElementById('free-count-sec').style.display = 'none';
   document.getElementById('upgrade-sec').style.display = ticketType === 'upgrade' ? 'block' : 'none';
   document.getElementById('general-notice').style.display = MODE === 'general' ? 'block' : 'none';
+  // 出演者は振込先を送らない（別途連絡）ため案内文を切替
+  document.getElementById('form-sub-text').textContent = MODE === 'performer'
+    ? 'ご登録のメールアドレスに申し込み完了メールをお送りします。'
+    : 'ご登録のメールアドレスに受付番号・振込先をお送りします。';
   document.getElementById('btn-form-back').onclick = () => setScreen(1);
   setScreen(2);
 }
@@ -1552,6 +1553,10 @@ function submitForm() {
     document.getElementById('c-email').textContent = email;
     document.getElementById('c-total').textContent = `¥${total.toLocaleString()}`;
     document.getElementById('c-ref').textContent = ref;
+
+    // 「紙チケットをご希望の方は当日受付でお渡し」は一般受付のみ表示
+    const paperNote = document.getElementById('tlb-paper-note');
+    if (paperNote) paperNote.style.display = MODE === 'performer' ? 'none' : 'inline';
 
     if (ticketType === 'upgrade') {
       document.getElementById('c-name-lbl').textContent = '出演者名';
