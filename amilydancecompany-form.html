@@ -571,8 +571,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="sec-h">— 出演者情報</div>
     <div class="frow full">
       <div class="field">
-        <label>チケット扱い（ダンサー名を記載ください） <span class="req">*</span></label>
-        <input id="f-performer" placeholder="例: Anri" type="text">
+        <label>チケット扱い（お名前・カタカナフルネーム） <span class="req">*</span></label>
+        <input id="f-performer" placeholder="例: ヤマダハナコ" type="text">
       </div>
     </div>
     <!-- 7/11以降：手持ちの自由席チケット番号で紐付け（任意） -->
@@ -991,7 +991,7 @@ function buildSeatMap() {
       outer.appendChild(buildFullRow(row, booked));
     }
   });
-　
+
   wrap.appendChild(outer);
 
   // 初期ズーム100%、指定席エリア（中央ブロック）を中心にスクロール
@@ -1501,7 +1501,7 @@ function submitForm() {
   let freeTicketNo = '';
   if (ticketType === 'upgrade') {
     performer = document.getElementById('f-performer').value.trim();
-    if (!performer) { alert('チケット扱い（ダンサー名）をご入力ください。'); return; }
+    if (!performer) { alert('お名前（カタカナフルネーム）をご入力ください。'); return; }
     // 7/11以降は手持ちの自由席チケット番号を入力できる（任意）
     if (PHASE >= 2) {
       freeTicketNo = document.getElementById('f-free-tno').value.trim();
