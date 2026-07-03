@@ -358,7 +358,6 @@ function buildCard(t) {
         <div class="seatmap-wrap" id="${mapId}">
           <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;transform-origin:0 0;"></svg>
         </div>
-        <div class="seatmap-hint">ピンチ・スクロールでズーム</div>
         <div class="seatmap-legend">
           <span><i style="background:#dedad5;"></i>自由席</span>
           <span><i style="background:#3a8c5c;"></i>指定席</span>
@@ -400,10 +399,12 @@ function buildSeatMap(wrapperId, seatType) {
     N:{left:[3,12],right:[25,34],sel:[]},
     O:{left:null,right:[25,33],sel:[],wc:true}
   };
-  const UNAVAIL = {A:[17,18,19,20],H:rng(13,24),M:rng(13,16),N:rng(13,16),O:rng(13,16)};
+  const UNAVAIL = {A:[17,18,19,20],H:rng(13,24),M:rng(13,24),N:rng(13,24),O:rng(13,24)};
   function rng(a,b){const x=[];for(let i=a;i<=b;i++)x.push(i);return x;}
 
-  const S=6,G=1.5,STEP=S+G,AISLE=10,HDR=8;
+  const S=6,G=1.5,STEP=S+G,AISLE=10,HDR=8,AISLE_V=5;
+  // D→E列間の横通路ぶん、E以降（行index>=4）を下へずらす
+  function rowY(ri){ return HDR+STEP+ri*STEP + (ri>=4?AISLE_V:0); }
   function colToX(c){
     if(c>=1&&c<=12) return (c-1)*STEP;
     if(c>=13&&c<=24) return 12*STEP+AISLE+(c-13)*STEP;
@@ -411,7 +412,7 @@ function buildSeatMap(wrapperId, seatType) {
     return 0;
   }
   const totalW=12*STEP+AISLE+12*STEP+AISLE+12*STEP;
-  const totalH=HDR+STEP+ROWS.length*STEP;
+  const totalH=HDR+STEP+ROWS.length*STEP+AISLE_V;
   svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
   svg.setAttribute('width',totalW);svg.setAttribute('height',totalH);
 
@@ -434,7 +435,7 @@ function buildSeatMap(wrapperId, seatType) {
 
   const lAx=12*STEP+AISLE/2, rAx=12*STEP+AISLE+12*STEP+AISLE/2;
   ROWS.forEach((r,ri)=>{
-    const y=HDR+STEP+ri*STEP;
+    const y=rowY(ri);
     const cfg=ROW_CFG[r];
     const unavCols=UNAVAIL[r]||[];
     [lAx,rAx].forEach(lx=>{
