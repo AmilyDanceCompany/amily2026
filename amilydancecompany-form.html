@@ -572,7 +572,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="frow full">
       <div class="field">
         <label>チケット扱い（お名前・カタカナフルネーム） <span class="req">*</span></label>
-        <input id="f-performer" placeholder="例: ヤマダハナコ" type="text">
+        <input id="f-performer" placeholder="例: イトウアンリ" type="text">
       </div>
     </div>
     <!-- 7/11以降：手持ちの自由席チケット番号で紐付け（任意） -->
@@ -874,6 +874,7 @@ if (MODE === 'performer' && PHASE >= 2) {
 let selectedPerf = null;
 let ticketType = MODE === 'performer' ? 'upgrade' : 'reserved';
 let selSeats = new Map();
+let pendingRef = null; // 送信中の受付番号（再送で使い回し→二重予約防止）
 
 // Ticket number counters (simulated; in production managed by GAS/sheet)
 const ticketCounters = {
@@ -1432,6 +1433,7 @@ function goToStep1() {
 function goToScreen0() { selSeats.clear(); setScreen(0); }
 
 function goToForm() {
+  pendingRef = null; // 確定画面に新規到達 → 新しい受付番号（再送時のみ使い回し）
   buildFormSummary();
   document.getElementById('f-count').value = `${selSeats.size}席`;
   document.getElementById('reserved-count-field').style.display = '';
@@ -1447,6 +1449,7 @@ function goToForm() {
 }
 
 function buildFormSummaryFree() {
+  pendingRef = null; // 確定画面に新規到達 → 新しい受付番号（再送時のみ使い回し）
   document.getElementById('free-count-sec').style.display = 'block';
   document.getElementById('reserved-count-field').style.display = 'none';
   document.getElementById('upgrade-sec').style.display = 'none';
@@ -1520,7 +1523,10 @@ function submitForm() {
   else if (ticketType === 'reserved') { ticketNo = cntr.general_reserved; cntr.general_reserved += selSeats.size || 1; }
   else { ticketNo = cntr.general_free; cntr.general_free += freeCount; }
 
-  const ref = (selectedPerf === '1st' ? 'S1' : 'S2') + '-' + Date.now().toString(36).toUpperCase().slice(-5);
+  // 受付番号は1回だけ生成し、再送（通信エラー後の再クリック）時も同じrefを使う
+  // → サーバー側の重複チェックが効いて二重予約を防げる
+  if (!pendingRef) pendingRef = (selectedPerf === '1st' ? 'S1' : 'S2') + '-' + Date.now().toString(36).toUpperCase().slice(-5);
+  const ref = pendingRef;
 
   // 完了画面の表示内容を準備
   const perfLabel = selectedPerf === '1st' ? '1st Stage 14:30開演' : '2nd Stage 18:00開演';
@@ -1548,6 +1554,7 @@ function submitForm() {
 
   // 完了画面を描画する処理（送信成功後に呼ぶ。serverNos = GASが採番した番号）
   function showCompletion(serverNos) {
+    pendingRef = null; // 予約確定 → 次回は新しい受付番号
     document.getElementById('c-perf').textContent = perfLabel;
     document.getElementById('c-type').textContent = typeLabel;
     document.getElementById('c-email').textContent = email;
@@ -1701,7 +1708,7 @@ function payPayOrTransferHTML(ticketNo, cnt) {
           <div style="font-size:11px;color:var(--mid);line-height:1.7;text-align:left;max-width:240px;margin:0 auto;">
             <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-bottom:1px;">金融機関</span>りそな銀行 東青梅支店（771）
             <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">口座番号</span>普通 3501521
-            <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">名義</span>伊藤杏莉（イトウアンリ）
+            <span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:5px;margin-bottom:1px;">名義</span>イトウ アンリ
           </div>
         </div>
       </div>
