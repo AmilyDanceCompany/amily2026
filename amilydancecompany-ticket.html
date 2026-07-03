@@ -127,7 +127,7 @@ window.addEventListener('DOMContentLoaded', () => {
       .catch(() => { hideLoading(); showErr('通信エラーが発生しました。'); });
   }
 });
-
+　
 function loginByEmail() {
   const email = document.getElementById('email-input').value.trim().toLowerCase();
   if (!email) { showErr('メールアドレスを入力してください。'); return; }
