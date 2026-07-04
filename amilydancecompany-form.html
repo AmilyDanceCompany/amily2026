@@ -1588,16 +1588,26 @@ function submitForm() {
     }
 
     const dispNo = (serverNos && serverNos.length) ? serverNos[0] : ticketNo;
-    // 表示は「No.1397, 1398」で統一（No.は先頭に1つ・以降は数字をカンマ区切り）
-    let noText;
+    const noWrap = document.getElementById('c-ticketno-wrap');
     if (ticketType === 'upgrade' && freeTicketNo) {
-      noText = `No.${freeTicketNo}`;
-    } else if (serverNos && serverNos.length) {
-      noText = `No.${serverNos.join(', ')}`;
+      // 7/8 15:00〜：出演者自身が入力した自由席チケット番号は表示してよい（本人の番号なので）
+      noWrap.style.display = '';
+      document.getElementById('c-ticketno').textContent = `No.${freeTicketNo}`;
+    } else if (ticketType === 'upgrade') {
+      // 〜7/8 15:00（自動紐付け）：入力ミス時に他の方の番号が表示されるのを防ぐため番号を出さない
+      // （正しく紐付いた番号は確認メール／電子チケットでご案内）
+      noWrap.style.display = 'none';
     } else {
-      noText = `No.${Array.from({length: cnt}, (_, i) => ticketNo + i).join(', ')}`;
+      noWrap.style.display = '';
+      // 表示は「No.1397, 1398」で統一（No.は先頭に1つ・以降は数字をカンマ区切り）
+      let noText;
+      if (serverNos && serverNos.length) {
+        noText = `No.${serverNos.join(', ')}`;
+      } else {
+        noText = `No.${Array.from({length: cnt}, (_, i) => ticketNo + i).join(', ')}`;
+      }
+      document.getElementById('c-ticketno').textContent = noText;
     }
-    document.getElementById('c-ticketno').textContent = noText;
 
     renderPaymentInfo(ref, ticketType, dispNo, freeCount, cnt);
     selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
