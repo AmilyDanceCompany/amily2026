@@ -1588,15 +1588,16 @@ function submitForm() {
     }
 
     const dispNo = (serverNos && serverNos.length) ? serverNos[0] : ticketNo;
+    // 表示は「No.1397, 1398」で統一（No.は先頭に1つ・以降は数字をカンマ区切り）
+    let noText;
     if (ticketType === 'upgrade' && freeTicketNo) {
-      document.getElementById('c-ticketno').textContent = freeTicketNo;
+      noText = `No.${freeTicketNo}`;
     } else if (serverNos && serverNos.length) {
-      document.getElementById('c-ticketno').textContent =
-        serverNos.length > 1 ? `${serverNos[0]}〜${serverNos[serverNos.length-1]}` : `${serverNos[0]}`;
+      noText = `No.${serverNos.join(', ')}`;
     } else {
-      const endNo = ticketNo + cnt - 1;
-      document.getElementById('c-ticketno').textContent = cnt > 1 ? `${ticketNo}〜${endNo}` : `${ticketNo}`;
+      noText = `No.${Array.from({length: cnt}, (_, i) => ticketNo + i).join(', ')}`;
     }
+    document.getElementById('c-ticketno').textContent = noText;
 
     renderPaymentInfo(ref, ticketType, dispNo, freeCount, cnt);
     selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
@@ -1687,11 +1688,11 @@ function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt) {
   }
 
   // ── 一般（reserved / free）── 全フェーズで即時支払い案内
-  if (ticketType === 'free') {
-    sub.textContent = `ご予約を承りました。当日は電子チケットのQRコードをご提示ください。紙チケットをご希望の場合は当日受付にてお申し付けください。お支払いは下記をご確認ください。`;
-  } else {
-    sub.textContent = 'ご予約を承りました。当日は電子チケットのQRコードをご提示ください。紙チケットをご希望の場合は当日受付にてお申し付けください。下記よりお支払いをお済ませください。';
-  }
+  sub.innerHTML =
+    'ご予約を承りました。<br>' +
+    '当日は電子チケットのQRコードでご入場いただけます。<br>' +
+    '紙チケットご希望の方は当日受付でお声がけください。<br>' +
+    'お支払いは下記よりお願いします。';
   area.innerHTML = payPayOrTransferHTML(ticketNo, cnt);
 }
 
@@ -1839,7 +1840,12 @@ function showClosedScreen({ title, message, waitlist }) {
   const steps = document.querySelector('.steps');     if (steps) steps.style.display = 'none';
   const evi   = document.getElementById('event-info'); if (evi) evi.style.display = 'block';  // イベント詳細は表示
   if (title)   document.getElementById('closed-title').textContent = title;
-  document.getElementById('closed-msg').textContent = message || '';
+  // 本文がタイトルと同じ（重複）なら本文は表示しない
+  const norm = s => String(s || '').replace(/[。\s]/g, '');
+  const msgEl = document.getElementById('closed-msg');
+  const showMsg = message && norm(message) !== norm(title);
+  msgEl.textContent = showMsg ? message : '';
+  msgEl.style.display = showMsg ? '' : 'none';
   document.getElementById('waitlist-box').style.display = waitlist ? 'block' : 'none';
   document.getElementById('closed-screen').style.display = 'block';
 }
