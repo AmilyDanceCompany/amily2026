@@ -1610,7 +1610,8 @@ function submitForm() {
       document.getElementById('c-ticketno').textContent = noText;
     }
 
-    renderPaymentInfo(ref, ticketType, dispNo, freeCount, cnt);
+    const payerKana = String((seiK || '') + (meiK || '')).replace(/[\s　]/g, '') || 'ヤマダハナコ';
+    renderPaymentInfo(ref, ticketType, dispNo, freeCount, cnt, payerKana);
     selSeats.forEach((_,id) => bookedSeats[selectedPerf].add(id));
     setScreen(3);
   }
@@ -1671,7 +1672,8 @@ function submitForm() {
 // ============================================================
 // PAYMENT INFO — フェーズ×モード で完了画面の案内を切替
 // ============================================================
-function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt) {
+function renderPaymentInfo(ref, ticketType, ticketNo, freeCount, cnt, payerKana) {
+  payerKana = payerKana || 'ヤマダハナコ';
   const area = document.getElementById('pay-info-area');
   const sub  = document.getElementById('comp-sub');
   const phase = window.PHASE || 1;
@@ -1726,7 +1728,7 @@ function payPayOrTransferHTML(ticketNo, cnt) {
       </div>
 
       <div style="background:var(--rose-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--rose-d);line-height:1.8;">
-        ※ 振込名義は「チケット番号（代表1つ）＋お名前（フルネーム）」を必ずご記入ください（例：${ticketNo}カトウミキ）。<br>
+        ※ 振込名義は「チケット番号（代表1つ）＋お名前（フルネーム）」を必ずご記入ください（例：${ticketNo}${payerKana}）。<br>
         ※ お申し込みから <strong>1週間以内</strong> にお支払いをお願いいたします。<br>
         ※ 振込確認後に電子チケットのQRコードが表示されます。確認までお時間をいただく場合がございます。
       </div>
