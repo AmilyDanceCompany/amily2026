@@ -331,6 +331,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </head>
 <body>
 
+<!-- 読み込み中オーバーレイ（受付状態が確定するまで表示 → チラつき防止） -->
+<div id="loading-overlay" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+  <div style="width:34px;height:34px;border:3px solid rgba(0,0,0,.12);border-top-color:var(--rose,#c96);border-radius:50%;animation:ldspin 0.8s linear infinite;"></div>
+  <div style="font-size:12px;color:var(--mid,#999);letter-spacing:.05em;">読み込み中...</div>
+</div>
+<style>@keyframes ldspin{to{transform:rotate(360deg)}}</style>
+
 <div class="hero">
   <img src="amily-icon.png" alt="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;height:260px;object-fit:contain;opacity:.22;pointer-events:none;mix-blend-mode:screen;">
   <div class="hero-eye">TICKET RESERVATION — AMILY DANCE COMPANY</div>
@@ -355,7 +362,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <p id="closed-msg" style="font-size:14px;color:var(--mid);line-height:2;"></p>
   <p style="font-size:12px;color:var(--mid);line-height:2;margin-top:18px;">
     たくさんのお申し込みをいただき、誠にありがとうございました。<br>
-    ご不明な点は <a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a> までお問い合わせください。
+    ご不明な点は <a href="mailto:amilysummershowcase2026@gmail.com" style="color:var(--rose);">amilysummershowcase2026@gmail.com</a> までお問い合わせください。
   </p>
 
   <!-- 自由席キャンセル待ち（満席締切時・一般のみ表示） -->
@@ -758,7 +765,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <!-- 問い合わせ -->
     <div style="text-align:center;padding-top:20px;font-size:12px;color:var(--mid);line-height:2;">
       お問い合わせ：Instagramアカウント または<br>
-      <a href="mailto:amilydancecompany@gmail.com" style="color:var(--rose);">amilydancecompany@gmail.com</a>
+      <a href="mailto:amilysummershowcase2026@gmail.com" style="color:var(--rose);">amilysummershowcase2026@gmail.com</a>
     </div>
 
   </div>
@@ -811,7 +818,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
             ご来場ありがとうございます。
           </div>
           <div style="font-size:12px;color:#999;">
-            お問い合わせ：<a href="mailto:amilydancecompany@gmail.com" style="color:#c8506e;">amilydancecompany@gmail.com</a>
+            お問い合わせ：<a href="mailto:amilysummershowcase2026@gmail.com" style="color:#c8506e;">amilysummershowcase2026@gmail.com</a>
           </div>
         </div>
       </div>`;
@@ -1875,28 +1882,36 @@ function showClosedScreen({ title, message, waitlist }) {
 // 受付状態を判定して受付終了画面を出す
 // ① 8/14以降 → 公演終了（自動・キャンセル待ちなし）
 // ② 手動CLOSED → 満席締切（一般は自由席キャンセル待ちを受付）
+function hideLoadingOverlay() {
+  const ov = document.getElementById('loading-overlay');
+  if (ov) ov.style.display = 'none';
+}
 function checkFormStatus() {
   const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
   const CLOSE = new Date('2026-08-14T00:00:00+09:00');
   if (now >= CLOSE) {
     showClosedScreen({ title:'受付を終了しました', message:'本イベントのチケット受付は終了しました。', waitlist:false });
+    hideLoadingOverlay();
     return;
   }
   fetch(`${GAS_URL}?action=getFormStatus`)
     .then(r => r.json())
     .then(res => {
-      if (res.status !== 'ok' || !res.formStatus) return;
-      const fs = res.formStatus;
-      const closed = MODE === 'performer' ? fs.performer === 'CLOSED' : fs.general === 'CLOSED';
-      if (!closed) return;
-      showClosedScreen({
-        title:'満席のため受付を終了しました',
-        message: fs.message || '満席のため受付を終了しました。',
-        // 一般のみ自由席キャンセル待ちを受付（出演者は対象外）
-        waitlist: MODE !== 'performer'
-      });
+      if (res.status === 'ok' && res.formStatus) {
+        const fs = res.formStatus;
+        const closed = MODE === 'performer' ? fs.performer === 'CLOSED' : fs.general === 'CLOSED';
+        if (closed) {
+          showClosedScreen({
+            title:'満席のため受付を終了しました',
+            message: fs.message || '満席のため受付を終了しました。',
+            // 一般のみ自由席キャンセル待ちを受付（出演者は対象外）
+            waitlist: MODE !== 'performer'
+          });
+        }
+      }
     })
-    .catch(err => console.warn('受付状態の取得に失敗:', err));
+    .catch(err => console.warn('受付状態の取得に失敗:', err))
+    .finally(() => hideLoadingOverlay()); // OPEN/CLOSED/エラーいずれも確定後に表示
 }
 
 // 自由席キャンセル待ち登録
