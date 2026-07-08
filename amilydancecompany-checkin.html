@@ -122,8 +122,9 @@ canvas#qr-canvas{display:none;}
 #result-flash.show{display:flex;}
 .rf-icon{font-size:64px;line-height:1;}
 .rf-status{font-size:18px;font-weight:700;}
-.rf-name{font-size:24px;font-weight:700;margin-top:4px;}
-.rf-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:2px;}
+.rf-number{font-size:64px;font-weight:800;line-height:1.05;margin-top:6px;letter-spacing:.02em;}
+.rf-name{font-size:20px;font-weight:600;margin-top:6px;}
+.rf-sub{font-size:15px;color:rgba(255,255,255,.75);margin-top:4px;}
 .rf-btn{
   margin-top:16px;padding:12px 32px;border:none;border-radius:12px;
   font-size:14px;font-weight:700;cursor:pointer;
@@ -168,8 +169,8 @@ canvas#qr-canvas{display:none;}
 .li-perf.p1st{background:rgba(192,64,96,.2);color:var(--1st);}
 .li-perf.p2nd{background:rgba(91,63,160,.2);color:#a080e0;}
 .li-name{flex:1;min-width:0;}
-.li-name b{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.li-name span{font-size:11px;color:var(--mid);font-family:'DM Mono',monospace;}
+.li-name b{font-size:22px;font-family:'DM Mono',monospace;display:block;letter-spacing:.02em;line-height:1.1;}
+.li-name span{font-size:12px;color:var(--mid);}
 .li-seat{font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);text-align:right;flex-shrink:0;}
 
 /* カメラ非対応 */
@@ -213,11 +214,6 @@ canvas#qr-canvas{display:none;}
       <div class="stat-lbl">入場済</div>
     </div>
     <div class="stat-div"></div>
-    <div class="stat-item">
-      <div class="stat-num yellow" id="s-notyet">—</div>
-      <div class="stat-lbl">未入場</div>
-    </div>
-    <div class="stat-div"></div>
     <div class="stat-item" style="flex:3">
       <div class="stat-prog"><div class="stat-prog-fill" id="s-fill" style="width:0%"></div></div>
       <div class="stat-lbl" id="s-pct">— / —</div>
@@ -249,6 +245,7 @@ canvas#qr-canvas{display:none;}
       <div id="result-flash">
         <div class="rf-icon"></div>
         <div class="rf-status" id="rf-status">—</div>
+        <div class="rf-number" id="rf-number"></div>
         <div class="rf-name" id="rf-name"></div>
         <div class="rf-sub" id="rf-sub"></div>
         <button id="force-btn" onclick="forceCheckin()">強制入場させる</button>
@@ -363,7 +360,6 @@ async function loadStats() {
 
 function updateStatBar(data) {
   document.getElementById('s-checked').textContent = data.checked;
-  document.getElementById('s-notyet').textContent  = data.notYet;
   const pct = data.total > 0 ? Math.round(data.checked / data.total * 100) : 0;
   document.getElementById('s-fill').style.width = pct + '%';
   document.getElementById('s-pct').textContent   = `${data.checked} / ${data.total}`;
@@ -381,8 +377,8 @@ function renderList(list) {
     <div class="list-item">
       <div class="li-perf ${r.perf === '1st' ? 'p1st' : 'p2nd'}">${r.perf}</div>
       <div class="li-name">
-        <b>${esc(r.name)}</b>
-        <span>No.${String(r.ticketNo || '').padStart(5,'0')}</span>
+        <b>No.${String(r.ticketNo || '').padStart(5,'0')}</b>
+        <span>${esc(r.name)}</span>
       </div>
       <div class="li-seat">${esc(r.seats || (r.ticketType === 'free' ? '自由席' : '—'))}</div>
     </div>
@@ -473,7 +469,7 @@ async function processQR(raw) {
     if (m) ticketNo = m[0];
   }
   if (!ticketNo) {
-    showResult('error', 'エラー', '読み取れません', raw, null);
+    showResult('error', 'エラー', '', '読み取れません', String(raw));
     return;
   }
 
@@ -481,8 +477,9 @@ async function processQR(raw) {
   const ticketPerf = String(ticketNo).charAt(0) === '2' ? '2nd' : '1st';
   if (ticketPerf !== scanPerf) {
     showResult('error', '公演が違います',
+      `No.${String(ticketNo).padStart(5,'0')}`,
       `このチケットは ${ticketPerf} です`,
-      `No.${ticketNo}／現在 ${scanPerf} を選択中`, null);
+      `現在 ${scanPerf} を選択中`);
     vibrate([200]);
     return;
   }
@@ -493,32 +490,38 @@ async function processQR(raw) {
   } catch(e) {
     // GAS未接続時のデモ表示
     if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
-      showResult('ok', '入場済（デモ）', 'デモユーザー 様', `No.${ticketNo} / 1st Stage / A-14`, ticketNo);
+      showResult('ok', '入場済（デモ）', `No.${String(ticketNo).padStart(5,'0')}`, 'デモユーザー 様', '1st Stage ／ 指定席（A-14）');
     } else {
-      showResult('error', '通信エラー', e.message, '', null);
+      showResult('error', '通信エラー', '', '', e.message);
     }
   }
 }
 
 function handleCheckinRes(res, ticketNo) {
+  const noStr = `No.${String(ticketNo).padStart(5,'0')}`;
+  const seatStr = res.seats || '自由席';
   if (res.status === 'ok') {
-    const sub = `No.${String(ticketNo).padStart(5,'0')} / ${res.perf} / ${res.seats || '自由席'}`;
-    showResult('ok', '入場済', (res.name || '') + ' 様', sub, null);
+    showResult('ok', '入場済', noStr, (res.name || '') + ' 様', `${res.perf} ／ ${seatStr}`);
     loadStats();
     vibrate([80]);
 
   } else if (res.status === 'warn' && res.code === 'ALREADY_CHECKED') {
-    showResult('warn', '既に入場済み', (res.name || '') + ' 様', `No.${String(ticketNo).padStart(5,'0')}`, null);
+    showResult('warn', '既に入場済み', noStr, (res.name || '') + ' 様', seatStr);
     vibrate([40, 40, 40]);
 
   } else if (res.status === 'warn' && res.code === 'NOT_PAID') {
     pendingForce = ticketNo;
-    showResult('warn', '未払いチケット', (res.name || '') + ' 様', `No.${String(ticketNo).padStart(5,'0')} / 強制入場も可能です`, ticketNo);
+    showResult('warn', '未払いチケット', noStr, (res.name || '') + ' 様', `${seatStr} ／ 強制入場も可能です`);
     document.getElementById('force-btn').style.display = 'inline-block';
     vibrate([40, 40, 40]);
 
+  } else if (res.status === 'error' && res.code === 'NOT_FOUND') {
+    showResult('error', 'チケット未登録', noStr, '', 'この番号は登録されていません');
+    vibrate([200]);
+
   } else {
-    showResult('error', 'チケット未登録', '', `スキャン値: ${ticketNo}`, null);
+    // 想定外の応答（例：サーバー未デプロイで unknown action）はメッセージを出す
+    showResult('error', 'エラー', noStr, '', res.message || '不明な応答');
     vibrate([200]);
   }
 }
@@ -538,12 +541,13 @@ async function forceCheckin() {
 // ============================================================
 // UI ヘルパー
 // ============================================================
-function showResult(type, status, name, sub, ticketNo) {
+function showResult(type, status, number, name, sub) {
   const el = document.getElementById('result-flash');
   el.className = 'show ' + type;
   document.getElementById('rf-status').textContent = status;
-  document.getElementById('rf-name').textContent   = name;
-  document.getElementById('rf-sub').textContent    = sub;
+  document.getElementById('rf-number').textContent = number || '';
+  document.getElementById('rf-name').textContent   = name || '';
+  document.getElementById('rf-sub').textContent    = sub || '';
   document.getElementById('force-btn').style.display = 'none';
 
   // 成功は2秒後に自動閉じ
