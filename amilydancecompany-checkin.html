@@ -201,7 +201,6 @@ canvas#qr-canvas{display:none;}
   <div class="hdr">
     <div class="hdr-title">AMILY 入場スキャン</div>
     <div class="perf-toggle">
-      <button class="ptbtn" id="ptbtn-all" onclick="setPerf('all')">ALL</button>
       <button class="ptbtn" id="ptbtn-1st" onclick="setPerf('1st')">1st</button>
       <button class="ptbtn" id="ptbtn-2nd" onclick="setPerf('2nd')">2nd</button>
     </div>
@@ -290,7 +289,7 @@ const GAS_URL = window.location.hostname.includes('script.google.com')
   : 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec'; // ローカル確認時のみここを置き換え
 
 let adminPw   = '';
-let scanPerf  = 'all';
+let scanPerf  = '1st';
 let scanning  = false;
 let lastScan  = '';
 let lastScanTime = 0;
@@ -329,7 +328,7 @@ async function doLogin() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-screen').style.display  = 'flex';
 
-  setPerf('all');
+  setPerf('1st');
   loadStats();
   startCamera();
 }
@@ -339,10 +338,9 @@ async function doLogin() {
 // ============================================================
 function setPerf(p) {
   scanPerf = p;
-  ['all','1st','2nd'].forEach(x => {
+  ['1st','2nd'].forEach(x => {
     const btn = document.getElementById(`ptbtn-${x}`);
-    btn.className = 'ptbtn' + (x === p ? ` active-${p === '1st' ? '1st' : p === '2nd' ? '2nd' : '1st'}` : '');
-    if (x === p && p === 'all') btn.className = 'ptbtn active-1st'; // allは赤系
+    btn.className = 'ptbtn' + (x === p ? ` active-${p}` : '');
   });
   loadStats();
 }
@@ -479,8 +477,18 @@ async function processQR(raw) {
     return;
   }
 
+  // 公演チェック：1xxx=1st / 2xxx=2nd。選択中の公演と違えば弾く
+  const ticketPerf = String(ticketNo).charAt(0) === '2' ? '2nd' : '1st';
+  if (ticketPerf !== scanPerf) {
+    showResult('error', '公演が違います',
+      `このチケットは ${ticketPerf} です`,
+      `No.${ticketNo}／現在 ${scanPerf} を選択中`, null);
+    vibrate([200]);
+    return;
+  }
+
   try {
-    const res = await gasPost({ action:'checkin', pw: adminPw, ticketNo, force: false });
+    const res = await gasGet({ action:'checkin', pw: adminPw, ticketNo, force: false });
     handleCheckinRes(res, ticketNo);
   } catch(e) {
     // GAS未接続時のデモ表示
@@ -518,7 +526,7 @@ function handleCheckinRes(res, ticketNo) {
 async function forceCheckin() {
   if (!pendingForce) return;
   try {
-    const res = await gasPost({ action:'checkin', pw: adminPw, ticketNo: pendingForce, force: true });
+    const res = await gasGet({ action:'checkin', pw: adminPw, ticketNo: pendingForce, force: true });
     document.getElementById('force-btn').style.display = 'none';
     handleCheckinRes({ ...res, status:'ok' }, pendingForce);
   } catch(e) {
