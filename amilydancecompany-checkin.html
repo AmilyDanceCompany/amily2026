@@ -108,6 +108,11 @@ canvas#qr-canvas{display:none;}
   font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.08em;
 }
 
+/* 手入力バー */
+.manual-bar{display:flex;gap:8px;padding:10px 14px calc(var(--safe-bot) + 10px);background:var(--bg);border-top:1px solid var(--border);}
+.manual-bar input{flex:1;padding:12px 14px;font-size:16px;border:1px solid var(--border);border-radius:10px;background:var(--dim);color:var(--ink);}
+.manual-bar button{padding:12px 18px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:var(--green);color:#fff;white-space:nowrap;}
+
 /* 結果フラッシュ */
 #result-flash{
   position:absolute;inset:0;display:none;
@@ -257,6 +262,12 @@ canvas#qr-canvas{display:none;}
         <p>このページはHTTPS環境（またはlocalhost）でのみ<br>カメラにアクセスできます。<br><br>GAS Web Appとして公開するか、<br>HTTPS対応のサーバーで開いてください。</p>
       </div>
     </div>
+
+    <!-- 手入力（QRが読めない時） -->
+    <div class="manual-bar">
+      <input id="manual-no" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="番号を手入力（例：1001）">
+      <button id="manual-btn" onclick="manualCheckin()">入場処理</button>
+    </div>
   </div>
 
   <!-- 未入場リスト -->
@@ -363,9 +374,9 @@ function updateStatBar(data) {
 function renderList(list) {
   const body = document.getElementById('list-body');
   const title = document.getElementById('list-title');
-  title.textContent = `未入場者リスト（${list.length}名）`;
+  title.textContent = `未入場（指定席）${list.length}名`;
   if (!list || list.length === 0) {
-    body.innerHTML = '<div class="list-empty">未入場者はいません 🎉</div>';
+    body.innerHTML = '<div class="list-empty">未入場の指定席はありません 🎉</div>';
     return;
   }
   body.innerHTML = list.map(r => `
@@ -436,16 +447,37 @@ function scanFrame() {
 }
 
 // ============================================================
+// 手入力での入場処理（QRが読めない時）
+// ============================================================
+function manualCheckin() {
+  const el = document.getElementById('manual-no');
+  const v = (el.value || '').trim();
+  if (!/^\d{3,5}$/.test(v)) { el.focus(); return; }
+  processQR(v);          // QRと同じ処理へ（番号のみでもOK）
+  el.value = '';
+}
+document.getElementById('manual-no').addEventListener('keydown', e => {
+  if (e.key === 'Enter') manualCheckin();
+});
+
+// ============================================================
 // QR処理
 // ============================================================
 async function processQR(raw) {
-  // 数字のみ抽出（QRに余計な文字が入っている場合も対応）
-  const m = raw.match(/\d{4,5}/);
-  if (!m) {
+  // 番号抽出：URL形式（…?id=1001）は id の番号を優先（URL内の"2026"等を誤読しないため）。
+  // 番号のみのQRにも対応。
+  let ticketNo = null;
+  const idm = String(raw).match(/id=0*(\d{4,5})/);
+  if (idm) {
+    ticketNo = idm[1];
+  } else {
+    const m = String(raw).match(/\d{4,5}/);
+    if (m) ticketNo = m[0];
+  }
+  if (!ticketNo) {
     showResult('error', 'エラー', '読み取れません', raw, null);
     return;
   }
-  const ticketNo = m[0];
 
   try {
     const res = await gasPost({ action:'checkin', pw: adminPw, ticketNo, force: false });
