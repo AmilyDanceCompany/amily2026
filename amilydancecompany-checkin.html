@@ -213,11 +213,6 @@ canvas#qr-canvas{display:none;}
       <div class="stat-num green" id="s-checked">—</div>
       <div class="stat-lbl">入場済</div>
     </div>
-    <div class="stat-div"></div>
-    <div class="stat-item" style="flex:3">
-      <div class="stat-prog"><div class="stat-prog-fill" id="s-fill" style="width:0%"></div></div>
-      <div class="stat-lbl" id="s-pct">— / —</div>
-    </div>
   </div>
 
   <!-- タブ -->
@@ -360,9 +355,6 @@ async function loadStats() {
 
 function updateStatBar(data) {
   document.getElementById('s-checked').textContent = data.checked;
-  const pct = data.total > 0 ? Math.round(data.checked / data.total * 100) : 0;
-  document.getElementById('s-fill').style.width = pct + '%';
-  document.getElementById('s-pct').textContent   = `${data.checked} / ${data.total}`;
 }
 
 function renderList(list) {
