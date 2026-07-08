@@ -1,0 +1,233 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Amily 指定席 空席図</title>
+<style>
+  :root{
+    --bg:#0f1013; --panel:#17181c; --ink:#f2f2f4; --dim:#26272d; --border:#33343b;
+    --empty:#2ec27e; --empty-b:#25a869; --taken:#3a2a2e; --taken-b:#5a3a40;
+    --accent:#e0455f; --muted:rgba(255,255,255,.55);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;}
+
+  /* ログイン */
+  #login{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:var(--bg);z-index:10;}
+  #login h1{font-size:18px;letter-spacing:.1em;margin:0;}
+  #login input{width:min(280px,80vw);padding:13px 14px;font-size:16px;border:1px solid var(--border);border-radius:10px;background:var(--dim);color:var(--ink);text-align:center;}
+  #login button{padding:12px 28px;font-size:15px;font-weight:700;border:none;border-radius:10px;background:var(--accent);color:#fff;}
+  #login .err{color:var(--accent);font-size:13px;min-height:18px;}
+
+  /* ヘッダー */
+  .hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5;}
+  .hdr-title{font-size:14px;letter-spacing:.08em;color:var(--muted);}
+  .perf-toggle{display:flex;gap:6px;}
+  .ptbtn{padding:7px 16px;font-size:14px;font-weight:700;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--muted);}
+  .ptbtn.active-1st{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .ptbtn.active-2nd{background:#2f6df0;border-color:#2f6df0;color:#fff;}
+
+  .stat{display:flex;gap:18px;align-items:baseline;padding:10px 14px;border-bottom:1px solid var(--border);}
+  .stat b{font-size:26px;color:var(--empty);}
+  .stat .t{font-size:12px;color:var(--muted);}
+  .stat .r{margin-left:auto;font-size:12px;color:var(--muted);}
+
+  .legend{display:flex;gap:14px;padding:8px 14px;font-size:11px;color:var(--muted);align-items:center;}
+  .legend i{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:4px;}
+  .lg-empty{background:var(--empty);border:1px solid var(--empty-b);}
+  .lg-taken{background:var(--taken);border:1px solid var(--taken-b);}
+
+  .stage{margin:12px auto 4px;text-align:center;font-size:11px;letter-spacing:.5em;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:6px 0;width:min(560px,92vw);}
+  .map-scroll{overflow-x:auto;padding:6px 14px 30px;}
+  .map{min-width:max-content;margin:0 auto;}
+  .colhdr,.seatrow{display:flex;align-items:center;gap:4px;justify-content:center;}
+  .colhdr{margin-bottom:4px;}
+  .rowlabel{width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;}
+  .cell{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;border-radius:5px;}
+  .colnum{width:30px;text-align:center;font-size:10px;color:var(--muted);flex-shrink:0;}
+  .seat{border:1px solid transparent;font-weight:600;}
+  .seat.empty{background:var(--empty);border-color:var(--empty-b);color:#06301c;}
+  .seat.taken{background:var(--taken);border-color:var(--taken-b);color:#a06;opacity:.85;}
+  .seat.taken .lb{opacity:.5;}
+  .gap{width:30px;height:30px;flex-shrink:0;}
+  .aisle{width:10px;flex-shrink:0;}
+  .rowlist{padding:0 14px 40px;}
+  .rowlist h3{font-size:12px;color:var(--muted);margin:14px 0 6px;letter-spacing:.05em;}
+  .rowlist .seats{font-size:12px;line-height:1.9;color:var(--empty);word-break:break-word;}
+  .loading{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+
+<!-- ログイン -->
+<div id="login">
+  <h1>指定席 空席図（管理）</h1>
+  <input id="pw" type="password" placeholder="管理パスワード" autocomplete="off">
+  <button onclick="doLogin()">表示</button>
+  <div class="err" id="login-err"></div>
+</div>
+
+<!-- 本体 -->
+<div id="main" style="display:none">
+  <div class="hdr">
+    <div class="hdr-title">AMILY 指定席 空席図</div>
+    <div class="perf-toggle">
+      <button class="ptbtn" id="pt-1st" onclick="setPerf('1st')">1st</button>
+      <button class="ptbtn" id="pt-2nd" onclick="setPerf('2nd')">2nd</button>
+    </div>
+  </div>
+
+  <div class="stat">
+    <div><b id="s-empty">–</b> <span class="t">空席</span></div>
+    <div><span class="t">埋席 </span><span id="s-taken">–</span></div>
+    <div class="r">指定席 全<span id="s-total">–</span>席</div>
+  </div>
+
+  <div class="legend">
+    <span><i class="lg-empty"></i>空席</span>
+    <span><i class="lg-taken"></i>埋席（予約済）</span>
+    <span style="margin-left:auto"><button class="ptbtn" style="padding:5px 12px;font-size:12px" onclick="load()">↻ 更新</button></span>
+  </div>
+
+  <div class="stage">S T A G E</div>
+  <div class="map-scroll"><div class="map" id="map"><div class="loading">読み込み中…</div></div></div>
+
+  <div class="rowlist" id="rowlist"></div>
+</div>
+
+<script>
+// ============================================================
+// 設定
+// ============================================================
+const GAS_URL = window.location.hostname.includes('script.google.com')
+  ? window.location.href.split('?')[0]
+  : 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec';
+
+// 指定席エリア（フォームの ROW_CONFIG と同じ）。selCols = 指定席の列番号
+function range(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r;}
+const ROW_CONFIG = {
+  A:{selCols:[13,14,15,16,21,22,23,24]},
+  B:{selCols:range(13,24)},
+  C:{selCols:range(13,24)},
+  D:{selCols:range(13,24)},
+  E:{selCols:range(13,24)},
+  F:{selCols:range(13,24)},
+  G:{selCols:range(13,24)},
+  H:{selCols:[]},
+  I:{selCols:range(13,24)},
+  J:{selCols:range(13,24)},
+  K:{selCols:range(13,24)},
+  L:{selCols:[]}, M:{selCols:[]}, N:{selCols:[]}, O:{selCols:[]}
+};
+const ROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length);
+const COLS = range(13, 24); // 表示する列（中央ブロック）
+
+let adminPw = '';
+let perf = '1st';
+let takenData = { '1st': new Set(), '2nd': new Set() };
+
+// ============================================================
+// ログイン
+// ============================================================
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const pw = document.getElementById('pw').value.trim();
+  if (!pw) return;
+  document.getElementById('login-err').textContent = '確認中…';
+  try {
+    const res = await gasGet({ action:'seatStatus', pw });
+    if (res.status === 'error') { document.getElementById('login-err').textContent = 'パスワードが違います'; return; }
+    adminPw = pw;
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    applyData(res.taken);
+    setPerf('1st');
+  } catch(e) {
+    document.getElementById('login-err').textContent = '接続エラー：' + e.message;
+  }
+}
+
+// ============================================================
+// データ取得・描画
+// ============================================================
+async function load() {
+  document.getElementById('map').innerHTML = '<div class="loading">読み込み中…</div>';
+  try {
+    const res = await gasGet({ action:'seatStatus', pw: adminPw });
+    if (res.status === 'ok') { applyData(res.taken); render(); }
+  } catch(e) {
+    document.getElementById('map').innerHTML = '<div class="loading">接続エラー：' + e.message + '</div>';
+  }
+}
+
+function applyData(taken) {
+  takenData = {
+    '1st': new Set((taken && taken['1st']) || []),
+    '2nd': new Set((taken && taken['2nd']) || [])
+  };
+}
+
+function setPerf(p) {
+  perf = p;
+  document.getElementById('pt-1st').className = 'ptbtn' + (p === '1st' ? ' active-1st' : '');
+  document.getElementById('pt-2nd').className = 'ptbtn' + (p === '2nd' ? ' active-2nd' : '');
+  render();
+}
+
+function render() {
+  const taken = takenData[perf];
+  const map = document.getElementById('map');
+  map.innerHTML = '';
+
+  // 列ヘッダー
+  const chdr = document.createElement('div');
+  chdr.className = 'colhdr';
+  chdr.appendChild(cell('rowlabel', ''));
+  COLS.forEach(c => { const d = document.createElement('div'); d.className = 'colnum'; d.textContent = c; chdr.appendChild(d); });
+  map.appendChild(chdr);
+
+  let total = 0, emptyN = 0;
+  const emptyByRow = {};
+
+  ROWS.forEach(row => {
+    const sel = new Set(ROW_CONFIG[row].selCols);
+    const rd = document.createElement('div');
+    rd.className = 'seatrow';
+    const lbl = document.createElement('div'); lbl.className = 'rowlabel'; lbl.textContent = row; rd.appendChild(lbl);
+    emptyByRow[row] = [];
+    COLS.forEach(c => {
+      if (!sel.has(c)) { const g = document.createElement('div'); g.className = 'gap'; rd.appendChild(g); return; }
+      const id = row + c;
+      total++;
+      const isTaken = taken.has(id);
+      const d = document.createElement('div');
+      d.className = 'cell seat ' + (isTaken ? 'taken' : 'empty');
+      d.innerHTML = '<span class="lb">' + c + '</span>';
+      d.title = id + (isTaken ? '（予約済）' : '（空席）');
+      if (!isTaken) { emptyN++; emptyByRow[row].push(id); }
+      rd.appendChild(d);
+    });
+    map.appendChild(rd);
+  });
+
+  document.getElementById('s-empty').textContent = emptyN;
+  document.getElementById('s-taken').textContent = (total - emptyN);
+  document.getElementById('s-total').textContent = total;
+
+  // 空席リスト（コピーしやすいテキスト）
+  const rl = document.getElementById('rowlist');
+  rl.innerHTML = '<h3>空席一覧（' + perf + '）</h3>';
+  const parts = ROWS.map(r => emptyByRow[r].length ? r + '列：' + emptyByRow[r].join(', ') : null).filter(Boolean);
+  const div = document.createElement('div');
+  div.className = 'seats';
+  div.textContent = parts.length ? parts.join('\n') : '空席はありません';
+  div.style.whiteSpace = 'pre-line';
+  rl.appendChild(div);
+}
+
+// ============================================================
+// GAS API（GET・CORS回避）
+// ============================================================
+async function gasGet(params) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(GAS_URL + '?' + qs);
+  return res.json();
+}
+</script>
