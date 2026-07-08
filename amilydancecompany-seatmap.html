@@ -83,7 +83,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 @media print{
   /* 内容の高さに合わせた横長サイズ（下の余白を詰める） */
-  @page{size:300mm 168mm;margin:7mm;}
+  @page{size:300mm 150mm;margin:6mm;}
   body{background:#fff;}
   #login,.hdr,.stat,.bar,.rowlist{display:none!important;}
   .map-panel{border:none;margin:0;padding:0;overflow:visible;box-shadow:none;}
@@ -149,7 +149,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="print-head" id="print-head">
       <div class="ph-event">Amily Summer Showcase 2026</div>
       <div class="ph-title"><span id="ph-perf">1st</span> 公演　指定席 空席図</div>
-      <div class="ph-meta"><span id="ph-date">2026年8月14日（金）</span>　／　空席 <span id="ph-empty">–</span>席（全<span id="ph-total">–</span>席）　発行 <span id="ph-issued"></span></div>
+      <div class="ph-meta"><span id="ph-date">2026年8月14日（金）</span>　<span id="ph-time"></span></div>
     </div>
     <div class="zoom-inner" id="zoom-inner">
       <div class="stage-bar"></div>
@@ -249,10 +249,6 @@ function printMap() {
   const saved = mapScale;
   // 印刷時は等倍に戻す（拡大状態が反映されないように）
   document.getElementById('zoom-inner').style.transform = 'none';
-  const d = new Date();
-  const issued = d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' +
-    ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
-  document.getElementById('ph-issued').textContent = issued;
   window.print();
   // 復帰
   setTimeout(() => { document.getElementById('zoom-inner').style.transform = 'scale(' + saved + ')'; }, 300);
@@ -347,8 +343,8 @@ function render(){
   document.getElementById('s-total').textContent=total;
   // 印刷/PDF用ヘッダーも更新
   document.getElementById('ph-perf').textContent=perf;
-  document.getElementById('ph-empty').textContent=emptyN;
-  document.getElementById('ph-total').textContent=total;
+  document.getElementById('ph-time').textContent =
+    perf==='2nd' ? '開場 17:30／開演 18:00' : '開場 14:00／開演 14:30';
 
   // 埋席（予約済）を行ごとに集計
   const takenByRow={};
