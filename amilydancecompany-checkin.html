@@ -200,7 +200,7 @@ canvas#qr-canvas{display:none;}
 <div id="main-screen">
   <!-- ヘッダー -->
   <div class="hdr">
-    <div class="hdr-title">AMILY 入場スキャン</div>
+    <div class="hdr-title">Amily Summer Showcase 2026</div>
     <div class="perf-toggle">
       <button class="ptbtn" id="ptbtn-1st" onclick="setPerf('1st')">1st</button>
       <button class="ptbtn" id="ptbtn-2nd" onclick="setPerf('2nd')">2nd</button>
@@ -369,7 +369,7 @@ function renderList(list) {
     <div class="list-item">
       <div class="li-perf ${r.perf === '1st' ? 'p1st' : 'p2nd'}">${r.perf}</div>
       <div class="li-name">
-        <b>No.${String(r.ticketNo || '').padStart(5,'0')}</b>
+        <b>No.${String(parseInt(r.ticketNo, 10) || r.ticketNo || '')}</b>
         <span>${esc(r.name)}</span>
       </div>
       <div class="li-seat">${esc(r.seats || (r.ticketType === 'free' ? '自由席' : '—'))}</div>
@@ -469,7 +469,7 @@ async function processQR(raw) {
   const ticketPerf = String(ticketNo).charAt(0) === '2' ? '2nd' : '1st';
   if (ticketPerf !== scanPerf) {
     showResult('error', '公演が違います',
-      `No.${String(ticketNo).padStart(5,'0')}`,
+      `No.${String(ticketNo)}`,
       `このチケットは ${ticketPerf} です`,
       `現在 ${scanPerf} を選択中`);
     vibrate([200]);
@@ -482,7 +482,7 @@ async function processQR(raw) {
   } catch(e) {
     // GAS未接続時のデモ表示
     if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
-      showResult('ok', '入場済（デモ）', `No.${String(ticketNo).padStart(5,'0')}`, 'デモユーザー 様', '1st Stage ／ 指定席（A-14）');
+      showResult('ok', '入場済（デモ）', `No.${String(ticketNo)}`, 'デモユーザー 様', '1st Stage ／ 指定席（A-14）');
     } else {
       showResult('error', '通信エラー', '', '', e.message);
     }
@@ -490,7 +490,7 @@ async function processQR(raw) {
 }
 
 function handleCheckinRes(res, ticketNo) {
-  const noStr = `No.${String(ticketNo).padStart(5,'0')}`;
+  const noStr = `No.${String(ticketNo)}`;
   const seatStr = res.seats || '自由席';
   if (res.status === 'ok') {
     showResult('ok', '入場済', noStr, (res.name || '') + ' 様', `${res.perf} ／ ${seatStr}`);
