@@ -49,8 +49,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .map-panel{background:#fff;border:1px solid var(--border);border-radius:12px;margin:0 12px 16px;padding:16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .stage-bar{width:60%;margin:0 auto 26px;height:10px;background:linear-gradient(90deg,transparent,rgba(200,80,110,.4),rgba(200,80,110,.9),rgba(200,80,110,.4),transparent);border-radius:4px;position:relative;}
 .stage-bar::before{content:'S T A G E';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.35em;color:var(--rose);font-family:'DM Mono',monospace;white-space:nowrap;}
-.zoom-inner{transform-origin:top center;display:inline-block;min-width:100%;}
-.seatmap-wrap{display:inline-block;}
+.zoom-inner{transform-origin:top center;display:block;min-width:100%;text-align:center;}
+.seatmap-wrap{display:inline-block;text-align:left;}
 
 .seat-row{display:flex;align-items:center;justify-content:center;margin-bottom:3px;}
 .aisle-row{display:flex;align-items:center;gap:6px;padding:4px 0;margin:2px 0;}
