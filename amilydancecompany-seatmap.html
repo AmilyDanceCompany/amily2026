@@ -1,59 +1,105 @@
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Amily 指定席 空席図</title>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amily 指定席 空席図（管理）</title>
 <style>
-  :root{
-    --bg:#0f1013; --panel:#17181c; --ink:#f2f2f4; --dim:#26272d; --border:#33343b;
-    --empty:#2ec27e; --empty-b:#25a869; --taken:#3a2a2e; --taken-b:#5a3a40;
-    --accent:#e0455f; --muted:rgba(255,255,255,.55);
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap');
+:root{
+  --bg:#fafaf8;--white:#fff;--ink:#1a1a1a;--mid:#666;--border:#e0ddd8;
+  --rose:#c8506e;--rose-l:#f9eef1;--rose-d:#a33d58;--green:#2e7d52;
+  --avail:#3a8c5c;--taken:#6b7a90;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
 
-  /* ログイン */
-  #login{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:var(--bg);z-index:10;}
-  #login h1{font-size:18px;letter-spacing:.1em;margin:0;}
-  #login input{width:min(280px,80vw);padding:13px 14px;font-size:16px;border:1px solid var(--border);border-radius:10px;background:var(--dim);color:var(--ink);text-align:center;}
-  #login button{padding:12px 28px;font-size:15px;font-weight:700;border:none;border-radius:10px;background:var(--accent);color:#fff;}
-  #login .err{color:var(--accent);font-size:13px;min-height:18px;}
+/* ログイン */
+#login{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:var(--bg);z-index:10;}
+#login h1{font-size:17px;letter-spacing:.08em;font-weight:700;}
+#login input{width:min(280px,80vw);padding:12px 14px;font-size:16px;border:1.5px solid var(--border);border-radius:9px;text-align:center;}
+#login button{padding:11px 28px;font-size:15px;font-weight:700;border:none;border-radius:9px;background:var(--rose);color:#fff;cursor:pointer;}
+#login .err{color:var(--rose);font-size:13px;min-height:18px;}
 
-  /* ヘッダー */
-  .hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5;}
-  .hdr-title{font-size:14px;letter-spacing:.08em;color:var(--muted);}
-  .perf-toggle{display:flex;gap:6px;}
-  .ptbtn{padding:7px 16px;font-size:14px;font-weight:700;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--muted);}
-  .ptbtn.active-1st{background:var(--accent);border-color:var(--accent);color:#fff;}
-  .ptbtn.active-2nd{background:#2f6df0;border-color:#2f6df0;color:#fff;}
+/* ヘッダー */
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:5;}
+.hdr-title{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.14em;color:var(--mid);}
+.perf-toggle{display:flex;gap:6px;}
+.ptbtn{padding:7px 16px;font-size:14px;font-weight:700;border:1.5px solid var(--border);border-radius:999px;background:#fff;color:var(--mid);cursor:pointer;}
+.ptbtn.active-1st{background:#8C2D3F;border-color:#8C2D3F;color:#fff;}
+.ptbtn.active-2nd{background:#5C3080;border-color:#5C3080;color:#fff;}
 
-  .stat{display:flex;gap:18px;align-items:baseline;padding:10px 14px;border-bottom:1px solid var(--border);}
-  .stat b{font-size:26px;color:var(--empty);}
-  .stat .t{font-size:12px;color:var(--muted);}
-  .stat .r{margin-left:auto;font-size:12px;color:var(--muted);}
+.stat{display:flex;gap:20px;align-items:baseline;padding:12px 16px 6px;}
+.stat b{font-family:'DM Mono',monospace;font-size:26px;color:var(--green);}
+.stat .taken-n{font-family:'DM Mono',monospace;font-size:16px;color:var(--taken);}
+.stat .t{font-size:12px;color:var(--mid);}
+.stat .r{margin-left:auto;font-size:12px;color:var(--mid);}
 
-  .legend{display:flex;gap:14px;padding:8px 14px;font-size:11px;color:var(--muted);align-items:center;}
-  .legend i{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:4px;}
-  .lg-empty{background:var(--empty);border:1px solid var(--empty-b);}
-  .lg-taken{background:var(--taken);border:1px solid var(--taken-b);}
+.bar{display:flex;gap:12px;align-items:center;padding:4px 16px 10px;flex-wrap:wrap;}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--mid);align-items:center;}
+.legend .dot{display:inline-block;width:15px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px;}
+.lg-e{background:var(--avail);}
+.lg-t{background:var(--taken);opacity:.55;}
+.lg-f{background:#dedad5;opacity:.7;}
+.zoom{margin-left:auto;display:flex;gap:6px;align-items:center;}
+.zbtn{width:28px;height:28px;border:1.5px solid var(--border);border-radius:6px;background:#fff;font-size:16px;font-weight:700;cursor:pointer;}
+.zlbl{font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);min-width:38px;text-align:center;}
 
-  .stage{margin:12px auto 4px;text-align:center;font-size:11px;letter-spacing:.5em;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:6px 0;width:min(560px,92vw);}
-  .map-scroll{overflow-x:auto;padding:6px 14px 30px;}
-  .map{min-width:max-content;margin:0 auto;}
-  .colhdr,.seatrow{display:flex;align-items:center;gap:4px;justify-content:center;}
-  .colhdr{margin-bottom:4px;}
-  .rowlabel{width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;}
-  .cell{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;border-radius:5px;}
-  .colnum{width:30px;text-align:center;font-size:10px;color:var(--muted);flex-shrink:0;}
-  .seat{border:1px solid transparent;font-weight:600;}
-  .seat.empty{background:var(--empty);border-color:var(--empty-b);color:#06301c;}
-  .seat.taken{background:var(--taken);border-color:var(--taken-b);color:#a06;opacity:.85;}
-  .seat.taken .lb{opacity:.5;}
-  .gap{width:30px;height:30px;flex-shrink:0;}
-  .aisle{width:10px;flex-shrink:0;}
-  .rowlist{padding:0 14px 40px;}
-  .rowlist h3{font-size:12px;color:var(--muted);margin:14px 0 6px;letter-spacing:.05em;}
-  .rowlist .seats{font-size:12px;line-height:1.9;color:var(--empty);word-break:break-word;}
-  .loading{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+/* マップ */
+.map-panel{background:#fff;border:1px solid var(--border);border-radius:12px;margin:0 12px 16px;padding:16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.stage-bar{width:60%;margin:0 auto 26px;height:10px;background:linear-gradient(90deg,transparent,rgba(200,80,110,.4),rgba(200,80,110,.9),rgba(200,80,110,.4),transparent);border-radius:4px;position:relative;}
+.stage-bar::before{content:'S T A G E';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.35em;color:var(--rose);font-family:'DM Mono',monospace;white-space:nowrap;}
+.zoom-inner{transform-origin:top center;display:inline-block;min-width:100%;}
+.seatmap-wrap{display:inline-block;}
+
+.seat-row{display:flex;align-items:center;justify-content:center;margin-bottom:3px;}
+.aisle-row{display:flex;align-items:center;gap:6px;padding:4px 0;margin:2px 0;}
+.aisle-row-line{flex:1;height:2px;background:repeating-linear-gradient(90deg,#ccc 0,#ccc 4px,transparent 4px,transparent 8px);}
+.aisle-row-label{font-family:'DM Mono',monospace;font-size:8px;color:#aaa;white-space:nowrap;letter-spacing:.1em;}
+.slope-wrap{display:flex;align-items:stretch;border:1.5px solid #d4822b;border-radius:4px;margin:2px 0;padding:3px 0;}
+.slope-wrap-rows{flex:1;}
+.slope-wrap-label{writing-mode:vertical-rl;text-orientation:mixed;font-size:8px;color:#d4822b;letter-spacing:.15em;padding:4px 3px;white-space:nowrap;display:flex;align-items:center;justify-content:center;}
+
+.seat{width:17px;height:13px;border-radius:3px 3px 1px 1px;border:1px solid transparent;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:6px;color:transparent;margin:0 1px 3px;}
+.seat::after{content:'';position:absolute;bottom:-2px;left:2px;right:2px;height:2px;border-radius:0 0 2px 2px;background:inherit;filter:brightness(.65);}
+.seat.free-seat{background:#dedad5;border-color:#c8c4c0;opacity:.55;}
+.seat.free-seat::after{background:#bbb7b2;}
+.seat.empty{background:var(--avail);border-color:rgba(46,125,82,.6);}
+.seat.taken{background:var(--taken);border-color:#a8a3a0;opacity:.5;}
+.seat.taken::after{background:#9e9a97;}
+.seat.hidden{opacity:0;}
+.seat.unavail{background:#b8b3ae;border-color:#9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);}
+.seat.wheel{font-size:7px;color:#5b7fc4;}
+.seat-num{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:2px 5px;border-radius:3px;font-size:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;}
+.seat:hover .seat-num{opacity:1;}
+
+/* 印刷/PDF用（画面では非表示） */
+.print-head,.print-legend{display:none;}
+.print-legend{gap:16px;font-size:11px;color:#333;}
+.print-legend .dot{display:inline-block;width:15px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:5px;}
+.print-head .ph-event{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--rose);}
+.print-head .ph-title{font-size:20px;font-weight:700;margin:2px 0 4px;}
+.print-head .ph-meta{font-size:11px;color:#555;}
+
+@media print{
+  @page{size:A4 landscape;margin:8mm;}
+  body{background:#fff;}
+  #login,.hdr,.stat,.bar,.rowlist{display:none!important;}
+  .map-panel{border:none;margin:0;padding:0;overflow:visible;box-shadow:none;}
+  .print-head{display:block;text-align:center;margin-bottom:8px;}
+  .print-legend{display:flex;justify-content:center;margin-top:10px;}
+  .zoom-inner{transform:none!important;text-align:center;}
+  .seatmap-wrap{display:inline-block;}
+  .stage-bar{margin-bottom:20px;}
+}
+
+.rowlist{padding:0 16px 40px;max-width:760px;}
+.rowlist h3{font-size:12px;color:var(--mid);margin:8px 0 6px;letter-spacing:.05em;}
+.rowlist .seats{font-size:12px;line-height:1.9;color:var(--green);white-space:pre-line;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.loading{padding:40px;text-align:center;color:var(--mid);font-size:13px;}
 </style>
+</head>
+<body>
 
 <!-- ログイン -->
 <div id="login">
@@ -75,18 +121,43 @@
 
   <div class="stat">
     <div><b id="s-empty">–</b> <span class="t">空席</span></div>
-    <div><span class="t">埋席 </span><span id="s-taken">–</span></div>
+    <div><span class="t">埋席 </span><span class="taken-n" id="s-taken">–</span></div>
     <div class="r">指定席 全<span id="s-total">–</span>席</div>
   </div>
 
-  <div class="legend">
-    <span><i class="lg-empty"></i>空席</span>
-    <span><i class="lg-taken"></i>埋席（予約済）</span>
-    <span style="margin-left:auto"><button class="ptbtn" style="padding:5px 12px;font-size:12px" onclick="load()">↻ 更新</button></span>
+  <div class="bar">
+    <div class="legend">
+      <span><i class="dot lg-e"></i>空席</span>
+      <span><i class="dot lg-t"></i>埋席</span>
+      <span><i class="dot lg-f"></i>自由席</span>
+    </div>
+    <div class="zoom">
+      <button class="ptbtn" style="padding:5px 12px;font-size:12px" onclick="printMap()">🖨 PDF / 印刷</button>
+      <button class="ptbtn" style="padding:5px 12px;font-size:12px" onclick="load()">↻ 更新</button>
+      <button class="zbtn" onclick="zoom(-0.15)">−</button>
+      <span class="zlbl" id="zlbl">100%</span>
+      <button class="zbtn" onclick="zoom(0.15)">＋</button>
+    </div>
   </div>
 
-  <div class="stage">S T A G E</div>
-  <div class="map-scroll"><div class="map" id="map"><div class="loading">読み込み中…</div></div></div>
+  <div class="map-panel">
+    <!-- 印刷/PDF用ヘッダー（画面では非表示） -->
+    <div class="print-head" id="print-head">
+      <div class="ph-event">Amily Summer Showcase 2026</div>
+      <div class="ph-title"><span id="ph-perf">1st</span> 公演　指定席 空席図</div>
+      <div class="ph-meta"><span id="ph-date">2026年8月14日（金）</span>　／　空席 <span id="ph-empty">–</span>席（全<span id="ph-total">–</span>席）　発行 <span id="ph-issued"></span></div>
+    </div>
+    <div class="zoom-inner" id="zoom-inner">
+      <div class="stage-bar"></div>
+      <div class="seatmap-wrap" id="map"><div class="loading">読み込み中…</div></div>
+    </div>
+    <!-- 印刷/PDF用 凡例（画面では非表示） -->
+    <div class="print-legend" id="print-legend">
+      <span><i class="dot lg-e"></i>空席</span>
+      <span><i class="dot lg-t"></i>埋席（予約済）</span>
+      <span><i class="dot lg-f"></i>自由席</span>
+    </div>
+  </div>
 
   <div class="rowlist" id="rowlist"></div>
 </div>
@@ -99,34 +170,36 @@ const GAS_URL = window.location.hostname.includes('script.google.com')
   ? window.location.href.split('?')[0]
   : 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec';
 
-// 指定席エリア（フォームの ROW_CONFIG と同じ）。selCols = 指定席の列番号
+// フォームと同じ座席レイアウト
 function range(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r;}
 const ROW_CONFIG = {
-  A:{selCols:[13,14,15,16,21,22,23,24]},
-  B:{selCols:range(13,24)},
-  C:{selCols:range(13,24)},
-  D:{selCols:range(13,24)},
-  E:{selCols:range(13,24)},
-  F:{selCols:range(13,24)},
-  G:{selCols:range(13,24)},
-  H:{selCols:[]},
-  I:{selCols:range(13,24)},
-  J:{selCols:range(13,24)},
-  K:{selCols:range(13,24)},
-  L:{selCols:[]}, M:{selCols:[]}, N:{selCols:[]}, O:{selCols:[]}
+  A:{left:[6,12],  right:[25,31], selCols:[13,14,15,16,21,22,23,24]},
+  B:{left:[5,12],  right:[25,32], selCols:range(13,24)},
+  C:{left:[4,12],  right:[25,33], selCols:range(13,24)},
+  D:{left:[2,12],  right:[25,35], selCols:range(13,24)},
+  E:{left:[2,12],  right:[25,35], selCols:range(13,24)},
+  F:{left:[2,12],  right:[25,35], selCols:range(13,24)},
+  G:{left:[1,12],  right:[25,36], selCols:range(13,24)},
+  H:{left:[1,12],  right:[25,36], selCols:[]},
+  I:{left:[1,12],  right:[25,36], selCols:range(13,24)},
+  J:{left:[1,12],  right:[25,36], selCols:range(13,24)},
+  K:{left:[1,12],  right:[25,36], selCols:range(13,24)},
+  L:{left:[1,12],  right:[25,36], selCols:[]},
+  M:{left:[2,12],  right:[25,35], selCols:[]},
+  N:{left:[3,12],  right:[25,34], selCols:[]},
+  O:{left:null,    right:[25,33], selCols:[], wheelchair:true}
 };
-const ROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length);
-const COLS = range(13, 24); // 表示する列（中央ブロック）
+const SELROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length);
 
 let adminPw = '';
 let perf = '1st';
 let takenData = { '1st': new Set(), '2nd': new Set() };
+let mapScale = 1.0;
 
 // ============================================================
 // ログイン
 // ============================================================
 document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-
 async function doLogin() {
   const pw = document.getElementById('pw').value.trim();
   if (!pw) return;
@@ -139,95 +212,156 @@ async function doLogin() {
     document.getElementById('main').style.display = 'block';
     applyData(res.taken);
     setPerf('1st');
-  } catch(e) {
-    document.getElementById('login-err').textContent = '接続エラー：' + e.message;
-  }
+  } catch(e) { document.getElementById('login-err').textContent = '接続エラー：' + e.message; }
 }
 
 // ============================================================
-// データ取得・描画
+// データ
 // ============================================================
 async function load() {
   document.getElementById('map').innerHTML = '<div class="loading">読み込み中…</div>';
   try {
     const res = await gasGet({ action:'seatStatus', pw: adminPw });
     if (res.status === 'ok') { applyData(res.taken); render(); }
-  } catch(e) {
-    document.getElementById('map').innerHTML = '<div class="loading">接続エラー：' + e.message + '</div>';
-  }
+  } catch(e) { document.getElementById('map').innerHTML = '<div class="loading">接続エラー：' + e.message + '</div>'; }
 }
-
 function applyData(taken) {
-  takenData = {
-    '1st': new Set((taken && taken['1st']) || []),
-    '2nd': new Set((taken && taken['2nd']) || [])
-  };
+  takenData = { '1st': new Set((taken && taken['1st']) || []), '2nd': new Set((taken && taken['2nd']) || []) };
 }
-
 function setPerf(p) {
   perf = p;
   document.getElementById('pt-1st').className = 'ptbtn' + (p === '1st' ? ' active-1st' : '');
   document.getElementById('pt-2nd').className = 'ptbtn' + (p === '2nd' ? ' active-2nd' : '');
   render();
 }
+function zoom(d) {
+  mapScale = Math.round(Math.min(2.2, Math.max(0.5, mapScale + d)) * 100) / 100;
+  document.getElementById('zoom-inner').style.transform = 'scale(' + mapScale + ')';
+  document.getElementById('zlbl').textContent = Math.round(mapScale * 100) + '%';
+}
 
-function render() {
-  const taken = takenData[perf];
-  const map = document.getElementById('map');
-  map.innerHTML = '';
+// PDF / 印刷：現在表示中の公演の座席図を出力（公演・日付・空席数を明記）
+function printMap() {
+  const saved = mapScale;
+  // 印刷時は等倍に戻す（拡大状態が反映されないように）
+  document.getElementById('zoom-inner').style.transform = 'none';
+  const d = new Date();
+  const issued = d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+    ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+  document.getElementById('ph-issued').textContent = issued;
+  window.print();
+  // 復帰
+  setTimeout(() => { document.getElementById('zoom-inner').style.transform = 'scale(' + saved + ')'; }, 300);
+}
 
-  // 列ヘッダー
-  const chdr = document.createElement('div');
-  chdr.className = 'colhdr';
-  const corner = document.createElement('div'); corner.className = 'rowlabel'; chdr.appendChild(corner);
-  COLS.forEach(c => { const d = document.createElement('div'); d.className = 'colnum'; d.textContent = c; chdr.appendChild(d); });
-  map.appendChild(chdr);
+// ============================================================
+// 座席セル生成（フォームと同じ）
+// ============================================================
+function hiddenSeat(){ const d=document.createElement('div'); d.className='seat hidden'; return d; }
+function freeSeat(){ const d=document.createElement('div'); d.className='seat free-seat'; return d; }
+function unavailSeat(){ const d=document.createElement('div'); d.className='seat unavail'; return d; }
+function shiteiSeat(id, taken){
+  const d=document.createElement('div');
+  d.className='seat ' + (taken ? 'taken' : 'empty');
+  d.dataset.id=id;
+  const tip=document.createElement('div'); tip.className='seat-num';
+  tip.textContent=id + (taken ? '（予約済）' : '（空席）'); d.appendChild(tip);
+  return d;
+}
 
-  let total = 0, emptyN = 0;
-  const emptyByRow = {};
+function buildRow(row, taken){
+  const cfg=ROW_CONFIG[row];
+  const rowDiv=document.createElement('div'); rowDiv.className='seat-row';
+  const lbl=()=>{ const d=document.createElement('div'); d.style.cssText='width:19px;flex-shrink:0;text-align:center;font-family:"DM Mono",monospace;font-size:11px;font-weight:700;color:var(--mid);line-height:1;'; d.textContent=row; return d; };
 
-  ROWS.forEach(row => {
-    const sel = new Set(ROW_CONFIG[row].selCols);
-    const rd = document.createElement('div');
-    rd.className = 'seatrow';
-    const lbl = document.createElement('div'); lbl.className = 'rowlabel'; lbl.textContent = row; rd.appendChild(lbl);
-    emptyByRow[row] = [];
-    COLS.forEach(c => {
-      if (!sel.has(c)) { const g = document.createElement('div'); g.className = 'gap'; rd.appendChild(g); return; }
-      const id = row + c;
-      total++;
-      const isTaken = taken.has(id);
-      const d = document.createElement('div');
-      d.className = 'cell seat ' + (isTaken ? 'taken' : 'empty');
-      d.innerHTML = '<span class="lb">' + c + '</span>';
-      d.title = id + (isTaken ? '（予約済）' : '（空席）');
-      if (!isTaken) { emptyN++; emptyByRow[row].push(id); }
-      rd.appendChild(d);
-    });
-    map.appendChild(rd);
+  // 左ブロック 1-12
+  if (cfg.wheelchair) {
+    for (let c=1;c<=7;c++) rowDiv.appendChild(hiddenSeat());
+    for (let c=8;c<=12;c++){ const d=document.createElement('div'); d.className='seat free-seat wheel'; d.textContent='♿'; rowDiv.appendChild(d); }
+  } else if (cfg.left) {
+    const [lf,lt]=cfg.left;
+    for (let c=1;c<lf;c++) rowDiv.appendChild(hiddenSeat());
+    for (let c=lf;c<=lt;c++) rowDiv.appendChild(freeSeat());
+    for (let c=lt+1;c<=12;c++) rowDiv.appendChild(hiddenSeat());
+  } else { for (let c=1;c<=12;c++) rowDiv.appendChild(hiddenSeat()); }
+
+  rowDiv.appendChild(lbl());
+
+  // 中央ブロック 13-24
+  for (let c=13;c<=24;c++){
+    const id=row+c;
+    if ((row==='A'&&c>=17&&c<=20)||(row==='H'&&c>=13&&c<=24)||(['M','N','O'].includes(row)&&c>=13&&c<=24)){
+      rowDiv.appendChild(unavailSeat()); continue;
+    }
+    if (cfg.selCols.includes(c)) rowDiv.appendChild(shiteiSeat(id, taken.has(id)));
+    else rowDiv.appendChild(freeSeat());
+  }
+
+  rowDiv.appendChild(lbl());
+
+  // 右ブロック 25-36
+  if (cfg.right){
+    const [rf,rt]=cfg.right;
+    for (let c=25;c<rf;c++) rowDiv.appendChild(hiddenSeat());
+    for (let c=rf;c<=rt;c++) rowDiv.appendChild(freeSeat());
+    for (let c=rt+1;c<=36;c++) rowDiv.appendChild(hiddenSeat());
+  } else { for (let c=25;c<=36;c++) rowDiv.appendChild(hiddenSeat()); }
+
+  return rowDiv;
+}
+
+// ============================================================
+// 描画
+// ============================================================
+function render(){
+  const taken=takenData[perf];
+  const map=document.getElementById('map');
+  map.innerHTML='';
+  const outer=document.createElement('div'); outer.className='seatmap-wrap';
+
+  const SLOPE=new Set(['H','I','J','K','L','M','N','O']);
+  const allRows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
+  const slopeWrap=document.createElement('div'); slopeWrap.className='slope-wrap';
+  const slopeRows=document.createElement('div'); slopeRows.className='slope-wrap-rows';
+  const slopeLbl=()=>{ const d=document.createElement('div'); d.className='slope-wrap-label'; d.textContent='傾斜型座席・段差あり'; return d; };
+  slopeWrap.appendChild(slopeLbl()); slopeWrap.appendChild(slopeRows);
+
+  allRows.forEach(row=>{
+    if (row==='E'){ const a=document.createElement('div'); a.className='aisle-row'; a.innerHTML='<div class="aisle-row-line"></div><div class="aisle-row-label">通　路</div><div class="aisle-row-line"></div>'; outer.appendChild(a); }
+    if (SLOPE.has(row)){
+      slopeRows.appendChild(buildRow(row, taken));
+      if (row==='O'){ slopeWrap.appendChild(slopeLbl()); outer.appendChild(slopeWrap); }
+    } else outer.appendChild(buildRow(row, taken));
   });
+  map.appendChild(outer);
 
-  document.getElementById('s-empty').textContent = emptyN;
-  document.getElementById('s-taken').textContent = (total - emptyN);
-  document.getElementById('s-total').textContent = total;
+  // 集計＆空席一覧
+  let total=0, emptyN=0; const emptyByRow={};
+  SELROWS.forEach(r=>{ emptyByRow[r]=[]; ROW_CONFIG[r].selCols.forEach(c=>{ const id=r+c; total++; if(!taken.has(id)){emptyN++; emptyByRow[r].push(id);} }); });
+  document.getElementById('s-empty').textContent=emptyN;
+  document.getElementById('s-taken').textContent=(total-emptyN);
+  document.getElementById('s-total').textContent=total;
+  // 印刷/PDF用ヘッダーも更新
+  document.getElementById('ph-perf').textContent=perf;
+  document.getElementById('ph-empty').textContent=emptyN;
+  document.getElementById('ph-total').textContent=total;
 
-  // 空席リスト（コピーしやすいテキスト）
-  const rl = document.getElementById('rowlist');
-  rl.innerHTML = '<h3>空席一覧（' + perf + '）</h3>';
-  const parts = ROWS.map(r => emptyByRow[r].length ? r + '列：' + emptyByRow[r].join(', ') : null).filter(Boolean);
-  const div = document.createElement('div');
-  div.className = 'seats';
-  div.textContent = parts.length ? parts.join('\n') : '空席はありません';
-  div.style.whiteSpace = 'pre-line';
+  const rl=document.getElementById('rowlist');
+  rl.innerHTML='<h3>空席一覧（'+perf+'）</h3>';
+  const parts=SELROWS.map(r=>emptyByRow[r].length ? r+'列：'+emptyByRow[r].join(', ') : null).filter(Boolean);
+  const div=document.createElement('div'); div.className='seats';
+  div.textContent=parts.length ? parts.join('\n') : '空席はありません';
   rl.appendChild(div);
 }
 
 // ============================================================
 // GAS API（GET・CORS回避）
 // ============================================================
-async function gasGet(params) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(GAS_URL + '?' + qs);
+async function gasGet(params){
+  const qs=new URLSearchParams(params).toString();
+  const res=await fetch(GAS_URL+'?'+qs);
   return res.json();
 }
 </script>
+</body>
+</html>
