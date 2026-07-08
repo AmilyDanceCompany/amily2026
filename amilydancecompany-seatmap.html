@@ -82,20 +82,24 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .print-head .ph-meta{font-size:11px;color:#555;}
 
 @media print{
-  @page{size:A4 landscape;margin:8mm;}
+  /* 内容の高さに合わせた横長サイズ（下の余白を詰める） */
+  @page{size:300mm 168mm;margin:7mm;}
   body{background:#fff;}
   #login,.hdr,.stat,.bar,.rowlist{display:none!important;}
   .map-panel{border:none;margin:0;padding:0;overflow:visible;box-shadow:none;}
-  .print-head{display:block;text-align:center;margin-bottom:8px;}
-  .print-legend{display:flex;justify-content:center;margin-top:10px;}
+  .print-head{display:block;text-align:center;margin-bottom:4px;}
+  .print-legend{display:flex;justify-content:center;margin-top:8px;}
   .zoom-inner{transform:none!important;text-align:center;}
   .seatmap-wrap{display:inline-block;}
-  .stage-bar{margin-bottom:20px;}
+  /* STAGEラベル（バー上の文字）がヘッダーと被らないよう余白を確保 */
+  .stage-bar{margin-top:28px;margin-bottom:16px;}
 }
 
 .rowlist{padding:0 16px 40px;max-width:760px;}
-.rowlist h3{font-size:12px;color:var(--mid);margin:8px 0 6px;letter-spacing:.05em;}
-.rowlist .seats{font-size:12px;line-height:1.9;color:var(--green);white-space:pre-line;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.rowlist h3{font-size:12px;color:var(--mid);margin:14px 0 6px;letter-spacing:.05em;}
+.rowlist .seats{font-size:12px;line-height:1.9;white-space:pre-line;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.rowlist .seats.empty-list{color:var(--green);}
+.rowlist .seats.taken-list{color:var(--taken);}
 .loading{padding:40px;text-align:center;color:var(--mid);font-size:13px;}
 </style>
 </head>
@@ -346,12 +350,21 @@ function render(){
   document.getElementById('ph-empty').textContent=emptyN;
   document.getElementById('ph-total').textContent=total;
 
+  // 埋席（予約済）を行ごとに集計
+  const takenByRow={};
+  SELROWS.forEach(r=>{ takenByRow[r]=ROW_CONFIG[r].selCols.map(c=>r+c).filter(id=>taken.has(id)); });
+
   const rl=document.getElementById('rowlist');
-  rl.innerHTML='<h3>空席一覧（'+perf+'）</h3>';
-  const parts=SELROWS.map(r=>emptyByRow[r].length ? r+'列：'+emptyByRow[r].join(', ') : null).filter(Boolean);
-  const div=document.createElement('div'); div.className='seats';
-  div.textContent=parts.length ? parts.join('\n') : '空席はありません';
-  rl.appendChild(div);
+  rl.innerHTML='';
+  const listBlock=(title, byRow, cls, emptyMsg)=>{
+    const h=document.createElement('h3'); h.textContent=title; rl.appendChild(h);
+    const parts=SELROWS.map(r=>byRow[r].length ? r+'列：'+byRow[r].join(', ') : null).filter(Boolean);
+    const div=document.createElement('div'); div.className='seats '+cls;
+    div.textContent=parts.length ? parts.join('\n') : emptyMsg;
+    rl.appendChild(div);
+  };
+  listBlock('埋席一覧（'+perf+'／'+(total-emptyN)+'席）', takenByRow, 'taken-list', '埋席はありません');
+  listBlock('空席一覧（'+perf+'／'+emptyN+'席）', emptyByRow, 'empty-list', '空席はありません');
 }
 
 // ============================================================
