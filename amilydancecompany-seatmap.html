@@ -82,12 +82,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .print-head .ph-meta{font-size:11px;color:#555;}
 
 @media print{
-  /* 内容の高さに合わせた横長サイズ（下の余白を詰める） */
-  @page{size:300mm 150mm;margin:6mm;}
+  /* 内容の高さに合わせた横長サイズ（上下の余白を均等ぎみに） */
+  @page{size:300mm 156mm;margin:6mm;}
   body{background:#fff;}
   #login,.hdr,.stat,.bar,.rowlist{display:none!important;}
   .map-panel{border:none;margin:0;padding:0;overflow:visible;box-shadow:none;}
-  .print-head{display:block;text-align:center;margin-bottom:4px;}
+  .print-head{display:block;text-align:center;margin-top:6mm;margin-bottom:4px;}
   .print-legend{display:flex;justify-content:center;margin-top:8px;}
   .zoom-inner{transform:none!important;text-align:center;}
   .seatmap-wrap{display:inline-block;}
