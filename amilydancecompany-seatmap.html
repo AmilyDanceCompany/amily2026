@@ -179,7 +179,7 @@ function render() {
   // 列ヘッダー
   const chdr = document.createElement('div');
   chdr.className = 'colhdr';
-  chdr.appendChild(cell('rowlabel', ''));
+  const corner = document.createElement('div'); corner.className = 'rowlabel'; chdr.appendChild(corner);
   COLS.forEach(c => { const d = document.createElement('div'); d.className = 'colnum'; d.textContent = c; chdr.appendChild(d); });
   map.appendChild(chdr);
 
