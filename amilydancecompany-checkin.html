@@ -465,8 +465,8 @@ async function processQR(raw) {
     return;
   }
 
-  // 公演チェック：1xxx=1st / 2xxx=2nd。選択中の公演と違えば弾く
-  const ticketPerf = String(ticketNo).charAt(0) === '2' ? '2nd' : '1st';
+  // 公演チェック：1001-1500=1st / 1501-2000=2nd（旧2001-2500も2nd扱い）。選択中と違えば弾く
+  const ticketPerf = parseInt(ticketNo, 10) >= 1501 ? '2nd' : '1st';
   if (ticketPerf !== scanPerf) {
     showResult('error', '公演が違います',
       `No.${String(ticketNo)}`,
