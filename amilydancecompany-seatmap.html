@@ -95,6 +95,23 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   .stage-bar{margin-top:28px;margin-bottom:16px;}
 }
 
+/* 座席表（名前）モード */
+.nm-row{display:flex;align-items:stretch;justify-content:center;gap:3px;margin-bottom:3px;}
+.nm-rowlbl{width:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--mid);}
+.nm-cell{width:58px;height:34px;flex-shrink:0;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;overflow:hidden;border:1px solid var(--border);background:#fff;}
+.nm-cell .nm-no{font-size:8px;color:var(--mid);font-family:'DM Mono',monospace;}
+.nm-cell .nm-nm{font-size:9px;font-weight:600;text-align:center;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 1px;}
+.nm-cell.performer{background:#eaf3ff;border-color:#b6d3f5;}
+.nm-cell.performer .nm-nm{color:#1a4e8a;}
+.nm-cell.general{background:#fdeef3;border-color:#f2c6d6;}
+.nm-cell.general .nm-nm{color:#8c2d3f;}
+.nm-cell.empty{background:#f4f4f2;border-style:dashed;}
+.nm-cell.empty .nm-nm{color:#bbb;}
+.nm-gap{width:58px;flex-shrink:0;}
+.nm-colhdr{display:flex;gap:3px;justify-content:center;margin-bottom:4px;}
+.nm-colhdr .nm-rowlbl{width:20px;}
+.nm-colnum{width:58px;flex-shrink:0;text-align:center;font-size:9px;color:var(--mid);}
+
 .rowlist{padding:0 16px 40px;max-width:760px;}
 .rowlist h3{font-size:12px;color:var(--mid);margin:14px 0 6px;letter-spacing:.05em;}
 .rowlist .seats{font-size:12px;line-height:1.9;white-space:pre-line;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
@@ -116,7 +133,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <!-- 本体 -->
 <div id="main" style="display:none">
   <div class="hdr">
-    <div class="hdr-title">AMILY 指定席 空席図</div>
+    <div class="perf-toggle">
+      <button class="ptbtn" id="vw-status" onclick="setView('status')">空席図</button>
+      <button class="ptbtn" id="vw-names" onclick="setView('names')">座席表</button>
+    </div>
     <div class="perf-toggle">
       <button class="ptbtn" id="pt-1st" onclick="setPerf('1st')">1st</button>
       <button class="ptbtn" id="pt-2nd" onclick="setPerf('2nd')">2nd</button>
@@ -130,10 +150,15 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   </div>
 
   <div class="bar">
-    <div class="legend">
+    <div class="legend" id="legend-status">
       <span><i class="dot lg-e"></i>空席</span>
       <span><i class="dot lg-t"></i>埋席</span>
       <span><i class="dot lg-f"></i>自由席</span>
+    </div>
+    <div class="legend" id="legend-names" style="display:none">
+      <span><i class="dot" style="background:#eaf3ff;border:1px solid #b6d3f5"></i>出演者</span>
+      <span><i class="dot" style="background:#fdeef3;border:1px solid #f2c6d6"></i>一般</span>
+      <span><i class="dot" style="background:#f4f4f2;border:1px dashed #ccc"></i>空席</span>
     </div>
     <div class="zoom">
       <button class="ptbtn" style="padding:5px 12px;font-size:12px" onclick="printMap()">🖨 PDF / 印刷</button>
@@ -197,7 +222,9 @@ const SELROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length
 
 let adminPw = '';
 let perf = '1st';
+let view = 'status'; // 'status'（空席図）／'names'（座席表）
 let takenData = { '1st': new Set(), '2nd': new Set() };
+let namesData = { '1st': {}, '2nd': {} };
 let mapScale = 1.0;
 
 // ============================================================
@@ -215,6 +242,9 @@ async function doLogin() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     applyData(res.taken);
+    const nres = await gasGet({ action:'seatNames', pw });
+    if (nres.status === 'ok') namesData = { '1st': nres.names['1st'] || {}, '2nd': nres.names['2nd'] || {} };
+    setView('status');
     setPerf('1st');
   } catch(e) { document.getElementById('login-err').textContent = '接続エラー：' + e.message; }
 }
@@ -226,7 +256,10 @@ async function load() {
   document.getElementById('map').innerHTML = '<div class="loading">読み込み中…</div>';
   try {
     const res = await gasGet({ action:'seatStatus', pw: adminPw });
-    if (res.status === 'ok') { applyData(res.taken); render(); }
+    if (res.status === 'ok') applyData(res.taken);
+    const nres = await gasGet({ action:'seatNames', pw: adminPw });
+    if (nres.status === 'ok') namesData = { '1st': nres.names['1st'] || {}, '2nd': nres.names['2nd'] || {} };
+    render();
   } catch(e) { document.getElementById('map').innerHTML = '<div class="loading">接続エラー：' + e.message + '</div>'; }
 }
 function applyData(taken) {
@@ -236,6 +269,17 @@ function setPerf(p) {
   perf = p;
   document.getElementById('pt-1st').className = 'ptbtn' + (p === '1st' ? ' active-1st' : '');
   document.getElementById('pt-2nd').className = 'ptbtn' + (p === '2nd' ? ' active-2nd' : '');
+  render();
+}
+function setView(v) {
+  view = v;
+  document.getElementById('vw-status').className = 'ptbtn' + (v === 'status' ? ' active-1st' : '');
+  document.getElementById('vw-names').className  = 'ptbtn' + (v === 'names'  ? ' active-1st' : '');
+  // 空席図の統計・凡例は座席表では隠す
+  document.querySelector('.stat').style.display = v === 'status' ? '' : 'none';
+  document.getElementById('rowlist').style.display = v === 'status' ? '' : 'none';
+  document.getElementById('legend-status').style.display = v === 'status' ? '' : 'none';
+  document.getElementById('legend-names').style.display  = v === 'names'  ? '' : 'none';
   render();
 }
 function zoom(d) {
@@ -314,10 +358,70 @@ function buildRow(row, taken){
 // 描画
 // ============================================================
 function render(){
+  // 印刷/PDF用ヘッダー（公演・時間・タイトル）
+  document.getElementById('ph-perf').textContent=perf;
+  document.getElementById('ph-time').textContent =
+    perf==='2nd' ? '開場 17:30／開演 18:00' : '開場 14:00／開演 14:30';
+  document.querySelector('.ph-title').innerHTML =
+    '<span id="ph-perf">'+perf+'</span> 公演　' + (view==='names' ? '指定席 座席表' : '指定席 空席図');
+  document.getElementById('print-legend').innerHTML = view==='names'
+    ? '<span><i class="dot" style="background:#eaf3ff;border:1px solid #b6d3f5"></i>出演者</span>' +
+      '<span><i class="dot" style="background:#fdeef3;border:1px solid #f2c6d6"></i>一般</span>' +
+      '<span><i class="dot" style="background:#f4f4f2;border:1px dashed #ccc"></i>空席</span>'
+    : '<span><i class="dot lg-e"></i>空席</span><span><i class="dot lg-t"></i>埋席（予約済）</span><span><i class="dot lg-f"></i>自由席</span>';
+  if (view==='names') { renderNames(); } else { renderStatus(); }
+}
+
+function renderNames(){
+  const names=namesData[perf]||{};
+  const map=document.getElementById('map');
+  map.innerHTML='';
+  const wrap=document.createElement('div'); wrap.style.display='inline-block';
+
+  // 列ヘッダー（13-24）
+  const chdr=document.createElement('div'); chdr.className='nm-colhdr';
+  const corner=document.createElement('div'); corner.className='nm-rowlbl'; chdr.appendChild(corner);
+  range(13,24).forEach(c=>{ const d=document.createElement('div'); d.className='nm-colnum'; d.textContent=c; chdr.appendChild(d); });
+  wrap.appendChild(chdr);
+
+  SELROWS.forEach(row=>{
+    const sel=new Set(ROW_CONFIG[row].selCols);
+    const rd=document.createElement('div'); rd.className='nm-row';
+    const lbl=document.createElement('div'); lbl.className='nm-rowlbl'; lbl.textContent=row; rd.appendChild(lbl);
+    range(13,24).forEach(c=>{
+      if(!sel.has(c)){ const g=document.createElement('div'); g.className='nm-gap'; rd.appendChild(g); return; }
+      const id=row+c; const info=names[id];
+      const cell=document.createElement('div');
+      cell.className='nm-cell ' + (info ? (info.kind==='performer'?'performer':'general') : 'empty');
+      const no=document.createElement('div'); no.className='nm-no'; no.textContent=id;
+      const nm=document.createElement('div'); nm.className='nm-nm'; nm.textContent=info?info.name:'';
+      if(info) nm.title=info.name;
+      cell.appendChild(no); cell.appendChild(nm);
+      rd.appendChild(cell);
+    });
+    wrap.appendChild(rd);
+  });
+  map.appendChild(wrap);
+}
+
+function buildColHeader(){
+  const row=document.createElement('div'); row.className='seat-row'; row.style.marginBottom='4px';
+  const gap=()=>{ const d=document.createElement('div'); d.style.cssText='width:19px;flex-shrink:0;'; return d; };
+  const num=n=>{ const d=document.createElement('div'); d.style.cssText='width:19px;flex-shrink:0;text-align:center;font-family:"DM Mono",monospace;font-size:7px;color:var(--mid);overflow:hidden;'; d.textContent=n; return d; };
+  for(let c=1;c<=12;c++) row.appendChild(num(c));
+  row.appendChild(gap());                 // 行ラベル位置
+  for(let c=13;c<=24;c++) row.appendChild(num(c)); // 中央（指定席）
+  row.appendChild(gap());
+  for(let c=25;c<=36;c++) row.appendChild(num(c));
+  return row;
+}
+
+function renderStatus(){
   const taken=takenData[perf];
   const map=document.getElementById('map');
   map.innerHTML='';
   const outer=document.createElement('div'); outer.className='seatmap-wrap';
+  outer.appendChild(buildColHeader()); // 列番号ヘッダー（元のseatmapと同じ）
 
   const SLOPE=new Set(['H','I','J','K','L','M','N','O']);
   const allRows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
@@ -341,10 +445,6 @@ function render(){
   document.getElementById('s-empty').textContent=emptyN;
   document.getElementById('s-taken').textContent=(total-emptyN);
   document.getElementById('s-total').textContent=total;
-  // 印刷/PDF用ヘッダーも更新
-  document.getElementById('ph-perf').textContent=perf;
-  document.getElementById('ph-time').textContent =
-    perf==='2nd' ? '開場 17:30／開演 18:00' : '開場 14:00／開演 14:30';
 
   // 埋席（予約済）を行ごとに集計
   const takenByRow={};
