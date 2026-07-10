@@ -69,6 +69,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .seat.taken::after{background:#9e9a97;}
 .seat.hidden{opacity:0;}
 .seat.unavail{background:#b8b3ae;border-color:#9e9994;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 4px);}
+.seat.invite{background:#e7d6f5;border-color:#c9a9e6;}
+.seat.invite::after{background:#c9a9e6;}
+.nm-cell.invite{background:#f3e8fb;border-color:#d8bdef;}
+.nm-cell.invite .nm-nm{color:#6b2f9e;}
 .seat.wheel{font-size:7px;color:#5b7fc4;}
 .seat-num{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:2px 5px;border-radius:3px;font-size:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;}
 .seat:hover .seat-num{opacity:1;}
@@ -153,11 +157,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="legend" id="legend-status">
       <span><i class="dot lg-e"></i>空席</span>
       <span><i class="dot lg-t"></i>埋席</span>
+      <span><i class="dot" style="background:#e7d6f5;border:1px solid #c9a9e6"></i>招待席（H列）</span>
       <span><i class="dot lg-f"></i>自由席</span>
     </div>
     <div class="legend" id="legend-names" style="display:none">
       <span><i class="dot" style="background:#eaf3ff;border:1px solid #b6d3f5"></i>出演者</span>
       <span><i class="dot" style="background:#fdeef3;border:1px solid #f2c6d6"></i>一般</span>
+      <span><i class="dot" style="background:#f3e8fb;border:1px solid #d8bdef"></i>招待席（H列）</span>
       <span><i class="dot" style="background:#f4f4f2;border:1px dashed #ccc"></i>空席</span>
     </div>
     <div class="zoom">
@@ -334,7 +340,12 @@ function buildRow(row, taken){
   // 中央ブロック 13-24
   for (let c=13;c<=24;c++){
     const id=row+c;
-    if ((row==='A'&&c>=17&&c<=20)||(row==='H'&&c>=13&&c<=24)||(['M','N','O'].includes(row)&&c>=13&&c<=24)){
+    if (row==='H'){ // H列13-24 = 招待席
+      const d=document.createElement('div'); d.className='seat invite'; d.dataset.id=id;
+      const tip=document.createElement('div'); tip.className='seat-num'; tip.textContent=id+'（招待席）'; d.appendChild(tip);
+      rowDiv.appendChild(d); continue;
+    }
+    if ((row==='A'&&c>=17&&c<=20)||(['M','N','O'].includes(row)&&c>=13&&c<=24)){
       rowDiv.appendChild(unavailSeat()); continue;
     }
     if (cfg.selCols.includes(c)) rowDiv.appendChild(shiteiSeat(id, taken.has(id)));
@@ -367,8 +378,11 @@ function render(){
   document.getElementById('print-legend').innerHTML = view==='names'
     ? '<span><i class="dot" style="background:#eaf3ff;border:1px solid #b6d3f5"></i>出演者</span>' +
       '<span><i class="dot" style="background:#fdeef3;border:1px solid #f2c6d6"></i>一般</span>' +
+      '<span><i class="dot" style="background:#f3e8fb;border:1px solid #d8bdef"></i>招待席（H列）</span>' +
       '<span><i class="dot" style="background:#f4f4f2;border:1px dashed #ccc"></i>空席</span>'
-    : '<span><i class="dot lg-e"></i>空席</span><span><i class="dot lg-t"></i>埋席（予約済）</span><span><i class="dot lg-f"></i>自由席</span>';
+    : '<span><i class="dot lg-e"></i>空席</span><span><i class="dot lg-t"></i>埋席（予約済）</span>' +
+      '<span><i class="dot" style="background:#e7d6f5;border:1px solid #c9a9e6"></i>招待席（H列）</span>' +
+      '<span><i class="dot lg-f"></i>自由席</span>';
   if (view==='names') { renderNames(); } else { renderStatus(); }
 }
 
@@ -384,15 +398,20 @@ function renderNames(){
   range(13,24).forEach(c=>{ const d=document.createElement('div'); d.className='nm-colnum'; d.textContent=c; chdr.appendChild(d); });
   wrap.appendChild(chdr);
 
-  SELROWS.forEach(row=>{
-    const sel=new Set(ROW_CONFIG[row].selCols);
+  // A〜K（H＝招待席として表示）
+  const NAMEROWS=['A','B','C','D','E','F','G','H','I','J','K'];
+  NAMEROWS.forEach(row=>{
+    const isInvite = row==='H';
+    const cols = isInvite ? range(13,24) : ROW_CONFIG[row].selCols;
+    const sel=new Set(cols);
     const rd=document.createElement('div'); rd.className='nm-row';
     const lbl=document.createElement('div'); lbl.className='nm-rowlbl'; lbl.textContent=row; rd.appendChild(lbl);
     range(13,24).forEach(c=>{
       if(!sel.has(c)){ const g=document.createElement('div'); g.className='nm-gap'; rd.appendChild(g); return; }
       const id=row+c; const info=names[id];
       const cell=document.createElement('div');
-      cell.className='nm-cell ' + (info ? (info.kind==='performer'?'performer':'general') : 'empty');
+      const cls = isInvite ? 'invite' : (info ? (info.kind==='performer'?'performer':(info.kind==='invite'?'invite':'general')) : 'empty');
+      cell.className='nm-cell ' + cls + (isInvite && !info ? ' empty' : '');
       const no=document.createElement('div'); no.className='nm-no'; no.textContent=id;
       const nm=document.createElement('div'); nm.className='nm-nm'; nm.textContent=info?info.name:'';
       if(info) nm.title=info.name;
