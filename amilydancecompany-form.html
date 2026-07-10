@@ -578,11 +578,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="sec-h">— 出演者情報</div>
     <div class="frow full">
       <div class="field">
-        <label>チケット扱い＝<span style="color:var(--rose)">出演者ご本人</span>のお名前（ダンサーネーム・カタカナ） <span class="req">*</span></label>
+        <label>チケット扱い＝<span style="color:var(--rose)">出演者ご本人</span>のカタカナフルネーム <span class="req">*</span></label>
         <input id="f-performer" placeholder="例: イトウアンリ" type="text">
         <div style="font-size:12px;color:var(--rose-d);background:var(--rose-l);border:1px solid rgba(200,80,110,.25);border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.7;">
           ⚠ <strong>ご購入者・お客様のお名前ではありません。</strong><br>
-          <strong>出演される方ご本人のお名前（ダンサーネーム／カタカナフルネーム）</strong>をご記入ください。<br>
+          <strong>出演される方ご本人のカタカナフルネーム</strong>（名簿と同じお名前）をご記入ください。<br>
           このお名前で座席の紐付け・照合を行います。
         </div>
       </div>
@@ -1532,7 +1532,7 @@ function submitForm() {
   const needPerformerName = ticketType === 'upgrade' || (MODE === 'performer' && ticketType === 'reserved');
   if (needPerformerName) {
     performer = document.getElementById('f-performer').value.trim();
-    if (!performer) { alert('出演者ご本人のお名前（ダンサーネーム・カタカナフルネーム）をご入力ください。'); return; }
+    if (!performer) { alert('出演者ご本人のカタカナフルネームをご入力ください。'); return; }
   }
 
   let freeCount = 1;
