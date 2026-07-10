@@ -478,7 +478,6 @@ function renderStatus(){
     div.textContent=parts.length ? parts.join('\n') : emptyMsg;
     rl.appendChild(div);
   };
-  listBlock('埋席一覧（'+perf+'／'+(total-emptyN)+'席）', takenByRow, 'taken-list', '埋席はありません');
   listBlock('空席一覧（'+perf+'／'+emptyN+'席）', emptyByRow, 'empty-list', '空席はありません');
 }
 
