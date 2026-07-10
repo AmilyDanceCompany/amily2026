@@ -1572,6 +1572,11 @@ function submitForm() {
     mode: MODE, // 'performer' / 'general'（出演者の追加購入も出演者受付で判定するため）
     note: '',
   };
+  // テスト用：?preview=1 のときは締切CLOSEDでも送信を通し、備考に TEST を付与（後で削除しやすく）
+  if (new URLSearchParams(location.search).get('preview') === '1') {
+    payload._bypassClose = true;
+    payload.note = 'TEST';
+  }
 
   // 完了画面を描画する処理（送信成功後に呼ぶ。serverNos = GASが採番した番号）
   function showCompletion(serverNos) {
@@ -1891,6 +1896,8 @@ function hideLoadingOverlay() {
   if (ov) ov.style.display = 'none';
 }
 function checkFormStatus() {
+  // テスト用：?preview=1 は締切/満席チェックをスキップ（CLOSEDのままUIを確認できる）
+  if (new URLSearchParams(location.search).get('preview') === '1') { hideLoadingOverlay(); return; }
   const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
   const CLOSE = new Date('2026-08-14T00:00:00+09:00');
   if (now >= CLOSE) {
