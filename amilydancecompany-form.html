@@ -658,7 +658,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <div class="ref-box" style="display:none">
     <div class="ref-num" id="c-ref" style="display:none">—</div>
     <div class="ref-note" id="ref-note">
-      <span id="c-upgrade-note" style="display:none;color:var(--rose)">※ 自由席チケットが届いたら、チケット確認ページからチケット番号を入力してください。</span>
+      <span id="c-upgrade-note" style="display:none;color:var(--rose)">※ お名前（ダンサーネーム）で照合いたします。チケット番号は確認メール・電子チケットでご案内します。</span>
     </div>
   </div>
 
@@ -838,12 +838,17 @@ if (MODE === 'performer') {
   document.getElementById('hero-mode').style.background = 'rgba(212,168,75,.25)';
   document.getElementById('hero-mode').style.borderColor = 'rgba(212,168,75,.4)';
   document.getElementById('hero-mode').style.color = '#f5d98a';
-  // 出演者モード：差額変更のみ横長1列で表示
-  document.getElementById('tt-reserved').style.display = 'none';
-  document.getElementById('tt-free').style.display = 'none';
+  // 出演者モード（7/13〜 追加募集）：「ノルマ変更（差額）」と「追加購入（指定席）」の2択
+  document.getElementById('tt-free').style.display = 'none';   // 自由席は対象外
+  document.getElementById('tt-reserved').classList.remove('selected');
   document.getElementById('tt-upgrade').classList.remove('hidden-card');
-  document.getElementById('tt-upgrade').classList.add('selected');
-  document.getElementById('type-cards').style.gridTemplateColumns = '1fr';
+  document.getElementById('tt-upgrade').classList.add('selected'); // 既定：ノルマ変更
+  // ラベルを出演者向けに調整
+  document.querySelector('#tt-upgrade .tc-name').textContent = 'ノルマ変更';
+  document.querySelector('#tt-upgrade .tc-note').innerHTML = '自由席→指定席<br>差額¥500/席';
+  document.querySelector('#tt-reserved .tc-name').textContent = '追加購入';
+  document.querySelector('#tt-reserved .tc-note').innerHTML = '指定席を<br>新規購入';
+  document.getElementById('type-cards').style.gridTemplateColumns = '1fr 1fr';
 }
 
 // 指定席エリア説明・注意事項（受付前サイトと同内容・モード別）
@@ -879,10 +884,8 @@ if (MODE === 'performer') {
 
 // フェーズ（テスト用に ?phase=2 で上書き可能）
 const PHASE = parseInt(params.get('phase'), 10) || window.PHASE || 1;
-// 7/11以降（PHASE 2〜）かつ出演者：自由席チケット番号の入力を必須表示
-if (MODE === 'performer' && PHASE >= 2) {
-  document.getElementById('f-free-tno-sec').style.display = '';
-}
+// 番号入力は不要（出演者名で自動照合）。自由席チケット番号欄は表示しない。
+// （以前の「PHASE2以降は番号入力必須」運用は廃止）
 
 // ============================================================
 // STATE
@@ -1565,7 +1568,8 @@ function submitForm() {
     count: cnt,
     total,
     freeTicketNo,
-    phase: PHASE, // 7/8 15:00〜(PHASE2以降)は番号未入力なら自動紐付けせず保留にするため
+    phase: PHASE,
+    mode: MODE, // 'performer' / 'general'（出演者の追加購入も出演者受付で判定するため）
     note: '',
   };
 
