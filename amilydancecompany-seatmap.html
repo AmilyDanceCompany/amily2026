@@ -401,6 +401,11 @@ function renderNames(){
   // A〜K（H＝招待席として表示）
   const NAMEROWS=['A','B','C','D','E','F','G','H','I','J','K'];
   NAMEROWS.forEach(row=>{
+    if (row==='E'){ // D/E列間の横通路
+      const a=document.createElement('div'); a.className='aisle-row';
+      a.innerHTML='<div class="aisle-row-line"></div><div class="aisle-row-label">通　路</div><div class="aisle-row-line"></div>';
+      wrap.appendChild(a);
+    }
     const isInvite = row==='H';
     const cols = isInvite ? range(13,24) : ROW_CONFIG[row].selCols;
     const sel=new Set(cols);
