@@ -1359,7 +1359,8 @@ function selType(t) {
     if (el) el.classList.toggle('selected', k === t);
   });
   document.getElementById('free-notice').style.display = t === 'free' ? 'block' : 'none';
-  updateRemaining();  // 種別切替で満席判定を更新（自由席は制限なし）
+  if (t === 'free') loadFreeRemaining(); // 自由席の残数を最新化
+  updateRemaining();  // 種別切替で満席判定を更新
   checkNext();
 }
 
@@ -1394,31 +1395,38 @@ function loadTakenSeats() {
 }
 
 function updateRemaining() {
-  // 自由席は席数制限なし → 満席判定の対象外
-  const limited = ticketType !== 'free';
+  const isFree = ticketType === 'free';
   ['1st','2nd'].forEach(p => {
-    const rem = 116 - (bookedSeats[p]?.size || 0);
+    // 自由席は上限（各回30枚）で残数判定／指定席は116席
+    const rem = isFree
+      ? (freeRemain[p] == null ? 30 : freeRemain[p])
+      : (116 - (bookedSeats[p]?.size || 0));
     const el = document.getElementById(`rem-${p}`);
     const card = document.getElementById(`pc-${p}`);
-    if (limited && rem <= 0) {
+    if (rem <= 0) {
       el.innerHTML = '<span class="pc-soldout-badge">満席（SOLD OUT）</span>';
       el.classList.remove('low');
       el.classList.add('soldout');
       card.classList.add('soldout');
-      // 満席公演が選択中だった場合は解除
       if (selectedPerf === p) { selectedPerf = null; card.classList.remove('selected'); checkNext(); }
-    } else if (!limited) {
-      // 自由席：席数制限なし
-      el.textContent = '自由席（席数制限なし）';
-      el.classList.remove('low','soldout');
-      card.classList.remove('soldout');
     } else {
-      el.textContent = `指定席 残${rem}席`;
-      el.classList.toggle('low', rem < 20);
+      el.textContent = isFree ? `自由席 残${rem}枚` : `指定席 残${rem}席`;
+      el.classList.toggle('low', rem < (isFree ? 10 : 20));
       el.classList.remove('soldout');
       card.classList.remove('soldout');
     }
   });
+}
+
+// 自由席の残り枚数（各回30枚上限）を取得
+let freeRemain = { '1st': null, '2nd': null };
+function loadFreeRemaining() {
+  return fetch(`${GAS_URL}?action=getFreeRemaining`)
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'ok' && res.remaining) { freeRemain = res.remaining; updateRemaining(); }
+    })
+    .catch(err => console.warn('自由席残数の取得に失敗:', err));
 }
 
 // ============================================================
@@ -1875,6 +1883,7 @@ function resetAll() {
 // init
 updateRemaining();
 loadTakenSeats();  // 起動時に予約済み席を取得（残席表示・売り切れ反映）
+loadFreeRemaining(); // 自由席の残り枚数（各回30枚上限）を取得
 checkFormStatus(); // 受付状態（手動締め切り）を確認
 
 // 受付終了画面を表示する共通処理
