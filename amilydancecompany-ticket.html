@@ -30,6 +30,27 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .err-msg{margin-top:12px;font-size:12px;color:var(--rose);text-align:center;display:none;}
 
 .ticket-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+
+/* フリップ（表＝紙デザイン／裏＝座席・QR） */
+.flip-card{perspective:1300px;margin-bottom:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.flip-inner{position:relative;width:100%;aspect-ratio:1/1.58;transition:transform .55s cubic-bezier(.4,.15,.2,1);transform-style:preserve-3d;}
+.flip-card.flipped .flip-inner{transform:rotateY(180deg);}
+.flip-front,.flip-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:16px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.18);}
+.ff-img{width:100%;height:100%;object-fit:cover;display:block;}
+.ff-overlay{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.62));padding:26px 16px 12px;color:#fff;text-align:center;}
+.ffo-seat{font-size:20px;font-weight:800;letter-spacing:.02em;}
+.ffo-no{font-family:'DM Mono',monospace;font-size:13px;opacity:.9;margin-top:2px;letter-spacing:.1em;}
+.flip-hint{position:absolute;top:10px;right:12px;font-size:10px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.28);padding:3px 9px;border-radius:20px;}
+.flip-back{transform:rotateY(180deg);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px;gap:6px;}
+.fb-event{font-family:'Playfair Display',serif;font-size:14px;opacity:.9;}
+.fb-seat{font-size:26px;font-weight:800;margin-top:2px;}
+.fb-no{font-family:'DM Mono',monospace;font-size:15px;letter-spacing:.14em;opacity:.95;}
+.fb-perf{font-size:11px;opacity:.85;margin-top:2px;}
+.fb-venue{font-size:10px;opacity:.8;line-height:1.7;margin-top:2px;}
+.fb-qr{background:#fff;padding:8px;border-radius:10px;margin-top:8px;line-height:0;}
+.fb-qrnote{font-size:9.5px;opacity:.85;margin-top:6px;}
+.fb-msg{font-size:12px;line-height:1.8;background:rgba(255,255,255,.14);border-radius:10px;padding:14px 16px;margin-top:6px;}
+.fb-checked{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:6px;}
 .tc-head{background:#6b2340;color:#fff;padding:14px 18px;position:relative;overflow:hidden;}
 .tc-head-wm{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.22;pointer-events:none;mix-blend-mode:screen;}
 .tc-head-text{position:relative;}
@@ -257,92 +278,88 @@ function buildCard(t) {
   }
 
   const card = document.createElement('div');
-  card.className = 'ticket-card';
+  card.style.marginBottom = '18px';
 
-  // ヘッダー
-  const headColor = t.perf === '2nd' ? '#5C3080' : '#8C2D3F';
-  card.innerHTML += `
-    <div class="tc-head" style="background:${headColor};">
-      <img class="tc-head-wm" src="amily-icon.png" alt="">
-      <div class="tc-head-text">
-        <div class="tc-brand">AMILY DANCE COMPANY</div>
-        <div class="tc-event">Amily Summer Showcase 2026</div>
+  const headColor = t.perf === '2nd' ? '#4E4785' : '#672C4D';
+  const frontImg  = `ticket-front-${t.perf === '2nd' ? '2nd' : '1st'}.png`;
+
+  // 座席コード抽出（形式に依存せず）
+  const sc = String(t.seatType || '').match(/([A-O])\s*-?\s*0*(\d+)/i);
+  const seatDisp  = sc ? `${sc[1].toUpperCase()}${parseInt(sc[2],10)}` : t.seatType;
+  const seatLabel = needsReg ? '指定席（番号登録待ち）' : (isFree ? '自由席' : `指定席 ${seatDisp}`);
+
+  const qrId = `qr-${noStr}-${Math.random().toString(36).slice(2)}`;
+  const backMain = showQR
+    ? `<div class="fb-qr" id="${qrId}"></div><div class="fb-qrnote">入場時にこのQRコードをご提示ください</div>`
+    : needsReg
+    ? `<div class="fb-msg">🎫 自由席チケット番号の登録が必要です。<br>下の入力欄からご登録ください。</div>`
+    : `<div class="fb-msg">🔒 お支払い確認後にQRコードが表示されます。</div>`;
+
+  // フリップカード（表＝紙デザイン／裏＝座席・QR）
+  const flip = document.createElement('div');
+  flip.className = 'flip-card';
+  flip.innerHTML = `
+    <div class="flip-inner">
+      <div class="flip-front">
+        <img class="ff-img" src="${frontImg}" alt="Amily Summer Showcase 2026">
+        <div class="flip-hint">タップでQR ▸</div>
+        <div class="ff-overlay">
+          <div class="ffo-seat">${seatLabel}</div>
+          <div class="ffo-no">NO. ${noStr}${isChecked ? ' ・入場済み' : ''}</div>
+        </div>
+      </div>
+      <div class="flip-back" style="background:${headColor};">
+        <div class="flip-hint" style="right:auto;left:12px;">◂ 表面</div>
+        <div class="fb-event">Amily Summer Showcase 2026</div>
+        <div class="fb-seat">${seatLabel}</div>
+        <div class="fb-no">NO. ${noStr}</div>
+        <div class="fb-perf">${perfLabel}</div>
+        <div class="fb-venue">2026年8月14日（金）<br>川崎市民プラザ ふるさとホール</div>
+        ${backMain}
+        ${isChecked ? '<div class="fb-checked">入場済み</div>' : ''}
       </div>
     </div>`;
+  flip.addEventListener('click', () => flip.classList.toggle('flipped'));
+  card.appendChild(flip);
 
   // 未払いアラート（QRスキャンアクセスで指定席+未払い）
   if (t.unpaidAlert) {
-    card.innerHTML += `
-      <div class="alert-box">
-        ⚠ 指定席にアップグレード済みですが、お支払いがまだ確認できていません。<br>
-        確認メールに記載の方法でお支払いをお済ませください。
-      </div>`;
+    const a = document.createElement('div'); a.className = 'ticket-card';
+    a.innerHTML = `<div class="alert-box" style="margin:12px;">⚠ 指定席にアップグレード済みですが、お支払いがまだ確認できていません。<br>確認メールに記載の方法でお支払いをお済ませください。</div>`;
+    card.appendChild(a);
   }
 
-  // チケット情報（座席コードは形式に依存せず抽出して表示）
-  const sc = String(t.seatType || '').match(/([A-O])\s*-?\s*0*(\d+)/i);
-  const seatDisp = sc ? `${sc[1].toUpperCase()}${parseInt(sc[2],10)}` : t.seatType;
-  const seatLabel = needsReg ? '指定席（番号登録待ち）' : (isFree ? '自由席' : `指定席　${seatDisp}`);
-  card.innerHTML += `
-    <div class="tc-body">
-      <div class="tc-row">
-        <span class="tc-lbl">NO.</span>
-        <span class="tc-no">${noStr}${isChecked ? '<span class="checked-badge">入場済み</span>' : ''}</span>
-      </div>
-      <div class="tc-row"><span class="tc-lbl">公演</span><span class="tc-val" style="font-size:12px;">${perfLabel}</span></div>
-      <div class="tc-row"><span class="tc-lbl">座席</span><span class="tc-val">${seatLabel}</span></div>
-    </div>`;
-
-  // イベント詳細（金額なし）
-  card.innerHTML += `
-    <div class="event-detail">
-      日程：2026年8月14日（金）<br>
-      会場：川崎市民プラザ ふるさとホール<br>
-      　　　〒213-0014 神奈川県川崎市高津区新作1-19-1
-    </div>`;
-
-  // QRコード or 未入金表示
-  const qrId = `qr-${noStr}-${Math.random().toString(36).slice(2)}`;
-  if (showQR) {
-    card.innerHTML += `
-      <div class="qr-wrap">
-        <div id="${qrId}"></div>
-        <div class="qr-note">入場時にこちらのQRコードをご提示ください${isPerformer ? '' : '<br><span class="qr-subnote">紙チケットをご希望の場合は当日受付にてお申し付けください</span>'}</div>
-      </div>`;
-  } else if (needsReg) {
+  // 番号登録が必要な場合の入力欄（フリップの下）
+  if (needsReg) {
     const regId = `reg-${Math.random().toString(36).slice(2)}`;
-    card.innerHTML += `
+    const rb = document.createElement('div'); rb.className = 'ticket-card';
+    rb.innerHTML = `
       <div class="unpaid-box">
         <div class="unpaid-icon">🎫</div>
-        <div class="unpaid-txt">お手持ちの<strong>自由席チケット番号の登録</strong>が必要です。<br>券面に記載の番号をご登録いただくと、お支払い確認後に電子チケット（QRコード）が表示されます。</div>
+        <div class="unpaid-txt">お手持ちの<strong>自由席チケット番号の登録</strong>が必要です。<br>券面に記載の番号をご登録いただくと、お支払い確認後にQRコードが表示されます。</div>
         <div class="reg-box" id="${regId}">
           <input class="reg-input" type="text" inputmode="numeric" placeholder="例: 1050（複数席は 1050, 1051）">
           <button class="reg-btn" type="button">この番号で登録する</button>
           <div class="reg-msg" style="display:none;"></div>
         </div>
       </div>`;
+    card.appendChild(rb);
     setTimeout(() => {
-      const boxEl = document.getElementById(regId);
-      if (!boxEl) return;
+      const boxEl = document.getElementById(regId); if (!boxEl) return;
       const inp = boxEl.querySelector('.reg-input');
       const b   = boxEl.querySelector('.reg-btn');
       const msg = boxEl.querySelector('.reg-msg');
       b.addEventListener('click', () => registerFreeTicket(t.ref, inp, b, msg));
     }, 50);
-  } else {
-    card.innerHTML += `
-      <div class="unpaid-box">
-        <div class="unpaid-icon">🔒</div>
-        <div class="unpaid-txt">お支払い確認後にQRコードが表示されます。<br>確認までお時間をいただく場合がございます。</div>
-      </div>`;
   }
 
+  // QRコード生成（裏面）
   if (showQR) {
     setTimeout(() => {
       const el = document.getElementById(qrId);
       if (el) new QRCode(el, {
         text: `${TICKET_BASE}?id=${noStr}`,
-        width: 180, height: 180,
+        width: 150, height: 150,
         colorDark: '#1a1a1a', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M,
       });
@@ -352,7 +369,8 @@ function buildCard(t) {
   // 座席図（指定席のみ・番号登録待ちは非表示）
   if (!isFree && !needsReg) {
     const mapId = `smap-${noStr}-${Math.random().toString(36).slice(2)}`;
-    card.innerHTML += `
+    const mb = document.createElement('div'); mb.className = 'ticket-card';
+    mb.innerHTML = `
       <div class="seatmap-box">
         <div class="seatmap-lbl">— 座席図 —</div>
         <div class="seatmap-wrap" id="${mapId}">
@@ -364,6 +382,7 @@ function buildCard(t) {
           <span><i style="background:#8C2D3F;"></i>あなたの席</span>
         </div>
       </div>`;
+    card.appendChild(mb);
     setTimeout(() => buildSeatMap(mapId, t.seatType), 100);
   }
 
