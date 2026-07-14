@@ -1410,8 +1410,8 @@ function updateRemaining() {
       card.classList.add('soldout');
       if (selectedPerf === p) { selectedPerf = null; card.classList.remove('selected'); checkNext(); }
     } else {
-      el.textContent = isFree ? `自由席 残${rem}枚` : `指定席 残${rem}席`;
-      el.classList.toggle('low', rem < (isFree ? 10 : 20));
+      el.textContent = isFree ? `自由席 受付中` : `指定席 残${rem}席`;
+      el.classList.toggle('low', !isFree && rem < 20);
       el.classList.remove('soldout');
       card.classList.remove('soldout');
     }
