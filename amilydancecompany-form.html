@@ -1667,10 +1667,9 @@ function submitForm() {
       .then(r => r.json())
       .then(res => {
         if (res.status === 'ok') showCompletion(res.ticketNos);
-        else alert(res.message || '申し込みの確定に失敗しました。お手数ですが再度お試しください。');
+        else { alert(res.message || '申し込みの確定に失敗しました。お手数ですが再度お試しください。'); resetSubmitBtn(btn); }
       })
-      .catch(err => { console.warn('GAS送信エラー:', err); alert('通信エラーが発生しました。再度お試しください。'); })
-      .finally(() => { if (btn) { btn.disabled = false; btn.textContent = '予約を確定する'; } });
+      .catch(err => { console.warn('GAS送信エラー:', err); verifyReservation(ref, btn); });
     return;
   }
 
@@ -1694,16 +1693,45 @@ function submitForm() {
         );
         setScreen(1);
         loadTakenSeats().then(() => { buildSeatMap(); renderCart(); });
+        resetSubmitBtn(btn);
       } else {
         alert(res.message || '申し込みの確定に失敗しました。お手数ですが再度お試しください。');
+        resetSubmitBtn(btn);
       }
     })
     .catch(err => {
       console.warn('GAS送信エラー:', err);
-      alert('通信エラーが発生しました。電波状況をご確認のうえ再度お試しください。');
+      verifyReservation(ref, btn);
+    });
+}
+
+function resetSubmitBtn(btn) {
+  if (btn) { btn.disabled = false; btn.textContent = '予約を確定する'; }
+}
+
+// 通信エラー時、受付番号(ref)で実際に登録できたかを確認。
+// 登録済みなら完了画面へ（サーバーは受付完了しているため）。未登録なら再試行を促す。
+function verifyReservation(ref, btn, attempt) {
+  attempt = attempt || 0;
+  if (btn) { btn.disabled = true; btn.textContent = '確認中…'; }
+  fetch(`${GAS_URL}?action=checkReservation&ref=${encodeURIComponent(ref)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (res && res.found) { showCompletion(res.ticketNos || []); return; }
+      if (attempt < 2) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
+      alert('通信が不安定なため、確定の確認ができませんでした。\n\n' +
+        '※ お申し込みが完了している場合は「申込完了メール」が届きます。\n' +
+        'メールが届いていれば手続きは完了していますので、再送信は不要です。\n' +
+        '届いていない場合のみ、電波の良い場所で再度お試しください。');
+      resetSubmitBtn(btn);
     })
-    .finally(() => {
-      if (btn) { btn.disabled = false; btn.textContent = '予約を確定する'; }
+    .catch(() => {
+      if (attempt < 2) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
+      alert('通信が不安定なため、確定の確認ができませんでした。\n\n' +
+        '※ お申し込みが完了している場合は「申込完了メール」が届きます。\n' +
+        'メールが届いていれば手続きは完了していますので、再送信は不要です。\n' +
+        '届いていない場合のみ、電波の良い場所で再度お試しください。');
+      resetSubmitBtn(btn);
     });
 }
 
