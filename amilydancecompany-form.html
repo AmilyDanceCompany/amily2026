@@ -1718,7 +1718,7 @@ function verifyReservation(ref, btn, attempt) {
     .then(r => r.json())
     .then(res => {
       if (res && res.found) { showCompletion(res.ticketNos || []); return; }
-      if (attempt < 2) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
+      if (attempt < 4) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
       alert('通信が不安定なため、確定の確認ができませんでした。\n\n' +
         '※ お申し込みが完了している場合は「申込完了メール」が届きます。\n' +
         'メールが届いていれば手続きは完了していますので、再送信は不要です。\n' +
@@ -1726,7 +1726,7 @@ function verifyReservation(ref, btn, attempt) {
       resetSubmitBtn(btn);
     })
     .catch(() => {
-      if (attempt < 2) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
+      if (attempt < 4) { setTimeout(() => verifyReservation(ref, btn, attempt + 1), 3000); return; }
       alert('通信が不安定なため、確定の確認ができませんでした。\n\n' +
         '※ お申し込みが完了している場合は「申込完了メール」が届きます。\n' +
         'メールが届いていれば手続きは完了していますので、再送信は不要です。\n' +
