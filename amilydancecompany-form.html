@@ -1960,6 +1960,11 @@ function checkFormStatus() {
             // 一般のみ自由席キャンセル待ちを受付（出演者は対象外）
             waitlist: MODE !== 'performer'
           });
+        } else if (MODE !== 'performer' && fs.generalReserved === 'CLOSED') {
+          // 一般の指定席（追加購入）だけ締切 → 指定席カードを隠して自由席のみに
+          const rc = document.getElementById('tt-reserved');
+          if (rc) rc.style.display = 'none';
+          selType('free');
         }
       }
     })
