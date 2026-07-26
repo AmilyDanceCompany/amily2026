@@ -896,7 +896,7 @@ const PHASE = parseInt(params.get('phase'), 10) || window.PHASE || 1;
 // STATE
 // ============================================================
 let selectedPerf = null;
-let ticketType = MODE === 'performer' ? 'upgrade' : 'reserved';
+let ticketType = MODE === 'performer' ? 'upgrade' : 'free'; // 一般の既定は自由席
 let selSeats = new Map();
 let pendingRef = null; // 送信中の受付番号（再送で使い回し→二重予約防止）
 
@@ -1802,11 +1802,12 @@ function payPayOrTransferHTML(ticketNo, cnt) {
 }
 
 function resetAll() {
-  selectedPerf = null; ticketType = MODE === 'performer' ? 'upgrade' : 'reserved'; selSeats.clear();
+  selectedPerf = null; ticketType = MODE === 'performer' ? 'upgrade' : 'free'; selSeats.clear();
   ['1st','2nd'].forEach(p => document.getElementById(`pc-${p}`).classList.remove('selected'));
   if (MODE !== 'performer') {
-    document.getElementById('tt-reserved').classList.add('selected');
-    document.getElementById('tt-free').classList.remove('selected');
+    // 一般の既定は自由席
+    document.getElementById('tt-reserved').classList.remove('selected');
+    document.getElementById('tt-free').classList.add('selected');
   }
   document.getElementById('btn-next0').disabled = true;
   document.getElementById('free-notice').style.display='none';
@@ -1909,6 +1910,7 @@ function resetAll() {
 })();
 
 // init
+if (MODE !== 'performer') selType('free'); // 一般の既定を自由席に
 updateRemaining();
 loadTakenSeats();  // 起動時に予約済み席を取得（残席表示・売り切れ反映）
 loadFreeRemaining(); // 自由席の残り枚数（各回30枚上限）を取得
