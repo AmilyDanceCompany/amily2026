@@ -108,6 +108,15 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .tk-tab.active .tt-name,.tk-tab.active .tt-sub{color:#fff;}
 .btn-logout{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--mid);cursor:pointer;font-family:inherit;margin-top:4px;}
 
+/* 来場者アンケート（入場済み検知後に自動表示） */
+.survey-card{border:1.5px solid var(--rose);animation:survey-in .4s ease;}
+@keyframes survey-in{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.survey-inner{padding:22px 20px;text-align:center;}
+.survey-icon{font-size:30px;line-height:1;margin-bottom:8px;}
+.survey-h{font-size:15px;font-weight:700;margin-bottom:6px;}
+.survey-sub{font-size:12px;color:var(--mid);line-height:1.8;margin-bottom:16px;}
+.survey-btn{display:block;width:100%;padding:13px;background:var(--rose);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;}
+
 .seatmap-box{border-top:1px dashed var(--border);padding:14px 18px 16px;}
 .seatmap-lbl{font-size:10px;color:var(--mid);margin-bottom:8px;text-align:center;letter-spacing:.1em;}
 .seatmap-wrap{overflow:hidden;border-radius:4px;background:#f9f7f4;touch-action:none;cursor:grab;height:150px;position:relative;}
@@ -169,6 +178,10 @@ const PERF_META = {
 };
 // 公演キーを正規化してチケット色を返す
 function perfColor(perf){ return (perf === '2nd') ? PERF_META['2nd'].color : PERF_META['1st'].color; }
+
+// 来場者アンケート（Googleフォーム）。リンク変更時はここだけ差し替える
+const SURVEY_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdKYqF7ExxF8Smq5vOXmpveZwGd1PuL22Gkbe4jrOmi4x55Ag/viewform';
+const CHECKIN_POLL_MS = 8000; // 入場済み検知のポーリング間隔
 
 window.addEventListener('DOMContentLoaded', () => {
   if (directId) {
@@ -535,7 +548,49 @@ function buildCard(t) {
     setTimeout(() => buildSeatMap(mapId, t.seatType), 100);
   }
 
+  // 来場者アンケート：入場済みなら即表示。未入場でQR表示中なら入場を検知して自動表示
+  if (isChecked) {
+    setTimeout(() => showSurvey(card), 0);
+  } else if (showQR && noStr && noStr !== '—') {
+    startCheckinPoll(card, noStr);
+  }
+
   return card;
+}
+
+// 来場者アンケートのパネルをチケット上部に差し込む（既に表示済みなら何もしない）
+function showSurvey(card){
+  if (!card || card.querySelector('.survey-card')) return;
+  const s = document.createElement('div');
+  s.className = 'ticket-card survey-card';
+  s.innerHTML = `
+    <div class="survey-inner">
+      <div class="survey-icon">🌹</div>
+      <div class="survey-h">ご来場ありがとうございました</div>
+      <div class="survey-sub">よろしければ来場者アンケートにご協力ください。<br>今後の公演の参考にさせていただきます。</div>
+      <a class="survey-btn" href="${SURVEY_URL}" target="_blank" rel="noopener">アンケートに回答する</a>
+    </div>`;
+  card.insertBefore(s, card.firstChild);
+  s.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// 入場済みになるまで定期的に状態を確認し、検知したらアンケートを表示
+function startCheckinPoll(card, ticketNo){
+  let busy = false;
+  const timer = setInterval(() => {
+    if (busy || document.hidden) return;   // 重複リクエスト・非表示中はスキップ
+    busy = true;
+    fetch(`${GAS_URL}?action=getTicketByNo&id=${encodeURIComponent(ticketNo)}`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.status === 'ok' && res.ticket && res.ticket.checkin === '入場済') {
+          clearInterval(timer);
+          showSurvey(card);
+        }
+      })
+      .catch(() => {})          // 一時的な通信エラーは無視して次回に任せる
+      .finally(() => { busy = false; });
+  }, CHECKIN_POLL_MS);
 }
 
 function buildSeatMap(wrapperId, seatType) {
