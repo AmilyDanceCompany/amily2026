@@ -89,6 +89,14 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .page-lbl{font-size:12px;color:var(--mid);margin-bottom:14px;letter-spacing:.05em;}
+
+/* 公演タブ（メールログイン時・複数公演のとき表示） */
+.perf-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.perf-tab{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;font-family:inherit;text-align:center;transition:border .15s,background .15s;display:flex;flex-direction:column;gap:2px;color:var(--mid);-webkit-tap-highlight-color:transparent;}
+.perf-tab .pt-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--ink);transition:color .15s;}
+.perf-tab .pt-sub{font-size:10px;color:var(--mid);transition:color .15s;}
+.perf-tab.active{border-color:var(--rose);background:var(--rose);}
+.perf-tab.active .pt-name,.perf-tab.active .pt-sub{color:#fff;}
 .btn-logout{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--mid);cursor:pointer;font-family:inherit;margin-top:4px;}
 
 .seatmap-box{border-top:1px dashed var(--border);padding:14px 18px 16px;}
@@ -145,6 +153,12 @@ const params         = new URLSearchParams(location.search);
 const directId       = params.get('id');
 let   loggedInEmail  = '';  // メールログイン時のアドレス（番号登録に使用）
 
+// 公演メタ情報（タブ表示用）
+const PERF_META = {
+  '1st': { label: '1st Stage', time: '14:30開演' },
+  '2nd': { label: '2nd Stage', time: '18:00開演' },
+};
+
 window.addEventListener('DOMContentLoaded', () => {
   if (directId) {
     showLoading();
@@ -184,7 +198,55 @@ function showTickets(tickets, showLogout) {
   document.getElementById('page-lbl').textContent       = showLogout ? `チケット ${tickets.length}件` : 'チケット情報';
   const list = document.getElementById('ticket-list');
   list.innerHTML = '';
-  tickets.forEach(t => list.appendChild(buildCard(t)));
+
+  // 公演ごとにグループ化（1st → 2nd の順で並べる）
+  const groups = {};
+  tickets.forEach(t => {
+    const key = (t.perf === '2nd') ? '2nd' : '1st';
+    (groups[key] = groups[key] || []).push(t);
+  });
+  const keys = ['1st', '2nd'].filter(k => groups[k] && groups[k].length);
+
+  // 公演が1つだけ（またはダイレクト表示）→ タブなしでそのまま縦表示
+  if (keys.length <= 1) {
+    tickets.forEach(t => list.appendChild(buildCard(t)));
+    return;
+  }
+
+  // 複数公演 → タブで整理して切り替え表示
+  const tabBar = document.createElement('div');
+  tabBar.className = 'perf-tabs';
+  const panels = {};
+
+  keys.forEach((k, i) => {
+    const meta = PERF_META[k] || { label: k, time: '' };
+
+    const tab = document.createElement('button');
+    tab.className = 'perf-tab' + (i === 0 ? ' active' : '');
+    tab.dataset.perf = k;
+    tab.innerHTML =
+      `<span class="pt-name">${meta.label}</span>` +
+      `<span class="pt-sub">${meta.time ? meta.time + '・' : ''}${groups[k].length}枚</span>`;
+    tab.onclick = () => selectPerfTab(k);
+    tabBar.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'perf-panel';
+    panel.dataset.perf = k;
+    panel.style.display = i === 0 ? 'block' : 'none';
+    groups[k].forEach(t => panel.appendChild(buildCard(t)));
+    panels[k] = panel;
+  });
+
+  list.appendChild(tabBar);
+  keys.forEach(k => list.appendChild(panels[k]));
+}
+
+function selectPerfTab(key) {
+  document.querySelectorAll('.perf-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.perf === key));
+  document.querySelectorAll('.perf-panel').forEach(p =>
+    p.style.display = (p.dataset.perf === key) ? 'block' : 'none');
 }
 
 function logout() {
