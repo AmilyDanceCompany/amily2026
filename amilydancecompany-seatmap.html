@@ -226,6 +226,23 @@ const ROW_CONFIG = {
 };
 const SELROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length);
 
+// 招待席判定（公演別）：H列13-24は常に招待席。A列17-20も招待席。
+// ただし昼(1st)のA17・18・19は指定席扱い（＝招待席から除外）。
+function isInviteSeat(row, c, p){
+  if (row==='H' && c>=13 && c<=24) return true;
+  if (row==='A' && c>=17 && c<=20){
+    if (p==='1st' && c>=17 && c<=19) return false; // 昼のA17-19は指定席
+    return true;
+  }
+  return false;
+}
+// 指定席判定（公演別）：通常のselCols＋昼(1st)のA17・18・19
+function isShiteiSeat(row, c, p){
+  if (ROW_CONFIG[row].selCols.includes(c)) return true;
+  if (row==='A' && p==='1st' && c>=17 && c<=19) return true;
+  return false;
+}
+
 let adminPw = '';
 let perf = '1st';
 let view = 'status'; // 'status'（空席図）／'names'（座席表）
@@ -340,7 +357,7 @@ function buildRow(row, taken){
   // 中央ブロック 13-24
   for (let c=13;c<=24;c++){
     const id=row+c;
-    if (row==='H' || (row==='A'&&c>=17&&c<=20)){ // H列13-24・A列17-20 = 招待席
+    if (isInviteSeat(row, c, perf)){ // H列13-24・A列17-20（昼のA17-19を除く）= 招待席
       const d=document.createElement('div'); d.className='seat invite'; d.dataset.id=id;
       const tip=document.createElement('div'); tip.className='seat-num'; tip.textContent=id+'（招待席）'; d.appendChild(tip);
       rowDiv.appendChild(d); continue;
@@ -348,7 +365,7 @@ function buildRow(row, taken){
     if (['M','N','O'].includes(row)&&c>=13&&c<=24){
       rowDiv.appendChild(unavailSeat()); continue;
     }
-    if (cfg.selCols.includes(c)) rowDiv.appendChild(shiteiSeat(id, taken.has(id)));
+    if (isShiteiSeat(row, c, perf)) rowDiv.appendChild(shiteiSeat(id, taken.has(id)));
     else rowDiv.appendChild(freeSeat());
   }
 
@@ -409,12 +426,13 @@ function renderNames(){
     const rd=document.createElement('div'); rd.className='nm-row';
     const lbl=document.createElement('div'); lbl.className='nm-rowlbl'; lbl.textContent=row; rd.appendChild(lbl);
     range(13,24).forEach(c=>{
-      const inviteCell = row==='H' || (row==='A'&&c>=17&&c<=20); // 招待席（H列・A17-20）
-      const isSel = inviteCell || ROW_CONFIG[row].selCols.includes(c);
+      const inviteCell = isInviteSeat(row, c, perf); // 招待席（H列・A17-20／昼のA17-19を除く）
+      const isSel = inviteCell || isShiteiSeat(row, c, perf);
       if(!isSel){ const g=document.createElement('div'); g.className='nm-gap'; rd.appendChild(g); return; }
       const id=row+c; const info=names[id];
       const cell=document.createElement('div');
-      const cls = inviteCell ? 'invite' : (info ? (info.kind==='performer'?'performer':(info.kind==='invite'?'invite':'general')) : 'empty');
+      // 構造的に指定席のセルは招待色にしない（招待リストに名前があっても指定席表示を優先）
+      const cls = inviteCell ? 'invite' : (info ? (info.kind==='performer'?'performer':'general') : 'empty');
       cell.className='nm-cell ' + cls + (inviteCell && !info ? ' empty' : '');
       const no=document.createElement('div'); no.className='nm-no'; no.textContent=id;
       const nm=document.createElement('div'); nm.className='nm-nm'; nm.textContent=info?info.name:'';
