@@ -229,7 +229,7 @@ const SELROWS = Object.keys(ROW_CONFIG).filter(r => ROW_CONFIG[r].selCols.length
 // 招待席判定（公演別）：H列13-24は常に招待席。A列17-20も招待席。
 // ただし昼(1st)のA17・18・19は指定席扱い（＝招待席から除外）。
 function isInviteSeat(row, c, p){
-  if (row==='H' && c>=13 && c<=24) return true;
+  if (row==='H' && c>=9 && c<=28) return true; // H9-12(左)・H13-24(中央)・H25-28(右)
   if (row==='A' && c>=17 && c<=20){
     if (p==='1st' && c>=17 && c<=19) return false; // 昼のA17-19は指定席
     return true;
@@ -335,6 +335,11 @@ function shiteiSeat(id, taken){
   tip.textContent=id + (taken ? '（予約済）' : '（空席）'); d.appendChild(tip);
   return d;
 }
+function inviteSeat(id){
+  const d=document.createElement('div'); d.className='seat invite'; d.dataset.id=id;
+  const tip=document.createElement('div'); tip.className='seat-num'; tip.textContent=id+'（招待席）'; d.appendChild(tip);
+  return d;
+}
 
 function buildRow(row, taken){
   const cfg=ROW_CONFIG[row];
@@ -348,7 +353,7 @@ function buildRow(row, taken){
   } else if (cfg.left) {
     const [lf,lt]=cfg.left;
     for (let c=1;c<lf;c++) rowDiv.appendChild(hiddenSeat());
-    for (let c=lf;c<=lt;c++) rowDiv.appendChild(freeSeat());
+    for (let c=lf;c<=lt;c++) rowDiv.appendChild(isInviteSeat(row,c,perf) ? inviteSeat(row+c) : freeSeat()); // H9-12=招待席
     for (let c=lt+1;c<=12;c++) rowDiv.appendChild(hiddenSeat());
   } else { for (let c=1;c<=12;c++) rowDiv.appendChild(hiddenSeat()); }
 
@@ -358,9 +363,7 @@ function buildRow(row, taken){
   for (let c=13;c<=24;c++){
     const id=row+c;
     if (isInviteSeat(row, c, perf)){ // H列13-24・A列17-20（昼のA17-19を除く）= 招待席
-      const d=document.createElement('div'); d.className='seat invite'; d.dataset.id=id;
-      const tip=document.createElement('div'); tip.className='seat-num'; tip.textContent=id+'（招待席）'; d.appendChild(tip);
-      rowDiv.appendChild(d); continue;
+      rowDiv.appendChild(inviteSeat(id)); continue;
     }
     if (['M','N','O'].includes(row)&&c>=13&&c<=24){
       rowDiv.appendChild(unavailSeat()); continue;
@@ -375,7 +378,7 @@ function buildRow(row, taken){
   if (cfg.right){
     const [rf,rt]=cfg.right;
     for (let c=25;c<rf;c++) rowDiv.appendChild(hiddenSeat());
-    for (let c=rf;c<=rt;c++) rowDiv.appendChild(freeSeat());
+    for (let c=rf;c<=rt;c++) rowDiv.appendChild(isInviteSeat(row,c,perf) ? inviteSeat(row+c) : freeSeat()); // H25-28=招待席
     for (let c=rt+1;c<=36;c++) rowDiv.appendChild(hiddenSeat());
   } else { for (let c=25;c<=36;c++) rowDiv.appendChild(hiddenSeat()); }
 
@@ -409,10 +412,10 @@ function renderNames(){
   map.innerHTML='';
   const wrap=document.createElement('div'); wrap.style.display='inline-block';
 
-  // 列ヘッダー（13-24）
+  // 列ヘッダー（9-28：H列の招待席 H9-12/H25-28 も表示）
   const chdr=document.createElement('div'); chdr.className='nm-colhdr';
   const corner=document.createElement('div'); corner.className='nm-rowlbl'; chdr.appendChild(corner);
-  range(13,24).forEach(c=>{ const d=document.createElement('div'); d.className='nm-colnum'; d.textContent=c; chdr.appendChild(d); });
+  range(9,28).forEach(c=>{ const d=document.createElement('div'); d.className='nm-colnum'; d.textContent=c; chdr.appendChild(d); });
   wrap.appendChild(chdr);
 
   // A〜K（H＝招待席として表示）
@@ -425,8 +428,8 @@ function renderNames(){
     }
     const rd=document.createElement('div'); rd.className='nm-row';
     const lbl=document.createElement('div'); lbl.className='nm-rowlbl'; lbl.textContent=row; rd.appendChild(lbl);
-    range(13,24).forEach(c=>{
-      const inviteCell = isInviteSeat(row, c, perf); // 招待席（H列・A17-20／昼のA17-19を除く）
+    range(9,28).forEach(c=>{
+      const inviteCell = isInviteSeat(row, c, perf); // 招待席（H列9-28・A17-20／昼のA17-19を除く）
       const isSel = inviteCell || isShiteiSeat(row, c, perf);
       if(!isSel){ const g=document.createElement('div'); g.className='nm-gap'; rd.appendChild(g); return; }
       const id=row+c; const info=names[id];
