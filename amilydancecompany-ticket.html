@@ -97,6 +97,15 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .perf-tab .pt-sub{font-size:10px;color:var(--mid);transition:color .15s;}
 .perf-tab.active{border-color:var(--rose);background:var(--rose);}
 .perf-tab.active .pt-name,.perf-tab.active .pt-sub{color:#fff;}
+
+/* チケットタブ（公演内・複数枚のとき表示） */
+.tk-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.tk-tabs::-webkit-scrollbar{height:0;}
+.tk-tab{flex:0 0 auto;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;cursor:pointer;font-family:inherit;text-align:center;line-height:1.3;transition:border .15s,background .15s;-webkit-tap-highlight-color:transparent;}
+.tk-tab .tt-name{font-size:12px;font-weight:700;color:var(--ink);transition:color .15s;}
+.tk-tab .tt-sub{font-size:9px;color:var(--mid);margin-left:5px;font-family:'DM Mono',monospace;transition:color .15s;}
+.tk-tab.active{border-color:var(--rose);background:var(--rose);}
+.tk-tab.active .tt-name,.tk-tab.active .tt-sub{color:#fff;}
 .btn-logout{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--mid);cursor:pointer;font-family:inherit;margin-top:4px;}
 
 .seatmap-box{border-top:1px dashed var(--border);padding:14px 18px 16px;}
@@ -207,13 +216,13 @@ function showTickets(tickets, showLogout) {
   });
   const keys = ['1st', '2nd'].filter(k => groups[k] && groups[k].length);
 
-  // 公演が1つだけ（またはダイレクト表示）→ タブなしでそのまま縦表示
+  // 公演が1つだけ（またはダイレクト表示）→ 公演タブなし・公演内のチケットタブのみ
   if (keys.length <= 1) {
-    tickets.forEach(t => list.appendChild(buildCard(t)));
+    buildPerfContent(list, keys.length ? groups[keys[0]] : tickets);
     return;
   }
 
-  // 複数公演 → タブで整理して切り替え表示
+  // 複数公演 → 公演タブで整理して切り替え表示
   const tabBar = document.createElement('div');
   tabBar.className = 'perf-tabs';
   const panels = {};
@@ -234,7 +243,7 @@ function showTickets(tickets, showLogout) {
     panel.className = 'perf-panel';
     panel.dataset.perf = k;
     panel.style.display = i === 0 ? 'block' : 'none';
-    groups[k].forEach(t => panel.appendChild(buildCard(t)));
+    buildPerfContent(panel, groups[k]);   // 公演内チケットタブを構築
     panels[k] = panel;
   });
 
@@ -242,11 +251,70 @@ function showTickets(tickets, showLogout) {
   keys.forEach(k => list.appendChild(panels[k]));
 }
 
+// 公演内の複数チケットをチケットタブで整理（1枚ならそのまま表示）
+function buildPerfContent(container, perfTickets) {
+  if (perfTickets.length <= 1) {
+    perfTickets.forEach(t => container.appendChild(buildCard(t)));
+    return;
+  }
+
+  const tabBar    = document.createElement('div');
+  tabBar.className = 'tk-tabs';
+  const panelWrap = document.createElement('div');
+
+  perfTickets.forEach((t, i) => {
+    const lab = ticketTabLabel(t);
+
+    const tab = document.createElement('button');
+    tab.className = 'tk-tab' + (i === 0 ? ' active' : '');
+    tab.dataset.idx = i;
+    tab.innerHTML =
+      `<span class="tt-name">${lab.name}</span>` +
+      (lab.sub ? `<span class="tt-sub">${lab.sub}</span>` : '');
+    tab.onclick = () => selectTicketTab(tabBar, panelWrap, i);
+    tabBar.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'tk-panel';
+    panel.dataset.idx = i;
+    panel.style.display = i === 0 ? 'block' : 'none';
+    panel.appendChild(buildCard(t));
+    panelWrap.appendChild(panel);
+  });
+
+  container.appendChild(tabBar);
+  container.appendChild(panelWrap);
+}
+
+// チケットタブのラベル（指定席=座席番号／自由席・招待席=種別＋チケット番号）
+function ticketTabLabel(t) {
+  const noStr    = t.needsTicketNo ? '' : String(t.ticketNo || t.ticketNoStr || '').replace(/^0+/, '');
+  const isFree   = !t.seatType || t.seatType === '自由席';
+  const isInvite = /招待/.test(String(t.seatType || ''));
+  const sc       = String(t.seatType || '').match(/([A-O])\s*-?\s*0*(\d+)/i);
+  const seatDisp = sc ? `${sc[1].toUpperCase()}${parseInt(sc[2], 10)}` : '';
+  let name;
+  if (t.needsTicketNo)   name = '指定席';
+  else if (isFree)       name = '自由席';
+  else if (isInvite)     name = seatDisp ? `招待 ${seatDisp}` : '招待席';
+  else                   name = seatDisp || '指定席';
+  return { name, sub: noStr ? `No.${noStr}` : '' };
+}
+
 function selectPerfTab(key) {
   document.querySelectorAll('.perf-tab').forEach(b =>
     b.classList.toggle('active', b.dataset.perf === key));
   document.querySelectorAll('.perf-panel').forEach(p =>
     p.style.display = (p.dataset.perf === key) ? 'block' : 'none');
+  refitVisibleSeatMaps();
+}
+
+function selectTicketTab(tabBar, panelWrap, idx) {
+  tabBar.querySelectorAll('.tk-tab').forEach(b =>
+    b.classList.toggle('active', Number(b.dataset.idx) === idx));
+  panelWrap.querySelectorAll('.tk-panel').forEach(p =>
+    p.style.display = (Number(p.dataset.idx) === idx) ? 'block' : 'none');
+  refitVisibleSeatMaps();
 }
 
 function logout() {
@@ -574,11 +642,29 @@ function buildSeatMap(wrapperId, seatType) {
   });
 
   // 全体フィット表示（ズーム・ドラッグなし）
-  const ww=wrap.clientWidth,wh=wrap.clientHeight;
-  const scale=Math.min(ww/totalW,wh/totalH)*0.95;
-  const tx=(ww-totalW*scale)/2,ty=(wh-totalH*scale)/2;
-  svg.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+  // 図のサイズを保持しておき、タブ切替で表示されたタイミングでも再フィットできるようにする
+  svg.dataset.tw = totalW;
+  svg.dataset.th = totalH;
   wrap.style.cursor='default';
+  fitSeatMap(wrap);
+}
+
+// 座席図を親要素サイズに合わせて再フィット（非表示中＝サイズ0のときはスキップ）
+function fitSeatMap(wrap){
+  const svg = wrap.querySelector('svg');
+  if(!svg) return;
+  const tw = parseFloat(svg.dataset.tw), th = parseFloat(svg.dataset.th);
+  if(!tw || !th) return;
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  if(!ww || !wh) return; // display:none などで未表示 → 表示時に再度呼ぶ
+  const scale = Math.min(ww/tw, wh/th)*0.95;
+  const tx=(ww-tw*scale)/2, ty=(wh-th*scale)/2;
+  svg.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+}
+
+// 現在表示中の座席図をまとめて再フィット（タブ切替後に呼ぶ）
+function refitVisibleSeatMaps(){
+  document.querySelectorAll('.seatmap-wrap').forEach(fitSeatMap);
 }
 
 document.getElementById('email-input').addEventListener('keydown', e => {
