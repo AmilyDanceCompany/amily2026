@@ -23,7 +23,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .login-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:28px 24px;}
 .login-h{font-size:15px;font-weight:700;margin-bottom:6px;}
 .login-sub{font-size:12px;color:var(--mid);margin-bottom:20px;line-height:1.7;}
-.field-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;font-family:inherit;outline:none;transition:border .15s;}
+.field-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:16px;font-family:inherit;outline:none;transition:border .15s;}/* 16px＝iOSでタップ時の自動ズームを防ぐ */
 .field-input:focus{border-color:var(--rose);}
 .btn-primary{width:100%;margin-top:12px;padding:13px;background:var(--rose);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}
 .btn-primary:disabled{opacity:.5;cursor:default;}
@@ -78,7 +78,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .unpaid-icon{font-size:32px;margin-bottom:8px;}
 .unpaid-txt{font-size:12px;line-height:1.7;}
 .reg-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
-.reg-input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:14px;color:#1a1a1a;outline:none;text-align:center;}
+.reg-input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:16px;color:#1a1a1a;outline:none;text-align:center;}/* 16px＝iOSでタップ時の自動ズームを防ぐ */
 .reg-input:focus{border-color:#8C2D3F;}
 .reg-btn{width:100%;background:#8C2D3F;color:#fff;border:none;padding:11px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;}
 .reg-btn:disabled{opacity:.6;cursor:default;}
@@ -95,7 +95,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .perf-tab{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;font-family:inherit;text-align:center;transition:border .15s,background .15s;display:flex;flex-direction:column;gap:2px;color:var(--mid);-webkit-tap-highlight-color:transparent;}
 .perf-tab .pt-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--ink);transition:color .15s;}
 .perf-tab .pt-sub{font-size:10px;color:var(--mid);transition:color .15s;}
-.perf-tab.active{border-color:var(--rose);background:var(--rose);}
+.perf-tab.active{border-color:var(--tk-color,var(--rose));background:var(--tk-color,var(--rose));}
 .perf-tab.active .pt-name,.perf-tab.active .pt-sub{color:#fff;}
 
 /* チケットタブ（公演内・複数枚のとき表示） */
@@ -104,7 +104,7 @@ body{background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--ink)
 .tk-tab{flex:0 0 auto;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;cursor:pointer;font-family:inherit;text-align:center;line-height:1.3;transition:border .15s,background .15s;-webkit-tap-highlight-color:transparent;}
 .tk-tab .tt-name{font-size:12px;font-weight:700;color:var(--ink);transition:color .15s;}
 .tk-tab .tt-sub{font-size:9px;color:var(--mid);margin-left:5px;font-family:'DM Mono',monospace;transition:color .15s;}
-.tk-tab.active{border-color:var(--rose);background:var(--rose);}
+.tk-tab.active{border-color:var(--tk-color,var(--rose));background:var(--tk-color,var(--rose));}
 .tk-tab.active .tt-name,.tk-tab.active .tt-sub{color:#fff;}
 .btn-logout{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--mid);cursor:pointer;font-family:inherit;margin-top:4px;}
 
@@ -162,11 +162,13 @@ const params         = new URLSearchParams(location.search);
 const directId       = params.get('id');
 let   loggedInEmail  = '';  // メールログイン時のアドレス（番号登録に使用）
 
-// 公演メタ情報（タブ表示用）
+// 公演メタ情報（タブ表示用）。color はチケット券面と同じ色（DIC-F70 / DIC-F58）
 const PERF_META = {
-  '1st': { label: '1st Stage', time: '14:30開演' },
-  '2nd': { label: '2nd Stage', time: '18:00開演' },
+  '1st': { label: '1st Stage', time: '14:30開演', color: '#672C4D' },
+  '2nd': { label: '2nd Stage', time: '18:00開演', color: '#4C4A8B' },
 };
+// 公演キーを正規化してチケット色を返す
+function perfColor(perf){ return (perf === '2nd') ? PERF_META['2nd'].color : PERF_META['1st'].color; }
 
 window.addEventListener('DOMContentLoaded', () => {
   if (directId) {
@@ -233,6 +235,7 @@ function showTickets(tickets, showLogout) {
     const tab = document.createElement('button');
     tab.className = 'perf-tab' + (i === 0 ? ' active' : '');
     tab.dataset.perf = k;
+    tab.style.setProperty('--tk-color', meta.color || 'var(--rose)');
     tab.innerHTML =
       `<span class="pt-name">${meta.label}</span>` +
       `<span class="pt-sub">${meta.time ? meta.time + '・' : ''}${groups[k].length}枚</span>`;
@@ -261,6 +264,7 @@ function buildPerfContent(container, perfTickets) {
   const tabBar    = document.createElement('div');
   tabBar.className = 'tk-tabs';
   const panelWrap = document.createElement('div');
+  const tkColor   = perfColor(perfTickets[0] && perfTickets[0].perf);
 
   perfTickets.forEach((t, i) => {
     const lab = ticketTabLabel(t);
@@ -268,6 +272,7 @@ function buildPerfContent(container, perfTickets) {
     const tab = document.createElement('button');
     tab.className = 'tk-tab' + (i === 0 ? ' active' : '');
     tab.dataset.idx = i;
+    tab.style.setProperty('--tk-color', tkColor);
     tab.innerHTML =
       `<span class="tt-name">${lab.name}</span>` +
       (lab.sub ? `<span class="tt-sub">${lab.sub}</span>` : '');
