@@ -175,6 +175,24 @@ canvas#qr-canvas{display:none;}
 .li-name b{font-size:22px;font-family:'DM Mono',monospace;display:block;letter-spacing:.02em;line-height:1.1;}
 .li-name span{font-size:12px;color:var(--mid);}
 .li-seat{font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);text-align:right;flex-shrink:0;}
+.li-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);text-align:right;flex-shrink:0;}
+
+/* 入場済タブ＋入場確認 */
+#tab-checked{flex:1;overflow-y:auto;display:none;padding-bottom:calc(var(--safe-bot) + 16px);}
+.check-search{display:flex;gap:8px;padding:10px 16px;}
+.check-search input{flex:1;padding:12px 14px;font-size:16px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);}
+.check-search button{padding:12px 18px;font-size:14px;font-weight:700;border:none;border-radius:10px;background:var(--1st);color:#fff;white-space:nowrap;}
+#check-result{padding:0 16px;}
+.chk-card{border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1.5px solid var(--border);}
+.chk-card.in{border-color:var(--green);background:var(--green-bg);}
+.chk-card.out{border-color:var(--yellow);background:var(--yellow-bg);}
+.chk-card.none{border-color:var(--red);background:var(--red-bg);}
+.chk-no{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;}
+.chk-line{font-size:13px;color:var(--mid);margin-top:4px;}
+.chk-badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:8px;}
+.chk-badge.in{background:var(--green);color:#fff;}
+.chk-badge.out{background:var(--yellow);color:#000;}
+.chk-badge.none{background:var(--red);color:#fff;}
 
 /* カメラ非対応 */
 .no-cam{
@@ -221,7 +239,8 @@ canvas#qr-canvas{display:none;}
   <!-- タブ -->
   <div class="tabs">
     <div class="tab active" id="tab-btn-scan" onclick="switchTab('scan')">📷 スキャン</div>
-    <div class="tab" id="tab-btn-list" onclick="switchTab('list')">📋 未入場リスト</div>
+    <div class="tab" id="tab-btn-list" onclick="switchTab('list')">📋 未入場</div>
+    <div class="tab" id="tab-btn-checked" onclick="switchTab('checked')">✅ 入場済</div>
   </div>
 
   <!-- スキャン画面 -->
@@ -271,6 +290,20 @@ canvas#qr-canvas{display:none;}
       <button class="refresh-btn" onclick="loadStats()">更新</button>
     </div>
     <div id="list-body"></div>
+  </div>
+
+  <!-- 入場済リスト＋入場確認 -->
+  <div id="tab-checked">
+    <div class="check-search">
+      <input id="check-no" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="番号で入場確認（例：1481）">
+      <button onclick="lookupStatus()">確認</button>
+    </div>
+    <div id="check-result"></div>
+    <div class="list-hdr">
+      <h3 id="checked-title">入場済リスト</h3>
+      <button class="refresh-btn" onclick="loadStats()">更新</button>
+    </div>
+    <div id="checked-body"></div>
   </div>
 </div>
 
@@ -340,6 +373,7 @@ async function doLogin() {
   setPerfUI('1st');
   updateStatBar(res.data);
   renderList(res.data.notYetList);
+  renderChecked(res.data.checkedList);
 }
 
 // ============================================================
@@ -368,6 +402,7 @@ async function loadStats() {
     if (res.status === 'ok') {
       updateStatBar(res.data);
       renderList(res.data.notYetList);
+      renderChecked(res.data.checkedList);
     }
   } catch(e) {
     // 通信失敗時は表示中の数値を保持（偽の0で上書きしない）。「更新」ボタンで再同期
@@ -402,6 +437,28 @@ function renderList(list) {
         <span>${esc(r.name)}</span>
       </div>
       <div class="li-seat">${esc(r.seats || (r.ticketType === 'free' ? '自由席' : '—'))}</div>
+    </div>
+  `).join('');
+}
+
+// 入場済リスト描画
+function renderChecked(list) {
+  const body  = document.getElementById('checked-body');
+  const title = document.getElementById('checked-title');
+  list = list || [];
+  title.textContent = `入場済 ${list.length}名`;
+  if (list.length === 0) {
+    body.innerHTML = '<div class="list-empty">入場済みはまだありません</div>';
+    return;
+  }
+  body.innerHTML = list.map(r => `
+    <div class="list-item">
+      <div class="li-perf ${r.perf === '1st' ? 'p1st' : 'p2nd'}">${r.perf}</div>
+      <div class="li-name">
+        <b>No.${String(parseInt(r.ticketNo, 10) || r.ticketNo || '')}</b>
+        <span>${esc(r.name)}</span>
+      </div>
+      <div class="li-time">${esc(r.time || '')}</div>
     </div>
   `).join('');
 }
@@ -495,6 +552,42 @@ document.getElementById('manual-no').addEventListener('keydown', e => {
 });
 
 // ============================================================
+// 入場確認（入場処理はせず、現在の状態だけ表示）
+// ============================================================
+async function lookupStatus() {
+  const el = document.getElementById('check-no');
+  const box = document.getElementById('check-result');
+  const v = (el.value || '').trim();
+  if (!/^\d{3,5}$/.test(v)) { el.focus(); return; }
+  box.innerHTML = '<div class="chk-card"><div class="chk-line">確認中…</div></div>';
+  try {
+    const res = await gasGet({ action:'ticketStatus', pw: adminPw, ticketNo: v });
+    if (res.status === 'ok') {
+      const cls   = res.checkedIn ? 'in' : 'out';
+      const badge = res.checkedIn
+        ? `<span class="chk-badge in">入場済　${esc(res.checkinTime || '')}</span>`
+        : `<span class="chk-badge out">未入場</span>`;
+      const payNote = res.paid ? '' : '　／　<b style="color:var(--yellow)">未入金</b>';
+      box.innerHTML = `
+        <div class="chk-card ${cls}">
+          <div class="chk-no">No.${esc(res.ticketNo)}</div>
+          <div class="chk-line">${esc(res.name || '')}　${esc(res.perf)} ／ ${esc(res.seats || '')}${payNote}</div>
+          ${badge}
+        </div>`;
+    } else if (res.code === 'NOT_FOUND') {
+      box.innerHTML = `<div class="chk-card none"><div class="chk-no">No.${esc(v)}</div><div class="chk-line">この番号は登録されていません</div><span class="chk-badge none">未登録</span></div>`;
+    } else {
+      box.innerHTML = `<div class="chk-card none"><div class="chk-line">${esc(res.message || 'エラー')}</div></div>`;
+    }
+  } catch(e) {
+    box.innerHTML = '<div class="chk-card none"><div class="chk-line">通信エラー：もう一度お試しください</div></div>';
+  }
+}
+document.getElementById('check-no').addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookupStatus();
+});
+
+// ============================================================
 // QR処理
 // ============================================================
 async function processQR(raw) {
@@ -529,9 +622,11 @@ async function processQR(raw) {
     const res = await gasGet({ action:'checkin', pw: adminPw, ticketNo, force: false });
     handleCheckinRes(res, ticketNo);
   } catch(e) {
-    // 通信失敗：偽の入場済は出さず、はっきりエラーを出して再スキャンを促す
-    showResult('error', '通信エラー', `No.${String(ticketNo)}`, '', '記録できていません。もう一度スキャンしてください');
-    vibrate([200]);
+    // 通信失敗：記録済みか未記録か区別できないため断定しない。
+    // 再スキャンで確認（既に記録されていれば「既に入場済み」と出る）。重複しても実害なし。
+    showResult('warn', '通信が不安定', `No.${String(ticketNo)}`, '',
+      'もう一度スキャンして確認してください（「既に入場済み」ならOK）');
+    vibrate([80, 40, 80]);
   }
 }
 
@@ -617,11 +712,22 @@ function closeResult() {
 }
 
 function switchTab(tab) {
-  document.getElementById('tab-scan').style.display  = tab === 'scan' ? 'flex' : 'none';
-  document.getElementById('tab-list').style.display  = tab === 'list' ? 'block' : 'none';
-  document.getElementById('tab-btn-scan').className  = 'tab' + (tab === 'scan' ? ' active' : '');
-  document.getElementById('tab-btn-list').className  = 'tab' + (tab === 'list' ? ' active' : '');
-  if (tab === 'list') loadStats();
+  document.getElementById('tab-scan').style.display    = tab === 'scan'    ? 'flex'  : 'none';
+  document.getElementById('tab-list').style.display    = tab === 'list'    ? 'block' : 'none';
+  document.getElementById('tab-checked').style.display  = tab === 'checked' ? 'block' : 'none';
+  document.getElementById('tab-btn-scan').className    = 'tab' + (tab === 'scan'    ? ' active' : '');
+  document.getElementById('tab-btn-list').className    = 'tab' + (tab === 'list'    ? ' active' : '');
+  document.getElementById('tab-btn-checked').className  = 'tab' + (tab === 'checked' ? ' active' : '');
+
+  if (tab === 'scan') {
+    // スキャンタブに戻ったら読み取り再開（結果表示中は除く）
+    const flashOpen = document.getElementById('result-flash').classList.contains('show');
+    if (camStream && !scanning && !flashOpen) { scanning = true; requestAnimationFrame(scanFrame); }
+  } else {
+    // 別タブ表示中は読み取りを止める（意図しないスキャンを防止）
+    scanning = false;
+    loadStats();
+  }
 }
 
 function vibrate(pattern) {
