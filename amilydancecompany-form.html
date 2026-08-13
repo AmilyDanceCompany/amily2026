@@ -692,7 +692,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <div style="font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
       <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
         年に一度のSummer Showcase 開催！<br>
-        Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする80分のshowcase！
+        Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする90分のshowcase！
       </p>
       <p style="font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);line-height:1.95;">
         積み重ねた挑戦と成長を、それぞれの輝きに変えて💎<br>
@@ -803,7 +803,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
   const OPEN   = new Date('2026-07-05T10:00:00+09:00');
-  const CLOSE  = new Date('2026-08-14T00:00:00+09:00');
+  const CLOSE  = new Date('2026-08-14T12:00:00+09:00');
   const PHASE2 = new Date('2026-07-08T15:00:00+09:00');
   const PHASE3 = new Date('2026-07-13T00:00:00+09:00');
 
@@ -1092,7 +1092,7 @@ function buildFullRow(row, booked) {
   } else if (cfg.left) {
     const [lf, lt] = cfg.left;
     for (let c=1;  c<lf;  c++) rowDiv.appendChild(makeHiddenSeat());
-    for (let c=lf; c<=lt; c++) rowDiv.appendChild(makeFreeSeat());
+    for (let c=lf; c<=lt; c++) rowDiv.appendChild((row === 'H' && c >= 9 && c <= 12) ? makeUnavailSeat() : makeFreeSeat()); // H9-12=招待席
     for (let c=lt+1; c<=12; c++) rowDiv.appendChild(makeHiddenSeat());
   } else {
     for (let c=1; c<=12; c++) rowDiv.appendChild(makeHiddenSeat());
@@ -1130,7 +1130,7 @@ function buildFullRow(row, booked) {
   if (cfg.right) {
     const [rf, rt] = cfg.right;
     for (let c=25;  c<rf;   c++) rowDiv.appendChild(makeHiddenSeat());
-    for (let c=rf;  c<=rt;  c++) rowDiv.appendChild(makeFreeSeat());
+    for (let c=rf;  c<=rt;  c++) rowDiv.appendChild((row === 'H' && c >= 25 && c <= 28) ? makeUnavailSeat() : makeFreeSeat()); // H25-28=招待席
     for (let c=rt+1;c<=36;  c++) rowDiv.appendChild(makeHiddenSeat());
   } else {
     for (let c=25; c<=36; c++) rowDiv.appendChild(makeHiddenSeat());
@@ -1855,7 +1855,7 @@ function resetAll() {
     } else if(cfg.l){
       const[lf,lt]=cfg.l;
       for(let c=1;c<lf;c++)row.appendChild(mk('hidden'));
-      for(let c=lf;c<=lt;c++)row.appendChild(mk('free'));
+      for(let c=lf;c<=lt;c++)row.appendChild((nm==='H'&&c>=9&&c<=12)?mk('unavail'):mk('free'));
       for(let c=lt+1;c<=12;c++)row.appendChild(mk('hidden'));
     } else {for(let c=1;c<=12;c++)row.appendChild(mk('hidden'));}
     row.appendChild(al());
@@ -1868,7 +1868,7 @@ function resetAll() {
     if(cfg.r){
       const[rf,rt]=cfg.r;
       for(let c=25;c<rf;c++)row.appendChild(mk('hidden'));
-      for(let c=rf;c<=rt;c++)row.appendChild(mk('free'));
+      for(let c=rf;c<=rt;c++)row.appendChild((nm==='H'&&c>=25&&c<=28)?mk('unavail'):mk('free'));
       for(let c=rt+1;c<=36;c++)row.appendChild(mk('hidden'));
     } else {for(let c=25;c<=36;c++)row.appendChild(mk('hidden'));}
     return row;
@@ -1943,7 +1943,7 @@ function checkFormStatus() {
   // テスト用：?preview=1 は締切/満席チェックをスキップ（CLOSEDのままUIを確認できる）
   if (new URLSearchParams(location.search).get('preview') === '1') { hideLoadingOverlay(); return; }
   const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-  const CLOSE = new Date('2026-08-14T00:00:00+09:00');
+  const CLOSE = new Date('2026-08-14T12:00:00+09:00');
   if (now >= CLOSE) {
     showClosedScreen({ title:'受付を終了しました', message:'本イベントのチケット受付は終了しました。', waitlist:false });
     hideLoadingOverlay();

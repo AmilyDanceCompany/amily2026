@@ -86,12 +86,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .print-head .ph-meta{font-size:11px;color:#555;}
 
 @media print{
-  /* 内容の高さに合わせた横長サイズ（上下の余白を均等ぎみに） */
-  @page{size:300mm 148mm;margin:6mm;}
+  /* A4横。内容は印刷直前に1ページ内へ自動縮尺（fitPrint）で必ず収める */
+  @page{size:A4 landscape;margin:6mm;}
   body{background:#fff;}
   #login,.hdr,.stat,.bar,.rowlist{display:none!important;}
-  .map-panel{border:none;margin:0;padding:0;overflow:visible;box-shadow:none;}
-  .print-head{display:block;text-align:center;margin-top:6mm;margin-bottom:4px;}
+  .map-panel{border:none;margin:0;padding:0;overflow:visible!important;box-shadow:none;}
+  .print-head{display:block;text-align:center;margin-top:2mm;margin-bottom:4px;}
   .print-legend{display:flex;justify-content:center;margin-top:8px;}
   .zoom-inner{transform:none!important;text-align:center;}
   .seatmap-wrap{display:inline-block;}
@@ -311,14 +311,37 @@ function zoom(d) {
   document.getElementById('zlbl').textContent = Math.round(mapScale * 100) + '%';
 }
 
+// 印刷を1ページに収めるための自動縮尺（Chrome/Safariのzoomでレイアウトごと縮小）
+function fitPrint() {
+  const panel = document.querySelector('.map-panel');
+  const zi = document.getElementById('zoom-inner');
+  // 画面ズームの影響を除去してから実寸を測る
+  zi.style.transform = 'none';
+  panel.style.zoom = '';
+  // A4横の印刷可能領域（@page margin 6mm）。安全側に0.97掛け
+  const DPI = 96, mm = v => v * DPI / 25.4, m = 6;
+  const availW = mm(297 - 2 * m) * 0.97, availH = mm(210 - 2 * m) * 0.97;
+  // 幅は内側コンテンツ（inline-block）を直接計測、高さはzoom-inner＋印刷用ヘッダー/凡例の余地
+  const content = document.getElementById('map').firstElementChild;
+  const w = content ? content.getBoundingClientRect().width : zi.getBoundingClientRect().width;
+  const h = zi.getBoundingClientRect().height + 120; // print-head+print-legend（印刷時のみ表示）の余地
+  const s = Math.min(1, availW / w, availH / h);
+  if (s < 1) panel.style.zoom = s;
+}
+function unfitPrint() {
+  const panel = document.querySelector('.map-panel');
+  panel.style.zoom = '';
+  document.getElementById('zoom-inner').style.transform = 'scale(' + mapScale + ')';
+}
+// ブラウザのCmd+P / PDF保存でも自動フィット
+window.addEventListener('beforeprint', fitPrint);
+window.addEventListener('afterprint', unfitPrint);
+
 // PDF / 印刷：現在表示中の公演の座席図を出力（公演・日付・空席数を明記）
 function printMap() {
-  const saved = mapScale;
-  // 印刷時は等倍に戻す（拡大状態が反映されないように）
-  document.getElementById('zoom-inner').style.transform = 'none';
+  fitPrint();       // 1ページに収める
   window.print();
-  // 復帰
-  setTimeout(() => { document.getElementById('zoom-inner').style.transform = 'scale(' + saved + ')'; }, 300);
+  setTimeout(unfitPrint, 300);  // 復帰
 }
 
 // ============================================================
