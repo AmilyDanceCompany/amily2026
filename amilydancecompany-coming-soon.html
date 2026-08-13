@@ -154,7 +154,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:var(--mid);margin-bottom:16px;">from Amily Dance Company 🌹</div>
     <p style="font-size:13px;color:var(--ink);line-height:1.95;margin-bottom:10px;">
       年に一度のSummer Showcase 開催！<br>
-      Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする80分のshowcase！
+      Amilyメンバーによるナンバー作品やコンテスト作品、外部からのpick up作品でお届けする90分のshowcase！
     </p>
     <p style="font-size:13px;color:var(--ink);line-height:1.95;">
       積み重ねた挑戦と成長を、それぞれの輝きに変えて💎<br>
@@ -425,7 +425,7 @@ if (MODE === 'performer') {
 const SOLD_OUT = false; // ★ 売り切れ時は true に変更してアップロード
 
 const OPEN  = new Date('2026-07-05T10:00:00+09:00');
-const CLOSE = new Date('2026-08-14T00:00:00+09:00');
+const CLOSE = new Date('2026-08-14T12:00:00+09:00');
 
 function updateCountdown() {
   const preview  = new URLSearchParams(location.search).get('preview');
@@ -457,8 +457,8 @@ function updateCountdown() {
   if (now >= OPEN) {
     cdBoxes.style.display = 'none';
     cdLabel.textContent = '申し込み受付中';
-    cdDate.textContent  = '〜 2026年8月13日（木）まで';
-    cdTime.textContent  = '前日までお申し込みいただけます';
+    cdDate.textContent  = '〜 2026年8月14日（金）12:00 まで';
+    cdTime.textContent  = '公演当日 昼12時までお申し込みいただけます';
     openBtns.style.display = 'flex';
     return;
   }

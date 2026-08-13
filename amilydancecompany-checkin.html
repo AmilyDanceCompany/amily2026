@@ -129,9 +129,12 @@ canvas#qr-canvas{display:none;}
   margin-top:16px;padding:12px 32px;border:none;border-radius:12px;
   font-size:14px;font-weight:700;cursor:pointer;
 }
-#result-flash.ok    {background:rgba(0,0,0,.92);}
-#result-flash.warn  {background:rgba(0,0,0,.93);}
-#result-flash.error {background:rgba(0,0,0,.93);}
+#result-flash.ok      {background:rgba(0,0,0,.92);}
+#result-flash.warn    {background:rgba(0,0,0,.93);}
+#result-flash.error   {background:rgba(0,0,0,.93);}
+#result-flash.loading {background:rgba(0,0,0,.9);}
+#result-flash.loading .rf-icon::after{content:'⏳';}
+#result-flash.loading .rf-status{color:var(--mid);}
 #result-flash.ok    .rf-icon::after{content:'✓';}
 #result-flash.warn  .rf-icon::after{content:'⚠';}
 #result-flash.error .rf-icon::after{content:'✕';}
@@ -357,6 +360,13 @@ function updateStatBar(data) {
   document.getElementById('s-checked').textContent = data.checked;
 }
 
+// 入場成功時にカウンタをローカルで+1（重い統計再取得を避ける。正確な値はタブ切替/更新ボタンで再同期）
+function bumpChecked() {
+  const el = document.getElementById('s-checked');
+  const n = parseInt(el.textContent, 10);
+  if (!isNaN(n)) el.textContent = n + 1;
+}
+
 function renderList(list) {
   const body = document.getElementById('list-body');
   const title = document.getElementById('list-title');
@@ -411,22 +421,24 @@ function scanFrame() {
     return;
   }
 
-  canvas.width  = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+  // 全画素だと重いので約1/2に縮小して解析（チケットのQRは十分大きく、検出精度は保ちつつ数倍高速）
+  const scale = 0.5;
+  const cw = Math.max(1, Math.floor(video.videoWidth  * scale));
+  const ch = Math.max(1, Math.floor(video.videoHeight * scale));
+  canvas.width  = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, cw, ch);
+  const imageData = ctx.getImageData(0, 0, cw, ch);
+  const code = jsQR(imageData.data, cw, ch, { inversionAttempts:'dontInvert' });
 
   if (code) {
-    const now = Date.now();
     const val = code.data.trim();
-    // 同じQRを連続スキャンしないよう2秒クールダウン
-    if (val !== lastScan || now - lastScanTime > 2000) {
-      lastScan = val;
-      lastScanTime = now;
-      processQR(val);
-    }
+    lastScan = val;
+    lastScanTime = Date.now();
+    scanning = false;      // 読み取れたらスキャン停止（「次へ」を押すまで再開しない）
+    processQR(val);
+    return;                // ループを止める
   }
 
   requestAnimationFrame(scanFrame);
@@ -476,6 +488,7 @@ async function processQR(raw) {
     return;
   }
 
+  showLoading(ticketNo);   // 応答待ちの間「確認中…」を表示
   try {
     const res = await gasGet({ action:'checkin', pw: adminPw, ticketNo, force: false });
     handleCheckinRes(res, ticketNo);
@@ -494,7 +507,7 @@ function handleCheckinRes(res, ticketNo) {
   const seatStr = res.seats || '自由席';
   if (res.status === 'ok') {
     showResult('ok', '入場済', noStr, (res.name || '') + ' 様', `${res.perf} ／ ${seatStr}`);
-    loadStats();
+    bumpChecked();   // 統計の全再取得はせず、入場済カウンタをローカルで+1（次スキャンを止めない）
     vibrate([80]);
 
   } else if (res.status === 'warn' && res.code === 'ALREADY_CHECKED') {
@@ -533,6 +546,19 @@ async function forceCheckin() {
 // ============================================================
 // UI ヘルパー
 // ============================================================
+// 応答待ちの「確認中…」表示（ボタンは出さない）
+function showLoading(ticketNo) {
+  scanning = false;
+  const el = document.getElementById('result-flash');
+  el.className = 'show loading';
+  document.getElementById('rf-status').textContent = '確認中…';
+  document.getElementById('rf-number').textContent = ticketNo ? `No.${String(ticketNo)}` : '';
+  document.getElementById('rf-name').textContent   = '';
+  document.getElementById('rf-sub').textContent    = 'サーバーに問い合わせています';
+  document.getElementById('force-btn').style.display = 'none';
+  document.getElementById('rf-close').style.display  = 'none';
+}
+
 function showResult(type, status, number, name, sub) {
   const el = document.getElementById('result-flash');
   el.className = 'show ' + type;
@@ -541,16 +567,20 @@ function showResult(type, status, number, name, sub) {
   document.getElementById('rf-name').textContent   = name || '';
   document.getElementById('rf-sub').textContent    = sub || '';
   document.getElementById('force-btn').style.display = 'none';
+  document.getElementById('rf-close').style.display  = '';   // 「次へ」ボタンを表示
 
-  // 成功は2秒後に自動閉じ
-  if (type === 'ok') {
-    setTimeout(closeResult, 2000);
-  }
+  // 結果表示中はスキャンを停止。「次へ」を押すまで次のスキャンに進まない
+  scanning = false;
 }
 
 function closeResult() {
   document.getElementById('result-flash').className = '';
   pendingForce = null;
+  // スキャン再開（多重起動を防止）
+  if (!scanning) {
+    scanning = true;
+    requestAnimationFrame(scanFrame);
+  }
 }
 
 function switchTab(tab) {
