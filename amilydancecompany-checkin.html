@@ -289,6 +289,8 @@ let scanning  = false;
 let lastScan  = '';
 let lastScanTime = 0;
 let pendingForce = null; // 強制入場待ちのticketNo
+let camStream = null;    // 現在のカメラストリーム
+let camWanted = false;   // カメラ起動を望んでいる状態か（並行起動の後始末用）
 
 // ============================================================
 // ログイン
@@ -301,43 +303,60 @@ async function doLogin() {
   const pw = document.getElementById('pw-input').value.trim();
   if (!pw) return;
 
-  // GAS に接続確認（checkinStats で認証テスト）
+  const btn = document.querySelector('.login-btn');
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = '接続中…'; }
+
+  // カメラは認証と並行して起動しておく（待ち時間を短縮）
+  startCamera();
+
+  // 認証＋初期表示データを1回のリクエストで取得（1st分のみ＝軽い）
+  let res;
   try {
-    const res = await gasGet({ action:'checkinStats', pw, perf:'all' });
-    if (res.status === 'error') {
-      document.getElementById('login-err').style.display = 'block';
-      return;
-    }
+    res = await gasGet({ action:'checkinStats', pw, perf:'1st' });
   } catch(e) {
-    // GAS未接続でも開発時はパス（ローカルテスト用）
-    if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
-      // デモモード
-    } else {
-      document.getElementById('login-err').style.display = 'block';
-      document.getElementById('login-err').textContent = '接続エラー: ' + e.message;
-      return;
-    }
+    stopCamera();
+    err.textContent = '接続エラー：通信できません。電波を確認してもう一度お試しください';
+    err.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'ログイン'; }
+    return;
+  }
+
+  if (!res || res.status !== 'ok') {
+    stopCamera();
+    err.textContent = 'パスワードが違います';
+    err.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'ログイン'; }
+    return;
   }
 
   adminPw = pw;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-screen').style.display  = 'flex';
+  if (btn) { btn.disabled = false; btn.textContent = 'ログイン'; }
 
-  setPerf('1st');
-  loadStats();
-  startCamera();
+  // 取得済みデータをそのまま表示（統計の再取得はしない）
+  setPerfUI('1st');
+  updateStatBar(res.data);
+  renderList(res.data.notYetList);
 }
 
 // ============================================================
 // 公演切替
 // ============================================================
 function setPerf(p) {
+  setPerfUI(p);
+  loadStats();
+}
+
+// ボタンの見た目と選択公演だけ切り替える（GAS通信なし）
+function setPerfUI(p) {
   scanPerf = p;
   ['1st','2nd'].forEach(x => {
     const btn = document.getElementById(`ptbtn-${x}`);
     btn.className = 'ptbtn' + (x === p ? ` active-${p}` : '');
   });
-  loadStats();
 }
 
 // ============================================================
@@ -351,8 +370,8 @@ async function loadStats() {
       renderList(res.data.notYetList);
     }
   } catch(e) {
-    // デモ表示
-    updateStatBar({ total:150, checked:0, notYet:150, notYetList:[] });
+    // 通信失敗時は表示中の数値を保持（偽の0で上書きしない）。「更新」ボタンで再同期
+    console.warn('loadStats error:', e);
   }
 }
 
@@ -391,6 +410,8 @@ function renderList(list) {
 // カメラ起動
 // ============================================================
 async function startCamera() {
+  if (camStream || camWanted) return;   // 起動中・起動済みなら二重起動しない
+  camWanted = true;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     document.getElementById('no-cam').style.display = 'flex';
     return;
@@ -399,16 +420,31 @@ async function startCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment', width:{ ideal:1280 }, height:{ ideal:720 } }
     });
+    if (!camWanted) {                   // 起動待ちの間にログイン失敗した等 → 破棄
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    camStream = stream;
     const video = document.getElementById('video');
     video.srcObject = stream;
     video.play();
     video.addEventListener('loadedmetadata', () => {
       scanning = true;
       requestAnimationFrame(scanFrame);
-    });
+    }, { once: true });
   } catch(e) {
+    camWanted = false;
     document.getElementById('no-cam').style.display = 'flex';
     console.warn('Camera error:', e);
+  }
+}
+
+function stopCamera() {
+  camWanted = false;
+  scanning = false;
+  if (camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
   }
 }
 
@@ -493,12 +529,9 @@ async function processQR(raw) {
     const res = await gasGet({ action:'checkin', pw: adminPw, ticketNo, force: false });
     handleCheckinRes(res, ticketNo);
   } catch(e) {
-    // GAS未接続時のデモ表示
-    if (GAS_URL === 'https://script.google.com/macros/s/AKfycbyFHFu1S9FpTu2nS4iFmjn2zZ1_33c1D_1SNj4UXkHbRxWMj38dly_vR7qvhEaVpC6Eow/exec') {
-      showResult('ok', '入場済（デモ）', `No.${String(ticketNo)}`, 'デモユーザー 様', '1st Stage ／ 指定席（A-14）');
-    } else {
-      showResult('error', '通信エラー', '', '', e.message);
-    }
+    // 通信失敗：偽の入場済は出さず、はっきりエラーを出して再スキャンを促す
+    showResult('error', '通信エラー', `No.${String(ticketNo)}`, '', '記録できていません。もう一度スキャンしてください');
+    vibrate([200]);
   }
 }
 
