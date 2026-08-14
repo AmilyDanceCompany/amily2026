@@ -135,6 +135,10 @@ canvas#qr-canvas{display:none;}
 #result-flash.loading {background:rgba(0,0,0,.9);}
 #result-flash.loading .rf-icon::after{content:'⏳';}
 #result-flash.loading .rf-status{color:var(--mid);}
+#result-flash.test    {background:rgba(0,0,0,.92);}
+#result-flash.test .rf-icon::after{content:'🧪';}
+#result-flash.test .rf-status{color:#38bdf8;}
+#result-flash.test .rf-btn{background:#38bdf8;color:#03121a;}
 #result-flash.ok    .rf-icon::after{content:'✓';}
 #result-flash.warn  .rf-icon::after{content:'⚠';}
 #result-flash.error .rf-icon::after{content:'✕';}
@@ -193,6 +197,8 @@ canvas#qr-canvas{display:none;}
 .chk-badge.in{background:var(--green);color:#fff;}
 .chk-badge.out{background:var(--yellow);color:#000;}
 .chk-badge.none{background:var(--red);color:#fff;}
+/* 入場済リストは番号を少し小さめに */
+#checked-body .li-name b{font-size:17px;}
 
 /* カメラ非対応 */
 .no-cam{
@@ -324,6 +330,7 @@ let lastScanTime = 0;
 let pendingForce = null; // 強制入場待ちのticketNo
 let camStream = null;    // 現在のカメラストリーム
 let camWanted = false;   // カメラ起動を望んでいる状態か（並行起動の後始末用）
+const TEST_NOS = []; // 旧テスト番号1476/1976は「自由席パス」に変更（公演ゲートも通常どおり適用）
 
 // ============================================================
 // ログイン
@@ -562,7 +569,9 @@ async function lookupStatus() {
   box.innerHTML = '<div class="chk-card"><div class="chk-line">確認中…</div></div>';
   try {
     const res = await gasGet({ action:'ticketStatus', pw: adminPw, ticketNo: v });
-    if (res.status === 'ok') {
+    if (res.freePass) {
+      box.innerHTML = `<div class="chk-card in"><div class="chk-no">No.${esc(res.ticketNo)}</div><div class="chk-line">🎫 自由席パス（入場OK・記録なし／カウント外）</div><span class="chk-badge in">自由席パス</span></div>`;
+    } else if (res.status === 'ok') {
       const cls   = res.checkedIn ? 'in' : 'out';
       const badge = res.checkedIn
         ? `<span class="chk-badge in">入場済　${esc(res.checkinTime || '')}</span>`
@@ -607,8 +616,9 @@ async function processQR(raw) {
   }
 
   // 公演チェック：1001-1500=1st / 1501-2000=2nd（旧2001-2500も2nd扱い）。選択中と違えば弾く
+  // ※ テスト番号は公演に関係なくいつでも確認できるよう、このチェックをスキップ
   const ticketPerf = parseInt(ticketNo, 10) >= 1501 ? '2nd' : '1st';
-  if (ticketPerf !== scanPerf) {
+  if (TEST_NOS.indexOf(String(ticketNo)) === -1 && ticketPerf !== scanPerf) {
     showResult('error', '公演が違います',
       `No.${String(ticketNo)}`,
       `このチケットは ${ticketPerf} です`,
@@ -633,7 +643,17 @@ async function processQR(raw) {
 function handleCheckinRes(res, ticketNo) {
   const noStr = `No.${String(ticketNo)}`;
   const seatStr = res.seats || '自由席';
-  if (res.status === 'ok') {
+  if (res.status === 'test' || res.code === 'TEST') {
+    // テスト番号：入場記録しない・カウントも動かさない
+    showResult('test', 'テスト番号', noStr, '', '記録しません（動作確認用）');
+    vibrate([40, 40, 40]);
+
+  } else if (res.status === 'ok' && res.count === false) {
+    // 自由席パス(1476/1976)：入場OKだが記録・カウントはしない（bumpChecked を呼ばない）
+    showResult('ok', '自由席 入場', noStr, '', `${res.perf} ／ 自由席（記録なし）`);
+    vibrate([80]);
+
+  } else if (res.status === 'ok') {
     showResult('ok', '入場済', noStr, (res.name || '') + ' 様', `${res.perf} ／ ${seatStr}`);
     bumpChecked();   // 統計の全再取得はせず、入場済カウンタをローカルで+1（次スキャンを止めない）
     vibrate([80]);
